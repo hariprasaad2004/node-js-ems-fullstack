@@ -1,0 +1,42 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EMS Login</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+    <script defer src="/js/login.js"></script>
+  </head>
+  <body class="page-auth">
+    <div class="shell">
+      <div class="card brand-card">
+        <h1 class="brand-title">Employee Management Suite</h1>
+        <p class="brand-subtitle">
+          Centralize your workforce data with a simple admin dashboard and a clean employee
+          self-service portal. Log in to manage profiles, roles, and contact details.
+        </p>
+        <div class="notice">Tip: Create your admin account using the seed script.</div>
+      </div>
+
+      <div class="card auth-card">
+        <h1>Welcome back</h1>
+        <p class="helper">Sign in to continue to your dashboard.</p>
+
+        <form id="login-form" class="form-grid">
+          <div>
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="you@company.com" required />
+          </div>
+
+          <div>
+            <label for="password">Password (optional if passwordless is enabled)</label>
+            <input id="password" type="password" placeholder="••••••••" />
+          </div>
+
+          <button class="btn-primary" type="submit">Sign In</button>
+          <p id="login-error" class="helper"></p>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

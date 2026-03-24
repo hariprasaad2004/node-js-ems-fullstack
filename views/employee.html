@@ -1,0 +1,102 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Employee Dashboard</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+    <script defer src="/js/employee.js"></script>
+  </head>
+  <body class="page-dashboard">
+    <div class="dashboard">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">EMS</div>
+          <div class="sidebar-title">Employee</div>
+        </div>
+        <nav class="nav-list">
+          <div class="nav-item active" data-section="profile">Profile</div>
+          <div class="nav-item" data-section="attendance">Attendance</div>
+          <div class="nav-item" data-section="leave">Leave</div>
+          <div class="nav-item" data-section="tasks">Tasks</div>
+        </nav>
+      </aside>
+
+      <main class="content">
+        <div class="content-card">
+          <div class="toolbar">
+            <div>
+              <h1 class="page-title">Employee Dashboard</h1>
+              <p class="helper">View your profile and update personal contact info.</p>
+            </div>
+            <button id="logout-btn" class="btn-ghost">Logout</button>
+          </div>
+        </div>
+
+        <section class="section active" data-section="profile">
+          <div class="grid-2">
+            <div class="content-card">
+              <h2 class="content-title">Profile Overview</h2>
+              <div id="profile" class="helper">No profile found.</div>
+            </div>
+
+            <div class="content-card">
+              <h2 class="content-title">Update Contact Info</h2>
+              <form id="profile-form" class="form-grid">
+                <div>
+                  <label for="phone">Phone</label>
+                  <input id="phone" type="text" />
+                </div>
+                <div>
+                  <label for="address">Address</label>
+                  <textarea id="address"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Save Changes</button>
+                <p id="profile-status" class="helper"></p>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" data-section="attendance">
+          <div class="content-card">
+            <h2 class="content-title">Attendance</h2>
+            <div class="action-row">
+              <button type="button" class="btn-primary">Check In</button>
+              <button type="button" class="btn-ghost">Check Out</button>
+            </div>
+            <p class="helper">Your attendance history will show here.</p>
+          </div>
+        </section>
+
+        <section class="section" data-section="leave">
+          <div class="content-card">
+            <h2 class="content-title">Leave Request</h2>
+            <form class="form-grid">
+              <div>
+                <label for="leave-from">From</label>
+                <input id="leave-from" type="date" />
+              </div>
+              <div>
+                <label for="leave-to">To</label>
+                <input id="leave-to" type="date" />
+              </div>
+              <div>
+                <label for="leave-reason">Reason</label>
+                <textarea id="leave-reason" placeholder="Reason for leave"></textarea>
+              </div>
+              <button type="button" class="btn-primary">Submit</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="section" data-section="tasks">
+          <div class="content-card">
+            <h2 class="content-title">My Tasks</h2>
+            <div class="notice">No tasks assigned yet.</div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

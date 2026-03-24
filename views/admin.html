@@ -1,0 +1,179 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+    <script defer src="/js/admin.js"></script>
+  </head>
+  <body class="page-dashboard">
+    <div class="dashboard">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">EMS</div>
+          <div class="sidebar-title">Admin</div>
+        </div>
+        <nav class="nav-list">
+          <div class="nav-item active" data-section="overview">Overview</div>
+          <div class="nav-item" data-section="employees">Employees</div>
+          <div class="nav-item" data-section="leave">Leave</div>
+          <div class="nav-item" data-section="attendance">Attendance</div>
+          <div class="nav-item" data-section="tasks">Tasks</div>
+          <div class="nav-item" data-section="policies">Policies</div>
+        </nav>
+      </aside>
+
+      <main class="content">
+        <div class="content-card">
+          <div class="toolbar">
+            <div>
+              <h1 class="page-title">Admin Dashboard</h1>
+              <p class="helper">Manage employees, roles, and active status.</p>
+            </div>
+            <button id="logout-btn" class="btn-ghost">Logout</button>
+          </div>
+        </div>
+
+        <section class="section active" data-section="overview">
+          <div class="content-card">
+            <h2 class="content-title">Dashboard Overview</h2>
+            <p class="helper">Quick snapshot of your workforce and recent activity.</p>
+          </div>
+          <div class="stats">
+            <div class="content-card stat-card">
+              <div class="helper">Total Employees</div>
+              <div class="stat-value" id="stat-total">0</div>
+            </div>
+            <div class="content-card stat-card">
+              <div class="helper">Active</div>
+              <div class="stat-value" id="stat-active">0</div>
+            </div>
+            <div class="content-card stat-card">
+              <div class="helper">Inactive</div>
+              <div class="stat-value" id="stat-inactive">0</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" data-section="employees">
+          <div class="grid-2">
+            <div class="content-card">
+              <h2 class="content-title">Employees</h2>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Title</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="employee-table-body">
+                  <tr>
+                    <td colspan="6">No employees found.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="content-card">
+              <h2 class="content-title">Add / Edit Employee</h2>
+              <form id="employee-form" class="form-grid">
+                <div>
+                  <label for="name">Full Name</label>
+                  <input id="name" type="text" required />
+                </div>
+                <div>
+                  <label for="email">Email</label>
+                  <input id="email" type="email" required />
+                </div>
+                <div>
+                  <label for="password">Password</label>
+                  <input id="password" type="text" required />
+                </div>
+                <div>
+                  <label for="department">Department</label>
+                  <input id="department" type="text" />
+                </div>
+                <div>
+                  <label for="title">Job Title</label>
+                  <input id="title" type="text" />
+                </div>
+                <div>
+                  <label for="phone">Phone</label>
+                  <input id="phone" type="text" />
+                </div>
+                <div>
+                  <label for="address">Address</label>
+                  <textarea id="address"></textarea>
+                </div>
+                <div>
+                  <label for="salary">Salary</label>
+                  <input id="salary" type="number" />
+                </div>
+                <div>
+                  <label for="status">Status</label>
+                  <select id="status">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn-primary">Add Employee</button>
+                <button type="button" id="cancel-edit" class="btn-ghost" style="display: none;">Cancel Edit</button>
+                <p id="form-status" class="helper"></p>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" data-section="leave">
+          <div class="content-card">
+            <h2 class="content-title">Leave Requests</h2>
+            <p class="helper">Track and approve leave requests from employees.</p>
+            <div class="notice">No leave requests yet.</div>
+          </div>
+        </section>
+
+        <section class="section" data-section="attendance">
+          <div class="content-card">
+            <h2 class="content-title">Attendance Snapshot</h2>
+            <p class="helper">Monitor daily check-ins and hours.</p>
+            <div class="notice">Attendance data will appear here.</div>
+          </div>
+        </section>
+
+        <section class="section" data-section="tasks">
+          <div class="content-card">
+            <h2 class="content-title">Assign Task</h2>
+            <form class="form-grid">
+              <div>
+                <label for="task-employee">Employee</label>
+                <input id="task-employee" type="text" placeholder="Employee name" />
+              </div>
+              <div>
+                <label for="task-details">Task</label>
+                <textarea id="task-details" placeholder="Describe the task"></textarea>
+              </div>
+              <button type="button" class="btn-primary">Assign</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="section" data-section="policies">
+          <div class="content-card">
+            <h2 class="content-title">Company Policies</h2>
+            <ul class="policy-list">
+              <li>Code of Conduct</li>
+              <li>Leave & Attendance Guidelines</li>
+              <li>Security & Data Access</li>
+              <li>Remote Work Policy</li>
+            </ul>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
