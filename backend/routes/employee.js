@@ -42,15 +42,19 @@ const toSafeLeave = (leave) => ({
   id: leave._id.toString(),
   fromDate: leave.fromDate,
   toDate: leave.toDate,
+  category: leave.category || 'casual',
   reason: leave.reason || '',
   status: leave.status,
   createdAt: leave.createdAt
 });
 
+const normalizeTaskStatus = (status) => (status === 'assigned' ? 'planning' : status);
+
 const toSafeTask = (task) => ({
   id: task._id.toString(),
   details: task.details,
-  status: task.status,
+  status: normalizeTaskStatus(task.status),
+  dueAt: task.dueAt || null,
   createdAt: task.createdAt,
   assignedBy: task.assignedBy
     ? {
@@ -168,7 +172,7 @@ router.get('/api/employee/leave', requireAuth, requireRole('employee'), async (r
 
 router.post('/api/employee/leave', requireAuth, requireRole('employee'), async (req, res) => {
   try {
-    const { fromDate, toDate, reason } = req.body;
+    const { fromDate, toDate, reason, category } = req.body;
     if (!fromDate || !toDate) {
       return res.status(400).json({ message: 'From and To dates are required.' });
     }
@@ -182,10 +186,28 @@ router.post('/api/employee/leave', requireAuth, requireRole('employee'), async (
       return res.status(400).json({ message: 'From date cannot be after To date.' });
     }
 
+    const leaveCategory = category || 'casual';
+    if (!['sick', 'casual', 'emergency'].includes(leaveCategory)) {
+      return res.status(400).json({ message: 'Invalid leave category.' });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const fromDay = new Date(from);
+    fromDay.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((fromDay - today) / (1000 * 60 * 60 * 24));
+    const casualLeadDays = 2;
+    if (leaveCategory === 'casual' && diffDays < casualLeadDays) {
+      return res
+        .status(400)
+        .json({ message: 'Casual leave must be requested at least 2 days in advance.' });
+    }
+
     const leave = await LeaveRequest.create({
       employee: req.session.userId,
       fromDate: from,
       toDate: to,
+      category: leaveCategory,
       reason: reason ? String(reason).trim() : ''
     });
 
@@ -204,6 +226,30 @@ router.get('/api/employee/tasks', requireAuth, requireRole('employee'), async (r
     return res.json(tasks.map(toSafeTask));
   } catch (err) {
     return res.status(500).json({ message: 'Failed to load tasks.' });
+  }
+});
+
+router.patch('/api/employee/tasks/:id', requireAuth, requireRole('employee'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    if (!['planning', 'processing', 'completed'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid task status.' });
+    }
+
+    const task = await Task.findOne({ _id: id, employee: req.session.userId }).populate(
+      'assignedBy',
+      'name email'
+    );
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found.' });
+    }
+
+    task.status = status;
+    await task.save();
+    return res.json(toSafeTask(task));
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to update task status.' });
   }
 });
 

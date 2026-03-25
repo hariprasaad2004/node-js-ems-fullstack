@@ -52,6 +52,7 @@ const toSafeLeave = (leave) => ({
   id: leave._id.toString(),
   fromDate: leave.fromDate,
   toDate: leave.toDate,
+  category: leave.category || 'casual',
   reason: leave.reason || '',
   status: leave.status,
   createdAt: leave.createdAt,
@@ -65,10 +66,13 @@ const toSafeLeave = (leave) => ({
     : null
 });
 
+const normalizeTaskStatus = (status) => (status === 'assigned' ? 'planning' : status);
+
 const toSafeTask = (task) => ({
   id: task._id.toString(),
   details: task.details,
-  status: task.status,
+  status: normalizeTaskStatus(task.status),
+  dueAt: task.dueAt || null,
   createdAt: task.createdAt,
   employee: task.employee
     ? {
@@ -354,9 +358,17 @@ router.get('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, re
 
 router.post('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, res) => {
   try {
-    const { employeeId, details } = req.body;
+    const { employeeId, details, dueAt } = req.body;
     if (!employeeId || !details || !String(details).trim()) {
       return res.status(400).json({ message: 'Employee and task details are required.' });
+    }
+    if (!dueAt) {
+      return res.status(400).json({ message: 'Due time is required.' });
+    }
+
+    const parsedDueAt = new Date(dueAt);
+    if (Number.isNaN(parsedDueAt.getTime())) {
+      return res.status(400).json({ message: 'Invalid due time.' });
     }
 
     const employee = await User.findOne({ _id: employeeId, role: 'employee' });
@@ -367,7 +379,9 @@ router.post('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, r
     const task = await Task.create({
       employee: employee._id,
       assignedBy: req.session.userId,
-      details: String(details).trim()
+      details: String(details).trim(),
+      status: 'planning',
+      dueAt: parsedDueAt
     });
 
     await task.populate('employee', 'name email department');
