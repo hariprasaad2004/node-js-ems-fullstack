@@ -2,6 +2,9 @@
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const Attendance = require('../models/Attendance');
+const LeaveRequest = require('../models/LeaveRequest');
+const Task = require('../models/Task');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
@@ -18,6 +21,61 @@ const toSafeEmployee = (user) => ({
   salary: user.salary || 0,
   status: user.status,
   createdAt: user.createdAt
+});
+
+const toSafeAttendance = (record) => ({
+  id: record._id.toString(),
+  date: record.dateKey,
+  checkInAt: record.checkInAt,
+  checkOutAt: record.checkOutAt,
+  employee: record.employee
+    ? {
+        id: record.employee._id?.toString?.() || record.employee.toString(),
+        name: record.employee.name,
+        email: record.employee.email,
+        department: record.employee.department || '',
+        title: record.employee.title || ''
+      }
+    : null
+});
+
+const toSafeLeave = (leave) => ({
+  id: leave._id.toString(),
+  fromDate: leave.fromDate,
+  toDate: leave.toDate,
+  reason: leave.reason || '',
+  status: leave.status,
+  createdAt: leave.createdAt,
+  employee: leave.employee
+    ? {
+        id: leave.employee._id?.toString?.() || leave.employee.toString(),
+        name: leave.employee.name,
+        email: leave.employee.email,
+        department: leave.employee.department || ''
+      }
+    : null
+});
+
+const toSafeTask = (task) => ({
+  id: task._id.toString(),
+  details: task.details,
+  status: task.status,
+  createdAt: task.createdAt,
+  employee: task.employee
+    ? {
+        id: task.employee._id?.toString?.() || task.employee.toString(),
+        name: task.employee.name,
+        email: task.employee.email,
+        department: task.employee.department || ''
+      }
+    : null,
+  assignedBy: task.assignedBy
+    ? {
+        id: task.assignedBy._id?.toString?.() || task.assignedBy.toString(),
+        name: task.assignedBy.name,
+        email: task.assignedBy.email
+      }
+    : null
 });
 
 router.get('/admin', requireAuth, requireRole('admin'), (req, res) => {
@@ -113,6 +171,94 @@ router.delete('/api/admin/employees/:id', requireAuth, requireRole('admin'), asy
     return res.json({ ok: true });
   } catch (err) {
     return res.status(500).json({ message: 'Failed to delete employee.' });
+  }
+});
+
+router.get('/api/admin/attendance', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const records = await Attendance.find()
+      .sort({ checkInAt: -1 })
+      .limit(30)
+      .populate('employee', 'name email department title');
+    return res.json(records.map(toSafeAttendance));
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to fetch attendance.' });
+  }
+});
+
+router.get('/api/admin/leave', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const leaves = await LeaveRequest.find()
+      .sort({ createdAt: -1 })
+      .limit(30)
+      .populate('employee', 'name email department');
+    return res.json(leaves.map(toSafeLeave));
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to fetch leave requests.' });
+  }
+});
+
+router.patch('/api/admin/leave/:id', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status.' });
+    }
+
+    const leave = await LeaveRequest.findById(id).populate('employee', 'name email department');
+    if (!leave) {
+      return res.status(404).json({ message: 'Leave request not found.' });
+    }
+
+    leave.status = status;
+    leave.reviewedBy = req.session.userId;
+    leave.reviewedAt = new Date();
+    await leave.save();
+
+    return res.json(toSafeLeave(leave));
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to update leave request.' });
+  }
+});
+
+router.get('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const tasks = await Task.find()
+      .sort({ createdAt: -1 })
+      .limit(30)
+      .populate('employee', 'name email department')
+      .populate('assignedBy', 'name email');
+    return res.json(tasks.map(toSafeTask));
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to fetch tasks.' });
+  }
+});
+
+router.post('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { employeeId, details } = req.body;
+    if (!employeeId || !details || !String(details).trim()) {
+      return res.status(400).json({ message: 'Employee and task details are required.' });
+    }
+
+    const employee = await User.findOne({ _id: employeeId, role: 'employee' });
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found.' });
+    }
+
+    const task = await Task.create({
+      employee: employee._id,
+      assignedBy: req.session.userId,
+      details: String(details).trim()
+    });
+
+    await task.populate('employee', 'name email department');
+    await task.populate('assignedBy', 'name email');
+
+    return res.status(201).json(toSafeTask(task));
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to assign task.' });
   }
 });
 

@@ -133,7 +133,24 @@
           <div class="content-card">
             <h2 class="content-title">Leave Requests</h2>
             <p class="helper">Track and approve leave requests from employees.</p>
-            <div class="notice">No leave requests yet.</div>
+            <p id="leave-status" class="helper"></p>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="leave-table-body">
+                <tr>
+                  <td colspan="6">No leave requests yet.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
@@ -141,24 +158,57 @@
           <div class="content-card">
             <h2 class="content-title">Attendance Snapshot</h2>
             <p class="helper">Monitor daily check-ins and hours.</p>
-            <div class="notice">Attendance data will appear here.</div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Date</th>
+                  <th>Check In</th>
+                  <th>Check Out</th>
+                  <th>Hours</th>
+                </tr>
+              </thead>
+              <tbody id="attendance-table-body">
+                <tr>
+                  <td colspan="5">Attendance data will appear here.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
         <section class="section" data-section="tasks">
           <div class="content-card">
             <h2 class="content-title">Assign Task</h2>
-            <form class="form-grid">
+            <form id="task-form" class="form-grid">
               <div>
                 <label for="task-employee">Employee</label>
-                <input id="task-employee" type="text" placeholder="Employee name" />
+                <select id="task-employee">
+                  <option value="">Loading employees...</option>
+                </select>
               </div>
               <div>
                 <label for="task-details">Task</label>
                 <textarea id="task-details" placeholder="Describe the task"></textarea>
               </div>
-              <button type="button" class="btn-primary">Assign</button>
+              <button type="submit" class="btn-primary">Assign</button>
+              <p id="task-status" class="helper"></p>
             </form>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Task</th>
+                  <th>Status</th>
+                  <th>Assigned</th>
+                </tr>
+              </thead>
+              <tbody id="task-table-body">
+                <tr>
+                  <td colspan="4">No tasks assigned yet.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
 

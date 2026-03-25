@@ -62,17 +62,32 @@
           <div class="content-card">
             <h2 class="content-title">Attendance</h2>
             <div class="action-row">
-              <button type="button" class="btn-primary">Check In</button>
-              <button type="button" class="btn-ghost">Check Out</button>
+              <button id="check-in-btn" type="button" class="btn-primary">Check In</button>
+              <button id="check-out-btn" type="button" class="btn-ghost">Check Out</button>
             </div>
-            <p class="helper">Your attendance history will show here.</p>
+            <p id="attendance-status" class="helper"></p>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Check In</th>
+                  <th>Check Out</th>
+                  <th>Hours</th>
+                </tr>
+              </thead>
+              <tbody id="attendance-table-body">
+                <tr>
+                  <td colspan="4">No attendance yet.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
         <section class="section" data-section="leave">
           <div class="content-card">
             <h2 class="content-title">Leave Request</h2>
-            <form class="form-grid">
+            <form id="leave-form" class="form-grid">
               <div>
                 <label for="leave-from">From</label>
                 <input id="leave-from" type="date" />
@@ -85,15 +100,45 @@
                 <label for="leave-reason">Reason</label>
                 <textarea id="leave-reason" placeholder="Reason for leave"></textarea>
               </div>
-              <button type="button" class="btn-primary">Submit</button>
+              <button type="submit" class="btn-primary">Submit</button>
+              <p id="leave-status" class="helper"></p>
             </form>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Status</th>
+                  <th>Requested</th>
+                </tr>
+              </thead>
+              <tbody id="leave-table-body">
+                <tr>
+                  <td colspan="4">No leave requests yet.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
         <section class="section" data-section="tasks">
           <div class="content-card">
             <h2 class="content-title">My Tasks</h2>
-            <div class="notice">No tasks assigned yet.</div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Task</th>
+                  <th>Status</th>
+                  <th>Assigned By</th>
+                  <th>Assigned On</th>
+                </tr>
+              </thead>
+              <tbody id="task-table-body">
+                <tr>
+                  <td colspan="4">No tasks assigned yet.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
       </main>
