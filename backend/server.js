@@ -1,13 +1,15 @@
-﻿require('dotenv').config();
+﻿const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
 const session = require('express-session');
 const mongoose = require('mongoose');
-const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const employeeRoutes = require('./routes/employee');
+
+const rootDir = path.join(__dirname, '..');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,7 +42,7 @@ app.use(
   })
 );
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(rootDir, 'frontend', 'public')));
 
 app.get('/', (req, res) => {
   if (!req.session.userId) {
