@@ -138,6 +138,7 @@
               <thead>
                 <tr>
                   <th>Employee</th>
+                  <th>Category</th>
                   <th>From</th>
                   <th>To</th>
                   <th>Reason</th>
@@ -147,7 +148,7 @@
               </thead>
               <tbody id="leave-table-body">
                 <tr>
-                  <td colspan="6">No leave requests yet.</td>
+                  <td colspan="7">No leave requests yet.</td>
                 </tr>
               </tbody>
             </table>
@@ -190,6 +191,10 @@
                 <label for="task-details">Task</label>
                 <textarea id="task-details" placeholder="Describe the task"></textarea>
               </div>
+              <div>
+                <label for="task-due">Due Time</label>
+                <input id="task-due" type="datetime-local" />
+              </div>
               <button type="submit" class="btn-primary">Assign</button>
               <p id="task-status" class="helper"></p>
             </form>
@@ -199,12 +204,13 @@
                   <th>Employee</th>
                   <th>Task</th>
                   <th>Status</th>
+                  <th>Due Time</th>
                   <th>Assigned</th>
                 </tr>
               </thead>
               <tbody id="task-table-body">
                 <tr>
-                  <td colspan="4">No tasks assigned yet.</td>
+                  <td colspan="5">No tasks assigned yet.</td>
                 </tr>
               </tbody>
             </table>

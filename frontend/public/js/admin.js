@@ -11,6 +11,7 @@ const attendanceTableBody = document.getElementById('attendance-table-body');
 const taskForm = document.getElementById('task-form');
 const taskEmployeeSelect = document.getElementById('task-employee');
 const taskDetails = document.getElementById('task-details');
+const taskDue = document.getElementById('task-due');
 const taskStatus = document.getElementById('task-status');
 const taskTableBody = document.getElementById('task-table-body');
 
@@ -203,12 +204,12 @@ async function loadLeaves() {
   if (!leaveTableBody) return;
   const res = await fetch('/api/admin/leave');
   if (!res.ok) {
-    leaveTableBody.innerHTML = '<tr><td colspan="6">Failed to load leave requests.</td></tr>';
+    leaveTableBody.innerHTML = '<tr><td colspan="7">Failed to load leave requests.</td></tr>';
     return;
   }
   const leaves = await res.json();
   if (leaves.length === 0) {
-    leaveTableBody.innerHTML = '<tr><td colspan="6">No leave requests yet.</td></tr>';
+    leaveTableBody.innerHTML = '<tr><td colspan="7">No leave requests yet.</td></tr>';
     return;
   }
   leaveTableBody.innerHTML = leaves
@@ -230,6 +231,7 @@ async function loadLeaves() {
       return `
         <tr>
           <td>${employee}</td>
+          <td>${leave.category || 'casual'}</td>
           <td>${formatDate(leave.fromDate)}</td>
           <td>${formatDate(leave.toDate)}</td>
           <td>${leave.reason || '-'}</td>
@@ -245,12 +247,12 @@ async function loadTasks() {
   if (!taskTableBody) return;
   const res = await fetch('/api/admin/tasks');
   if (!res.ok) {
-    taskTableBody.innerHTML = '<tr><td colspan="4">Failed to load tasks.</td></tr>';
+    taskTableBody.innerHTML = '<tr><td colspan="5">Failed to load tasks.</td></tr>';
     return;
   }
   const tasks = await res.json();
   if (tasks.length === 0) {
-    taskTableBody.innerHTML = '<tr><td colspan="4">No tasks assigned yet.</td></tr>';
+    taskTableBody.innerHTML = '<tr><td colspan="5">No tasks assigned yet.</td></tr>';
     return;
   }
   taskTableBody.innerHTML = tasks
@@ -261,6 +263,7 @@ async function loadTasks() {
           <td>${employee}</td>
           <td>${task.details}</td>
           <td>${task.status}</td>
+          <td>${formatDateTime(task.dueAt)}</td>
           <td>${formatDateTime(task.createdAt)}</td>
         </tr>
       `;
@@ -311,9 +314,11 @@ if (taskForm) {
     setInlineStatus(taskStatus, 'Assigning...');
 
     const detailsValue = taskDetails ? taskDetails.value.trim() : '';
+    const dueValue = taskDue ? taskDue.value : '';
     const payload = {
       employeeId: taskEmployeeSelect ? taskEmployeeSelect.value : '',
-      details: detailsValue
+      details: detailsValue,
+      dueAt: dueValue
     };
 
     if (!payload.employeeId) {
@@ -322,6 +327,10 @@ if (taskForm) {
     }
     if (!payload.details) {
       setInlineStatus(taskStatus, 'Enter task details.', true);
+      return;
+    }
+    if (!payload.dueAt) {
+      setInlineStatus(taskStatus, 'Select a due time.', true);
       return;
     }
 
@@ -339,6 +348,7 @@ if (taskForm) {
 
     setInlineStatus(taskStatus, 'Task assigned.');
     if (taskDetails) taskDetails.value = '';
+    if (taskDue) taskDue.value = '';
     await loadTasks();
   });
 }

@@ -34,27 +34,9 @@
         </div>
 
         <section class="section active" data-section="profile">
-          <div class="grid-2">
-            <div class="content-card">
-              <h2 class="content-title">Profile Overview</h2>
-              <div id="profile" class="helper">No profile found.</div>
-            </div>
-
-            <div class="content-card">
-              <h2 class="content-title">Update Contact Info</h2>
-              <form id="profile-form" class="form-grid">
-                <div>
-                  <label for="phone">Phone</label>
-                  <input id="phone" type="text" />
-                </div>
-                <div>
-                  <label for="address">Address</label>
-                  <textarea id="address"></textarea>
-                </div>
-                <button type="submit" class="btn-primary">Save Changes</button>
-                <p id="profile-status" class="helper"></p>
-              </form>
-            </div>
+          <div class="content-card">
+            <h2 class="content-title">Profile Overview</h2>
+            <div id="profile" class="helper">No profile found.</div>
           </div>
         </section>
 
@@ -89,6 +71,14 @@
             <h2 class="content-title">Leave Request</h2>
             <form id="leave-form" class="form-grid">
               <div>
+                <label for="leave-category">Category</label>
+                <select id="leave-category">
+                  <option value="sick">Sick</option>
+                  <option value="casual" selected>Casual</option>
+                  <option value="emergency">Emergency</option>
+                </select>
+              </div>
+              <div>
                 <label for="leave-from">From</label>
                 <input id="leave-from" type="date" />
               </div>
@@ -106,6 +96,7 @@
             <table class="table">
               <thead>
                 <tr>
+                  <th>Category</th>
                   <th>From</th>
                   <th>To</th>
                   <th>Status</th>
@@ -114,7 +105,7 @@
               </thead>
               <tbody id="leave-table-body">
                 <tr>
-                  <td colspan="4">No leave requests yet.</td>
+                  <td colspan="5">No leave requests yet.</td>
                 </tr>
               </tbody>
             </table>
@@ -129,19 +120,29 @@
                 <tr>
                   <th>Task</th>
                   <th>Status</th>
+                  <th>Due Time</th>
                   <th>Assigned By</th>
                   <th>Assigned On</th>
                 </tr>
               </thead>
               <tbody id="task-table-body">
                 <tr>
-                  <td colspan="4">No tasks assigned yet.</td>
+                  <td colspan="5">No tasks assigned yet.</td>
                 </tr>
               </tbody>
             </table>
+            <p id="task-status" class="helper"></p>
           </div>
         </section>
       </main>
+    </div>
+    <div id="leave-modal" class="modal" aria-hidden="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="leave-modal-title">
+        <h3 id="leave-modal-title">Leave Request Notice</h3>
+        <p id="leave-modal-message" class="helper"></p>
+        <button id="leave-modal-close" type="button" class="btn-primary">Okay</button>
+      </div>
     </div>
   </body>
 </html>
