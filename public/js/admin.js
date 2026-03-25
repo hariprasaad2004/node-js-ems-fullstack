@@ -8,6 +8,11 @@ const sections = document.querySelectorAll('.section');
 const leaveTableBody = document.getElementById('leave-table-body');
 const leaveStatus = document.getElementById('leave-status');
 const attendanceTableBody = document.getElementById('attendance-table-body');
+const attendanceForm = document.getElementById('attendance-form');
+const attendanceEmployeeSelect = document.getElementById('attendance-employee');
+const attendanceCheckInBtn = document.getElementById('attendance-checkin-btn');
+const attendanceCheckOutBtn = document.getElementById('attendance-checkout-btn');
+const attendanceStatus = document.getElementById('attendance-status');
 const taskForm = document.getElementById('task-form');
 const taskEmployeeSelect = document.getElementById('task-employee');
 const taskDetails = document.getElementById('task-details');
@@ -84,22 +89,36 @@ function formatDuration(startValue, endValue) {
   return `${hours}h ${mins}m`;
 }
 
+function formatStatus(status) {
+  if (!status) return '-';
+  return status
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 function formatEmployeeLabel(emp) {
   const dept = emp.department ? ` (${emp.department})` : '';
   return `${emp.name}${dept} — ${emp.email}`;
 }
 
-function renderEmployeeOptions(employees) {
-  if (!taskEmployeeSelect) return;
+function renderEmployeeOptionsFor(selectEl, employees, placeholderLabel) {
+  if (!selectEl) return;
   if (!employees.length) {
-    taskEmployeeSelect.innerHTML = '<option value="">No employees available</option>';
-    taskEmployeeSelect.disabled = true;
+    selectEl.innerHTML = '<option value="">No employees available</option>';
+    selectEl.disabled = true;
     return;
   }
-  taskEmployeeSelect.disabled = false;
-  taskEmployeeSelect.innerHTML = employees
+  selectEl.disabled = false;
+  const options = employees
     .map((emp) => `<option value="${emp.id}">${formatEmployeeLabel(emp)}</option>`)
     .join('');
+  selectEl.innerHTML = `<option value="">${placeholderLabel}</option>${options}`;
+}
+
+function renderEmployeeOptions(employees) {
+  renderEmployeeOptionsFor(taskEmployeeSelect, employees, 'Select employee');
+  renderEmployeeOptionsFor(attendanceEmployeeSelect, employees, 'Select employee');
 }
 
 function resetForm() {
@@ -130,6 +149,7 @@ async function loadEmployees() {
   cachedEmployees = employees;
   renderStats(employees);
   renderEmployeeOptions(employees);
+  loadAttendance();
   if (employees.length === 0) {
     tableBody.innerHTML = '<tr><td colspan="6">No employees found.</td></tr>';
     return;
@@ -158,14 +178,14 @@ async function loadEmployees() {
 
 async function loadAttendance() {
   if (!attendanceTableBody) return;
-  const res = await fetch('/api/admin/attendance');
+  const res = await fetch('/api/admin/attendance/summary');
   if (!res.ok) {
-    attendanceTableBody.innerHTML = '<tr><td colspan="5">Failed to load attendance.</td></tr>';
+    attendanceTableBody.innerHTML = '<tr><td colspan="4">Failed to load attendance.</td></tr>';
     return;
   }
   const records = await res.json();
   if (records.length === 0) {
-    attendanceTableBody.innerHTML = '<tr><td colspan="5">No attendance records yet.</td></tr>';
+    attendanceTableBody.innerHTML = '<tr><td colspan="4">No attendance records yet.</td></tr>';
     return;
   }
   attendanceTableBody.innerHTML = records
@@ -176,10 +196,9 @@ async function loadAttendance() {
       return `
         <tr>
           <td>${employee}</td>
-          <td>${record.date}</td>
+          <td>${formatStatus(record.status)}</td>
           <td>${formatDateTime(record.checkInAt)}</td>
           <td>${formatDateTime(record.checkOutAt)}</td>
-          <td>${formatDuration(record.checkInAt, record.checkOutAt)}</td>
         </tr>
       `;
     })
@@ -330,6 +349,42 @@ if (taskForm) {
   });
 }
 
+async function runAttendanceAction(action) {
+  if (!attendanceEmployeeSelect || !attendanceEmployeeSelect.value) {
+    setInlineStatus(attendanceStatus, 'Select an employee first.', true);
+    return;
+  }
+  const verb = action === 'check-in' ? 'Checking in...' : 'Checking out...';
+  setInlineStatus(attendanceStatus, verb);
+
+  const res = await fetch(`/api/admin/attendance/${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ employeeId: attendanceEmployeeSelect.value })
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    setInlineStatus(attendanceStatus, data.message || 'Failed to update attendance.', true);
+    return;
+  }
+
+  const timeLabel =
+    action === 'check-in'
+      ? `Checked in at ${formatDateTime(data.checkInAt)}.`
+      : `Checked out at ${formatDateTime(data.checkOutAt)}.`;
+  setInlineStatus(attendanceStatus, timeLabel);
+  await loadAttendance();
+}
+
+if (attendanceCheckInBtn) {
+  attendanceCheckInBtn.addEventListener('click', () => runAttendanceAction('check-in'));
+}
+
+if (attendanceCheckOutBtn) {
+  attendanceCheckOutBtn.addEventListener('click', () => runAttendanceAction('check-out'));
+}
+
 cancelBtn.addEventListener('click', () => {
   resetForm();
   setStatus('Edit canceled.');
@@ -405,6 +460,5 @@ document.addEventListener('click', async (event) => {
 resetForm();
 initNavigation();
 loadEmployees();
-loadAttendance();
 loadLeaves();
 loadTasks();

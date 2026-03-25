@@ -158,19 +158,31 @@
           <div class="content-card">
             <h2 class="content-title">Attendance Snapshot</h2>
             <p class="helper">Monitor daily check-ins and hours.</p>
+            <form id="attendance-form" class="form-grid">
+              <div>
+                <label for="attendance-employee">Employee</label>
+                <select id="attendance-employee">
+                  <option value="">Loading employees...</option>
+                </select>
+              </div>
+              <div class="action-row">
+                <button id="attendance-checkin-btn" type="button" class="btn-primary">Check In</button>
+                <button id="attendance-checkout-btn" type="button" class="btn-ghost">Check Out</button>
+              </div>
+              <p id="attendance-status" class="helper"></p>
+            </form>
             <table class="table">
               <thead>
                 <tr>
                   <th>Employee</th>
-                  <th>Date</th>
+                  <th>Status</th>
                   <th>Check In</th>
                   <th>Check Out</th>
-                  <th>Hours</th>
                 </tr>
               </thead>
               <tbody id="attendance-table-body">
                 <tr>
-                  <td colspan="5">Attendance data will appear here.</td>
+                  <td colspan="4">Attendance data will appear here.</td>
                 </tr>
               </tbody>
             </table>

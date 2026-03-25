@@ -23,6 +23,13 @@ const toSafeEmployee = (user) => ({
   createdAt: user.createdAt
 });
 
+const formatDateKey = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const toSafeAttendance = (record) => ({
   id: record._id.toString(),
   date: record.dateKey,
@@ -183,6 +190,114 @@ router.get('/api/admin/attendance', requireAuth, requireRole('admin'), async (re
     return res.json(records.map(toSafeAttendance));
   } catch (err) {
     return res.status(500).json({ message: 'Failed to fetch attendance.' });
+  }
+});
+
+router.get('/api/admin/attendance/summary', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const dateKey = typeof req.query.date === 'string' && req.query.date ? req.query.date : formatDateKey();
+    const [employees, records] = await Promise.all([
+      User.find({ role: 'employee' }).sort({ createdAt: -1 }),
+      Attendance.find({ dateKey })
+    ]);
+
+    const recordMap = new Map(
+      records.map((record) => [record.employee.toString(), record])
+    );
+
+    const summary = employees.map((employee) => {
+      const record = recordMap.get(employee._id.toString());
+      let status = 'not_checked_in';
+      let checkInAt = null;
+      let checkOutAt = null;
+      if (record) {
+        checkInAt = record.checkInAt;
+        checkOutAt = record.checkOutAt;
+        status = record.checkOutAt ? 'checked_out' : 'checked_in';
+      }
+      return {
+        employee: {
+          id: employee._id.toString(),
+          name: employee.name,
+          email: employee.email,
+          department: employee.department || '',
+          title: employee.title || ''
+        },
+        status,
+        date: dateKey,
+        checkInAt,
+        checkOutAt
+      };
+    });
+
+    return res.json(summary);
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to fetch attendance summary.' });
+  }
+});
+
+router.post('/api/admin/attendance/check-in', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { employeeId } = req.body;
+    if (!employeeId) {
+      return res.status(400).json({ message: 'Employee is required.' });
+    }
+
+    const employee = await User.findOne({ _id: employeeId, role: 'employee' });
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found.' });
+    }
+
+    const now = new Date();
+    const dateKey = formatDateKey(now);
+    const existing = await Attendance.findOne({ employee: employeeId, dateKey });
+    if (existing) {
+      if (!existing.checkOutAt) {
+        return res.status(409).json({ message: 'Employee already checked in today.' });
+      }
+      return res.status(409).json({ message: 'Attendance already recorded for today.' });
+    }
+
+    const record = await Attendance.create({
+      employee: employeeId,
+      dateKey,
+      checkInAt: now
+    });
+
+    return res.status(201).json(toSafeAttendance(record));
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to check in employee.' });
+  }
+});
+
+router.post('/api/admin/attendance/check-out', requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { employeeId } = req.body;
+    if (!employeeId) {
+      return res.status(400).json({ message: 'Employee is required.' });
+    }
+
+    const employee = await User.findOne({ _id: employeeId, role: 'employee' });
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found.' });
+    }
+
+    const now = new Date();
+    const dateKey = formatDateKey(now);
+    const record = await Attendance.findOne({ employee: employeeId, dateKey });
+    if (!record) {
+      return res.status(400).json({ message: 'No check-in found for today.' });
+    }
+    if (record.checkOutAt) {
+      return res.status(409).json({ message: 'Employee already checked out today.' });
+    }
+
+    record.checkOutAt = now;
+    await record.save();
+
+    return res.json(toSafeAttendance(record));
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to check out employee.' });
   }
 });
 
