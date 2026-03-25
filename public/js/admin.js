@@ -8,11 +8,6 @@ const sections = document.querySelectorAll('.section');
 const leaveTableBody = document.getElementById('leave-table-body');
 const leaveStatus = document.getElementById('leave-status');
 const attendanceTableBody = document.getElementById('attendance-table-body');
-const attendanceForm = document.getElementById('attendance-form');
-const attendanceEmployeeSelect = document.getElementById('attendance-employee');
-const attendanceCheckInBtn = document.getElementById('attendance-checkin-btn');
-const attendanceCheckOutBtn = document.getElementById('attendance-checkout-btn');
-const attendanceStatus = document.getElementById('attendance-status');
 const taskForm = document.getElementById('task-form');
 const taskEmployeeSelect = document.getElementById('task-employee');
 const taskDetails = document.getElementById('task-details');
@@ -118,7 +113,6 @@ function renderEmployeeOptionsFor(selectEl, employees, placeholderLabel) {
 
 function renderEmployeeOptions(employees) {
   renderEmployeeOptionsFor(taskEmployeeSelect, employees, 'Select employee');
-  renderEmployeeOptionsFor(attendanceEmployeeSelect, employees, 'Select employee');
 }
 
 function resetForm() {
@@ -347,42 +341,6 @@ if (taskForm) {
     if (taskDetails) taskDetails.value = '';
     await loadTasks();
   });
-}
-
-async function runAttendanceAction(action) {
-  if (!attendanceEmployeeSelect || !attendanceEmployeeSelect.value) {
-    setInlineStatus(attendanceStatus, 'Select an employee first.', true);
-    return;
-  }
-  const verb = action === 'check-in' ? 'Checking in...' : 'Checking out...';
-  setInlineStatus(attendanceStatus, verb);
-
-  const res = await fetch(`/api/admin/attendance/${action}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ employeeId: attendanceEmployeeSelect.value })
-  });
-
-  const data = await res.json();
-  if (!res.ok) {
-    setInlineStatus(attendanceStatus, data.message || 'Failed to update attendance.', true);
-    return;
-  }
-
-  const timeLabel =
-    action === 'check-in'
-      ? `Checked in at ${formatDateTime(data.checkInAt)}.`
-      : `Checked out at ${formatDateTime(data.checkOutAt)}.`;
-  setInlineStatus(attendanceStatus, timeLabel);
-  await loadAttendance();
-}
-
-if (attendanceCheckInBtn) {
-  attendanceCheckInBtn.addEventListener('click', () => runAttendanceAction('check-in'));
-}
-
-if (attendanceCheckOutBtn) {
-  attendanceCheckOutBtn.addEventListener('click', () => runAttendanceAction('check-out'));
 }
 
 cancelBtn.addEventListener('click', () => {
