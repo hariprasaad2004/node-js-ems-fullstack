@@ -258,9 +258,10 @@ router.post('/api/admin/attendance/check-in', requireAuth, requireRole('admin'),
     const dateKey = formatDateKey(now);
     const existing = await Attendance.findOne({ employee: employeeId, dateKey });
     if (existing) {
-      if (!existing.checkOutAt) {
-        return res.status(409).json({ message: 'Employee already checked in today.' });
-      }
+      const message = existing.checkOutAt
+        ? 'Attendance already recorded for today.'
+        : 'Employee already checked in today.';
+      return res.status(200).json({ ...toSafeAttendance(existing), message });
     }
 
     const record = await Attendance.create({
@@ -271,6 +272,16 @@ router.post('/api/admin/attendance/check-in', requireAuth, requireRole('admin'),
 
     return res.status(201).json(toSafeAttendance(record));
   } catch (err) {
+    if (err && err.code === 11000) {
+      const dateKey = formatDateKey();
+      const existing = await Attendance.findOne({ employee: employeeId, dateKey });
+      if (existing) {
+        return res.status(200).json({
+          ...toSafeAttendance(existing),
+          message: 'Attendance already recorded for today.'
+        });
+      }
+    }
     return res.status(500).json({ message: 'Failed to check in employee.' });
   }
 });
@@ -294,7 +305,10 @@ router.post('/api/admin/attendance/check-out', requireAuth, requireRole('admin')
       return res.status(400).json({ message: 'No check-in found for today.' });
     }
     if (record.checkOutAt) {
-      return res.status(409).json({ message: 'Employee already checked out today.' });
+      return res.status(200).json({
+        ...toSafeAttendance(record),
+        message: 'Employee already checked out today.'
+      });
     }
 
     record.checkOutAt = now;

@@ -183,7 +183,12 @@ if (checkInBtn) {
       setInlineStatus(attendanceStatus, data.message || 'Failed to check in.', true);
       return;
     }
-    setInlineStatus(attendanceStatus, `Checked in at ${formatDateTime(data.checkInAt)}.`);
+    if (data.message) {
+      const suffix = data.checkInAt ? ` at ${formatDateTime(data.checkInAt)}` : '';
+      setInlineStatus(attendanceStatus, `${data.message}${suffix}`);
+    } else {
+      setInlineStatus(attendanceStatus, `Checked in at ${formatDateTime(data.checkInAt)}.`);
+    }
     await loadAttendance();
   });
 }
@@ -197,7 +202,12 @@ if (checkOutBtn) {
       setInlineStatus(attendanceStatus, data.message || 'Failed to check out.', true);
       return;
     }
-    setInlineStatus(attendanceStatus, `Checked out at ${formatDateTime(data.checkOutAt)}.`);
+    if (data.message) {
+      const suffix = data.checkOutAt ? ` at ${formatDateTime(data.checkOutAt)}` : '';
+      setInlineStatus(attendanceStatus, `${data.message}${suffix}`);
+    } else {
+      setInlineStatus(attendanceStatus, `Checked out at ${formatDateTime(data.checkOutAt)}.`);
+    }
     await loadAttendance();
   });
 }
