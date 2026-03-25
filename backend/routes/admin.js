@@ -261,7 +261,6 @@ router.post('/api/admin/attendance/check-in', requireAuth, requireRole('admin'),
       if (!existing.checkOutAt) {
         return res.status(409).json({ message: 'Employee already checked in today.' });
       }
-      return res.status(409).json({ message: 'Attendance already recorded for today.' });
     }
 
     const record = await Attendance.create({
