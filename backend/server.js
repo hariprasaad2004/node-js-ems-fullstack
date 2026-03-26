@@ -4,7 +4,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const session = require('express-session');
 const mongoose = require('mongoose');
-const MongoStore = require("connect-mongo");
+const { MongoStore } = require('connect-mongo');
 
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
@@ -38,6 +38,9 @@ app.use(
     secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: MONGODB_URI
+    }),
     cookie: {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 8
@@ -75,16 +78,3 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-app.use(
-  session({
-    secret: "your_secret_key",
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGODB_URI,
-    }),
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // this is for the maximun one day session 
-    },
-  })
-);
