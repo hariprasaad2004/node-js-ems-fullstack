@@ -1,18 +1,18 @@
-export function formatDate(value) {
+export function formatDate(value) { // Format a date string for display.
   if (!value) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '-';
   return date.toLocaleDateString();
 }
 
-export function formatDateTime(value) {
+export function formatDateTime(value) { // Format a date-time string for display.
   if (!value) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '-';
   return date.toLocaleString();
 }
 
-export function formatDuration(startValue, endValue) {
+export function formatDuration(startValue, endValue) { // Format duration between two timestamps.
   if (!startValue || !endValue) return '-';
   const start = new Date(startValue);
   const end = new Date(endValue);
@@ -23,7 +23,7 @@ export function formatDuration(startValue, endValue) {
   return `${hours}h ${mins}m`;
 }
 
-export function formatStatus(status) {
+export function formatStatus(status) { // Humanize a status value.
   if (!status) return '-';
   return status
     .split('_')
@@ -31,8 +31,9 @@ export function formatStatus(status) {
     .join(' ');
 }
 
-export function formatEmployeeLabel(employee) {
+export function formatEmployeeLabel(employee) { // Build a concise employee label.
   if (!employee) return '';
   const dept = employee.department ? ` (${employee.department})` : '';
   return `${employee.name}${dept} - ${employee.email}`;
 }
+

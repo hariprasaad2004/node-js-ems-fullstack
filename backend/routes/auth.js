@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
@@ -8,14 +8,14 @@ const router = express.Router();
 const rootDir = path.join(__dirname, '..', '..');
 const frontendIndex = path.join(rootDir, 'frontend', 'dist', 'index.html');
 
-router.get('/login', (req, res) => {
+router.get('/login', (req, res) => { // Serve the SPA for the login route.
   if (req.session.userId) {
     return res.redirect('/');
   }
   return res.sendFile(frontendIndex);
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', async (req, res) => { // Handle login and create a session.
   try {
     const { email, password } = req.body;
     const allowPasswordless = process.env.ALLOW_PASSWORDLESS === 'true';
@@ -50,10 +50,11 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.post('/logout', (req, res) => {
+router.post('/logout', (req, res) => { // Destroy the session and log out.
   req.session.destroy(() => {
     res.json({ ok: true });
   });
 });
 
 module.exports = router;
+

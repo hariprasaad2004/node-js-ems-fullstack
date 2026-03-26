@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { apiRequest, readJson } from '../api/client.js';
 import { useBodyClass } from '../hooks/useBodyClass.js';
 
-export default function Login() {
+export default function Login() { // Login page and auth redirect logic.
   useBodyClass('page-auth');
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event) => { // Submit login form and route by role.
     event.preventDefault();
     setError('');
 
@@ -89,3 +89,4 @@ export default function Login() {
     </div>
   );
 }
+

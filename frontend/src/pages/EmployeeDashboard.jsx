@@ -18,7 +18,7 @@ const initialLeaveForm = {
   reason: ''
 };
 
-export default function EmployeeDashboard() {
+export default function EmployeeDashboard() { // Employee dashboard UI and data operations.
   useBodyClass('page-dashboard');
 
   const [activeSection, setActiveSection] = useState('profile');
@@ -44,7 +44,7 @@ export default function EmployeeDashboard() {
     loadTasks();
   }, []);
 
-  async function loadProfile() {
+  async function loadProfile() { // Fetch employee profile.
     setProfileError('');
     const res = await apiRequest('/api/employee/me');
     const data = await readJson(res);
@@ -58,7 +58,7 @@ export default function EmployeeDashboard() {
     setProfile(data);
   }
 
-  async function loadAttendance() {
+  async function loadAttendance() { // Fetch employee attendance records.
     setAttendanceError('');
     const res = await apiRequest('/api/employee/attendance');
     const data = await readJson(res);
@@ -72,7 +72,7 @@ export default function EmployeeDashboard() {
     setAttendance(Array.isArray(data) ? data : []);
   }
 
-  async function loadLeaves() {
+  async function loadLeaves() { // Fetch employee leave requests.
     setLeaveError('');
     const res = await apiRequest('/api/employee/leave');
     const data = await readJson(res);
@@ -86,7 +86,7 @@ export default function EmployeeDashboard() {
     setLeaves(Array.isArray(data) ? data : []);
   }
 
-  async function loadTasks() {
+  async function loadTasks() { // Fetch employee tasks.
     setTaskError('');
     const res = await apiRequest('/api/employee/tasks');
     const data = await readJson(res);
@@ -100,12 +100,12 @@ export default function EmployeeDashboard() {
     setTasks(Array.isArray(data) ? data : []);
   }
 
-  const handleLeaveChange = (event) => {
+  const handleLeaveChange = (event) => { // Track leave form input changes.
     const { name, value } = event.target;
     setLeaveForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCheckIn = async () => {
+  const handleCheckIn = async () => { // Record employee check-in.
     setAttendanceStatus({ message: 'Checking in...', isError: false });
     const res = await apiRequest('/api/employee/attendance/check-in', { method: 'POST' });
     const data = await readJson(res);
@@ -127,7 +127,7 @@ export default function EmployeeDashboard() {
     await loadAttendance();
   };
 
-  const handleCheckOut = async () => {
+  const handleCheckOut = async () => { // Record employee check-out.
     setAttendanceStatus({ message: 'Checking out...', isError: false });
     const res = await apiRequest('/api/employee/attendance/check-out', { method: 'POST' });
     const data = await readJson(res);
@@ -149,7 +149,7 @@ export default function EmployeeDashboard() {
     await loadAttendance();
   };
 
-  const handleLeaveSubmit = async (event) => {
+  const handleLeaveSubmit = async (event) => { // Submit a leave request.
     event.preventDefault();
     setLeaveStatus({ message: 'Submitting...', isError: false });
 
@@ -198,7 +198,7 @@ export default function EmployeeDashboard() {
     await loadLeaves();
   };
 
-  const handleTaskStatusChange = async (taskId, nextStatus) => {
+  const handleTaskStatusChange = async (taskId, nextStatus) => { // Update task status.
     const res = await apiRequest(`/api/employee/tasks/${taskId}`, {
       method: 'PATCH',
       body: JSON.stringify({ status: nextStatus })
@@ -217,7 +217,7 @@ export default function EmployeeDashboard() {
     setTaskStatus({ message: 'Task status updated.', isError: false });
   };
 
-  const handleLogout = async () => {
+  const handleLogout = async () => { // Logout and redirect to login.
     await apiRequest('/logout', { method: 'POST' });
     window.location.assign('/login');
   };
@@ -506,3 +506,4 @@ export default function EmployeeDashboard() {
     </>
   );
 }
+

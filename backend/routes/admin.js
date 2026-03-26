@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
@@ -12,7 +12,7 @@ const router = express.Router();
 const rootDir = path.join(__dirname, '..', '..');
 const frontendIndex = path.join(rootDir, 'frontend', 'dist', 'index.html');
 
-const toSafeEmployee = (user) => ({
+const toSafeEmployee = (user) => ({ // Sanitize employee data for API responses.
   id: user._id.toString(),
   name: user.name,
   email: user.email,
@@ -26,14 +26,14 @@ const toSafeEmployee = (user) => ({
   createdAt: user.createdAt
 });
 
-const formatDateKey = (date = new Date()) => {
+const formatDateKey = (date = new Date()) => { // Format a date into YYYY-MM-DD for attendance keys.
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
 
-const toSafeAttendance = (record) => ({
+const toSafeAttendance = (record) => ({ // Sanitize attendance record for API responses.
   id: record._id.toString(),
   date: record.dateKey,
   checkInAt: record.checkInAt,
@@ -49,7 +49,7 @@ const toSafeAttendance = (record) => ({
     : null
 });
 
-const toSafeLeave = (leave) => ({
+const toSafeLeave = (leave) => ({ // Sanitize leave request for API responses.
   id: leave._id.toString(),
   fromDate: leave.fromDate,
   toDate: leave.toDate,
@@ -67,9 +67,9 @@ const toSafeLeave = (leave) => ({
     : null
 });
 
-const normalizeTaskStatus = (status) => (status === 'assigned' ? 'planning' : status);
+const normalizeTaskStatus = (status) => (status === 'assigned' ? 'planning' : status); // Normalize task status to UI-friendly values.
 
-const toSafeTask = (task) => ({
+const toSafeTask = (task) => ({ // Sanitize task records for API responses.
   id: task._id.toString(),
   details: task.details,
   status: normalizeTaskStatus(task.status),
@@ -92,7 +92,7 @@ const toSafeTask = (task) => ({
     : null
 });
 
-router.get('/admin', (req, res) => {
+router.get('/admin', (req, res) => { // Serve the SPA for the admin route with role checks.
   if (!req.session.userId) {
     return res.redirect('/login');
   }
@@ -102,7 +102,7 @@ router.get('/admin', (req, res) => {
   return res.sendFile(frontendIndex);
 });
 
-router.get('/api/admin/employees', requireAuth, requireRole('admin'), async (req, res) => {
+router.get('/api/admin/employees', requireAuth, requireRole('admin'), async (req, res) => { // List employees for admin view.
   try {
     const employees = await User.find({ role: 'employee' }).sort({ createdAt: -1 });
     return res.json(employees.map(toSafeEmployee));
@@ -111,7 +111,7 @@ router.get('/api/admin/employees', requireAuth, requireRole('admin'), async (req
   }
 });
 
-router.post('/api/admin/employees', requireAuth, requireRole('admin'), async (req, res) => {
+router.post('/api/admin/employees', requireAuth, requireRole('admin'), async (req, res) => { // Create a new employee.
   try {
     const { name, email, password, department, title, phone, address, salary, status } = req.body;
 
@@ -145,7 +145,7 @@ router.post('/api/admin/employees', requireAuth, requireRole('admin'), async (re
   }
 });
 
-router.put('/api/admin/employees/:id', requireAuth, requireRole('admin'), async (req, res) => {
+router.put('/api/admin/employees/:id', requireAuth, requireRole('admin'), async (req, res) => { // Update an employee.
   try {
     const { id } = req.params;
     const { name, email, password, department, title, phone, address, salary, status } = req.body;
@@ -179,7 +179,7 @@ router.put('/api/admin/employees/:id', requireAuth, requireRole('admin'), async 
   }
 });
 
-router.delete('/api/admin/employees/:id', requireAuth, requireRole('admin'), async (req, res) => {
+router.delete('/api/admin/employees/:id', requireAuth, requireRole('admin'), async (req, res) => { // Delete an employee.
   try {
     const { id } = req.params;
     const employee = await User.findOne({ _id: id, role: 'employee' });
@@ -194,7 +194,7 @@ router.delete('/api/admin/employees/:id', requireAuth, requireRole('admin'), asy
   }
 });
 
-router.get('/api/admin/attendance', requireAuth, requireRole('admin'), async (req, res) => {
+router.get('/api/admin/attendance', requireAuth, requireRole('admin'), async (req, res) => { // Fetch recent attendance records.
   try {
     const records = await Attendance.find()
       .sort({ checkInAt: -1 })
@@ -206,7 +206,7 @@ router.get('/api/admin/attendance', requireAuth, requireRole('admin'), async (re
   }
 });
 
-router.get('/api/admin/attendance/summary', requireAuth, requireRole('admin'), async (req, res) => {
+router.get('/api/admin/attendance/summary', requireAuth, requireRole('admin'), async (req, res) => { // Summarize today's attendance across employees.
   try {
     const dateKey = typeof req.query.date === 'string' && req.query.date ? req.query.date : formatDateKey();
     const [employees, records] = await Promise.all([
@@ -249,7 +249,7 @@ router.get('/api/admin/attendance/summary', requireAuth, requireRole('admin'), a
   }
 });
 
-router.post('/api/admin/attendance/check-in', requireAuth, requireRole('admin'), async (req, res) => {
+router.post('/api/admin/attendance/check-in', requireAuth, requireRole('admin'), async (req, res) => { // Admin-triggered employee check-in.
   try {
     const { employeeId } = req.body;
     if (!employeeId) {
@@ -293,7 +293,7 @@ router.post('/api/admin/attendance/check-in', requireAuth, requireRole('admin'),
   }
 });
 
-router.post('/api/admin/attendance/check-out', requireAuth, requireRole('admin'), async (req, res) => {
+router.post('/api/admin/attendance/check-out', requireAuth, requireRole('admin'), async (req, res) => { // Admin-triggered employee check-out.
   try {
     const { employeeId } = req.body;
     if (!employeeId) {
@@ -327,7 +327,7 @@ router.post('/api/admin/attendance/check-out', requireAuth, requireRole('admin')
   }
 });
 
-router.get('/api/admin/leave', requireAuth, requireRole('admin'), async (req, res) => {
+router.get('/api/admin/leave', requireAuth, requireRole('admin'), async (req, res) => { // List leave requests.
   try {
     const leaves = await LeaveRequest.find()
       .sort({ createdAt: -1 })
@@ -339,7 +339,7 @@ router.get('/api/admin/leave', requireAuth, requireRole('admin'), async (req, re
   }
 });
 
-router.patch('/api/admin/leave/:id', requireAuth, requireRole('admin'), async (req, res) => {
+router.patch('/api/admin/leave/:id', requireAuth, requireRole('admin'), async (req, res) => { // Approve or reject a leave request.
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -363,7 +363,7 @@ router.patch('/api/admin/leave/:id', requireAuth, requireRole('admin'), async (r
   }
 });
 
-router.get('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, res) => {
+router.get('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, res) => { // List recent tasks.
   try {
     const tasks = await Task.find()
       .sort({ createdAt: -1 })
@@ -376,7 +376,7 @@ router.get('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, re
   }
 });
 
-router.post('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, res) => {
+router.post('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, res) => { // Assign a task to an employee.
   try {
     const { employeeId, details, dueAt } = req.body;
     if (!employeeId || !details || !String(details).trim()) {
@@ -414,3 +414,4 @@ router.post('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, r
 });
 
 module.exports = router;
+

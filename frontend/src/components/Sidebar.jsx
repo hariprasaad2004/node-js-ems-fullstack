@@ -1,4 +1,4 @@
-export default function Sidebar({ title, items, activeSection, onSelect }) {
+export default function Sidebar({ title, items, activeSection, onSelect }) { // Sidebar navigation component.
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -30,3 +30,4 @@ export default function Sidebar({ title, items, activeSection, onSelect }) {
     </aside>
   );
 }
+

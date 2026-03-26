@@ -1,4 +1,4 @@
-﻿const path = require('path');
+const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
@@ -50,7 +50,7 @@ app.use(
 
 app.use(express.static(frontendDist));
 
-app.get('/', (req, res) => {
+app.get('/', (req, res) => { // Root route redirects by session role.
   if (!req.session.userId) {
     return res.redirect('/login');
   }
@@ -64,17 +64,18 @@ app.use(authRoutes);
 app.use(adminRoutes);
 app.use(employeeRoutes);
 
-app.get('*', (req, res) => {
+app.get('*', (req, res) => { // SPA fallback for non-API routes.
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ message: 'Not found' });
   }
   return res.sendFile(frontendIndex);
 });
 
-app.use((req, res) => {
+app.use((req, res) => { // 404 handler for unmatched API routes.
   res.status(404).json({ message: 'Not found' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, () => { // Start the HTTP server.
   console.log(`Server running on http://localhost:${PORT}`);
 });
+

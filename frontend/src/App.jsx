@@ -3,7 +3,7 @@ import Login from './pages/Login.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import EmployeeDashboard from './pages/EmployeeDashboard.jsx';
 
-export default function App() {
+export default function App() { // SPA routes for login/admin/employee.
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
@@ -14,3 +14,4 @@ export default function App() {
     </Routes>
   );
 }
+

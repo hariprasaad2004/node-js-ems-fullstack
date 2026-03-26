@@ -1,11 +1,11 @@
-﻿function requireAuth(req, res, next) {
+function requireAuth(req, res, next) { // Enforce an authenticated session.
   if (!req.session.userId) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
   return next();
 }
 
-function requireRole(role) {
+function requireRole(role) { // Enforce a specific user role.
   return (req, res, next) => {
     if (req.session.role !== role) {
       return res.status(403).json({ message: 'Forbidden' });
@@ -15,3 +15,4 @@ function requireRole(role) {
 }
 
 module.exports = { requireAuth, requireRole };
+

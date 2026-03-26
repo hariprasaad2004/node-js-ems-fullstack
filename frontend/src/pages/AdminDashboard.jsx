@@ -31,7 +31,7 @@ const initialTaskState = {
   dueAt: ''
 };
 
-export default function AdminDashboard() {
+export default function AdminDashboard() { // Admin dashboard UI and data operations.
   useBodyClass('page-dashboard');
 
   const [activeSection, setActiveSection] = useState('overview');
@@ -63,7 +63,7 @@ export default function AdminDashboard() {
     loadTasks();
   }, []);
 
-  async function loadEmployees() {
+  async function loadEmployees() { // Fetch employees and refresh summary data.
     setEmployeeError('');
     const res = await apiRequest('/api/admin/employees');
     const data = await readJson(res);
@@ -79,7 +79,7 @@ export default function AdminDashboard() {
     await loadAttendance();
   }
 
-  async function loadAttendance() {
+  async function loadAttendance() { // Fetch attendance summary data.
     setAttendanceError('');
     const res = await apiRequest('/api/admin/attendance/summary');
     const data = await readJson(res);
@@ -93,7 +93,7 @@ export default function AdminDashboard() {
     setAttendance(Array.isArray(data) ? data : []);
   }
 
-  async function loadLeaves() {
+  async function loadLeaves() { // Fetch leave request data.
     setLeaveError('');
     const res = await apiRequest('/api/admin/leave');
     const data = await readJson(res);
@@ -107,7 +107,7 @@ export default function AdminDashboard() {
     setLeaves(Array.isArray(data) ? data : []);
   }
 
-  async function loadTasks() {
+  async function loadTasks() { // Fetch assigned tasks.
     setTaskError('');
     const res = await apiRequest('/api/admin/tasks');
     const data = await readJson(res);
@@ -121,17 +121,17 @@ export default function AdminDashboard() {
     setTasks(Array.isArray(data) ? data : []);
   }
 
-  const handleFormChange = (event) => {
+  const handleFormChange = (event) => { // Track Add/Edit form input changes.
     const { id, value } = event.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
-  const handleTaskChange = (event) => {
+  const handleTaskChange = (event) => { // Track task assignment form input changes.
     const { name, value } = event.target;
     setTaskForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event) => { // Create or update an employee.
     event.preventDefault();
     setFormStatus({ message: 'Saving...', isError: false });
 
@@ -174,7 +174,7 @@ export default function AdminDashboard() {
     await loadEmployees();
   };
 
-  const handleEdit = (employee) => {
+  const handleEdit = (employee) => { // Populate form for editing an employee.
     setShowForm(true);
     setEditingId(employee.id);
     setFormData({
@@ -191,13 +191,13 @@ export default function AdminDashboard() {
     setFormStatus({ message: `Editing ${employee.name}`, isError: false });
   };
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = () => { // Reset form and exit edit mode.
     setEditingId(null);
     setFormData(initialFormState);
     setFormStatus({ message: 'Edit canceled.', isError: false });
   };
 
-  const handleToggleForm = () => {
+  const handleToggleForm = () => { // Show or hide the Add/Edit form.
     setShowForm((prev) => {
       const next = !prev;
       if (next) {
@@ -209,7 +209,7 @@ export default function AdminDashboard() {
     });
   };
 
-  const handleDelete = async (employee) => {
+  const handleDelete = async (employee) => { // Delete an employee after confirmation.
     if (!window.confirm('Delete this employee?')) return;
 
     const res = await apiRequest(`/api/admin/employees/${employee.id}`, { method: 'DELETE' });
@@ -224,7 +224,7 @@ export default function AdminDashboard() {
     await loadEmployees();
   };
 
-  const handleLeaveAction = async (leaveId, action) => {
+  const handleLeaveAction = async (leaveId, action) => { // Approve or reject leave requests.
     setLeaveStatus({ message: 'Updating leave request...', isError: false });
     const res = await apiRequest(`/api/admin/leave/${leaveId}`, {
       method: 'PATCH',
@@ -241,7 +241,7 @@ export default function AdminDashboard() {
     await loadLeaves();
   };
 
-  const handleAssignTask = async (event) => {
+  const handleAssignTask = async (event) => { // Assign a task to an employee.
     event.preventDefault();
     setTaskStatus({ message: 'Assigning...', isError: false });
 
@@ -280,7 +280,7 @@ export default function AdminDashboard() {
     await loadTasks();
   };
 
-  const handleLogout = async () => {
+  const handleLogout = async () => { // Logout and redirect to login.
     await apiRequest('/logout', { method: 'POST' });
     window.location.assign('/login');
   };
@@ -743,3 +743,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
