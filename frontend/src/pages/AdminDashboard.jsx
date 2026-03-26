@@ -343,7 +343,7 @@ export default function AdminDashboard() {
                   {showForm ? 'Hide Form' : 'Add Employee'}
                 </button>
               </div>
-              <table className="table">
+              <table className="table table-responsive">
                 <thead>
                   <tr>
                     <th>Name</th>
@@ -366,11 +366,11 @@ export default function AdminDashboard() {
                   ) : (
                     employees.map((employee) => (
                       <tr key={employee.id}>
-                        <td>{employee.name}</td>
-                        <td>{employee.department || '-'}</td>
-                        <td>{employee.title || '-'}</td>
-                        <td>{employee.email}</td>
-                        <td>
+                        <td data-label="Name">{employee.name}</td>
+                        <td data-label="Department">{employee.department || '-'}</td>
+                        <td data-label="Title">{employee.title || '-'}</td>
+                        <td data-label="Email">{employee.email}</td>
+                        <td data-label="Status">
                           <span
                             className={`status-pill ${
                               employee.status === 'active' ? '' : 'inactive'
@@ -379,7 +379,7 @@ export default function AdminDashboard() {
                             {employee.status}
                           </span>
                         </td>
-                        <td>
+                        <td data-label="Actions">
                           <div className="action-row">
                             <button
                               className="btn-ghost"
@@ -524,7 +524,7 @@ export default function AdminDashboard() {
             >
               {leaveStatus.message}
             </p>
-            <table className="table">
+            <table className="table table-responsive">
               <thead>
                 <tr>
                   <th>Employee</th>
@@ -548,17 +548,17 @@ export default function AdminDashboard() {
                 ) : (
                   leaves.map((leave) => (
                     <tr key={leave.id}>
-                      <td>
+                      <td data-label="Employee">
                         {leave.employee
                           ? `${leave.employee.name} (${leave.employee.email})`
                           : 'Unknown'}
                       </td>
-                      <td>{leave.category || 'casual'}</td>
-                      <td>{formatDate(leave.fromDate)}</td>
-                      <td>{formatDate(leave.toDate)}</td>
-                      <td>{leave.reason || '-'}</td>
-                      <td>{leave.status}</td>
-                      <td>
+                      <td data-label="Category">{leave.category || 'casual'}</td>
+                      <td data-label="From">{formatDate(leave.fromDate)}</td>
+                      <td data-label="To">{formatDate(leave.toDate)}</td>
+                      <td data-label="Reason">{leave.reason || '-'}</td>
+                      <td data-label="Status">{leave.status}</td>
+                      <td data-label="Action">
                         {leave.status === 'pending' ? (
                           <div className="action-row">
                             <button
@@ -595,7 +595,7 @@ export default function AdminDashboard() {
           <div className="content-card">
             <h2 className="content-title">Attendance Snapshot</h2>
             <p className="helper">Monitor daily check-ins and hours.</p>
-            <table className="table">
+            <table className="table table-responsive">
               <thead>
                 <tr>
                   <th>Employee</th>
@@ -616,14 +616,14 @@ export default function AdminDashboard() {
                 ) : (
                   attendance.map((record, index) => (
                     <tr key={`${record.employee?.id || 'unknown'}-${index}`}>
-                      <td>
+                      <td data-label="Employee">
                         {record.employee
                           ? `${record.employee.name} (${record.employee.email})`
                           : 'Unknown'}
                       </td>
-                      <td>{formatStatus(record.status)}</td>
-                      <td>{formatDateTime(record.checkInAt)}</td>
-                      <td>{formatDateTime(record.checkOutAt)}</td>
+                      <td data-label="Status">{formatStatus(record.status)}</td>
+                      <td data-label="Check In">{formatDateTime(record.checkInAt)}</td>
+                      <td data-label="Check Out">{formatDateTime(record.checkOutAt)}</td>
                     </tr>
                   ))
                 )}
@@ -688,7 +688,7 @@ export default function AdminDashboard() {
                 {taskStatus.message}
               </p>
             </form>
-            <table className="table">
+            <table className="table table-responsive">
               <thead>
                 <tr>
                   <th>Employee</th>
@@ -710,13 +710,13 @@ export default function AdminDashboard() {
                 ) : (
                   tasks.map((task) => (
                     <tr key={task.id}>
-                      <td>
+                      <td data-label="Employee">
                         {task.employee ? `${task.employee.name} (${task.employee.email})` : 'Unknown'}
                       </td>
-                      <td>{task.details}</td>
-                      <td>{task.status}</td>
-                      <td>{formatDateTime(task.dueAt)}</td>
-                      <td>{formatDateTime(task.createdAt)}</td>
+                      <td data-label="Task">{task.details}</td>
+                      <td data-label="Status">{task.status}</td>
+                      <td data-label="Due Time">{formatDateTime(task.dueAt)}</td>
+                      <td data-label="Assigned">{formatDateTime(task.createdAt)}</td>
                     </tr>
                   ))
                 )}

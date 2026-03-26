@@ -297,7 +297,7 @@ export default function EmployeeDashboard() {
               >
                 {attendanceStatus.message}
               </p>
-              <table className="table">
+              <table className="table table-responsive">
                 <thead>
                   <tr>
                     <th>Date</th>
@@ -317,16 +317,18 @@ export default function EmployeeDashboard() {
                     </tr>
                   ) : (
                     attendance.map((record) => (
-                      <tr key={record.id}>
-                        <td>{record.date}</td>
-                        <td>{formatDateTime(record.checkInAt)}</td>
-                        <td>{formatDateTime(record.checkOutAt)}</td>
-                        <td>{formatDuration(record.checkInAt, record.checkOutAt)}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    <tr key={record.id}>
+                      <td data-label="Date">{record.date}</td>
+                      <td data-label="Check In">{formatDateTime(record.checkInAt)}</td>
+                      <td data-label="Check Out">{formatDateTime(record.checkOutAt)}</td>
+                      <td data-label="Hours">
+                        {formatDuration(record.checkInAt, record.checkOutAt)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
             </div>
           </section>
 
@@ -390,7 +392,7 @@ export default function EmployeeDashboard() {
                   {leaveStatus.message}
                 </p>
               </form>
-              <table className="table">
+              <table className="table table-responsive">
                 <thead>
                   <tr>
                     <th>Category</th>
@@ -411,17 +413,17 @@ export default function EmployeeDashboard() {
                     </tr>
                   ) : (
                     leaves.map((leave) => (
-                      <tr key={leave.id}>
-                        <td>{leave.category || 'casual'}</td>
-                        <td>{formatDate(leave.fromDate)}</td>
-                        <td>{formatDate(leave.toDate)}</td>
-                        <td>{leave.status}</td>
-                        <td>{formatDateTime(leave.createdAt)}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    <tr key={leave.id}>
+                      <td data-label="Category">{leave.category || 'casual'}</td>
+                      <td data-label="From">{formatDate(leave.fromDate)}</td>
+                      <td data-label="To">{formatDate(leave.toDate)}</td>
+                      <td data-label="Status">{leave.status}</td>
+                      <td data-label="Requested">{formatDateTime(leave.createdAt)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
             </div>
           </section>
 
@@ -431,7 +433,7 @@ export default function EmployeeDashboard() {
           >
             <div className="content-card">
               <h2 className="content-title">My Tasks</h2>
-              <table className="table">
+              <table className="table table-responsive">
                 <thead>
                   <tr>
                     <th>Task</th>
@@ -458,8 +460,8 @@ export default function EmployeeDashboard() {
                       const statusValue = task.status || 'planning';
                       return (
                         <tr key={task.id}>
-                          <td>{task.details}</td>
-                          <td>
+                          <td data-label="Task">{task.details}</td>
+                          <td data-label="Status">
                             <select
                               value={statusValue}
                               onChange={(event) =>
@@ -471,9 +473,9 @@ export default function EmployeeDashboard() {
                               <option value="completed">Completed</option>
                             </select>
                           </td>
-                          <td>{formatDateTime(task.dueAt)}</td>
-                          <td>{assignedBy}</td>
-                          <td>{formatDateTime(task.createdAt)}</td>
+                          <td data-label="Due Time">{formatDateTime(task.dueAt)}</td>
+                          <td data-label="Assigned By">{assignedBy}</td>
+                          <td data-label="Assigned On">{formatDateTime(task.createdAt)}</td>
                         </tr>
                       );
                     })

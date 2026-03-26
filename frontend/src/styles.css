@@ -148,9 +148,9 @@ a {
 .sidebar-logo {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
-  background: var(--dash-blue);
-  color: #fff;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
   display: grid;
   place-items: center;
   font-weight: 700;
@@ -158,8 +158,8 @@ a {
 }
 
 .sidebar-logo img {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
   display: block;
 }
@@ -395,6 +395,7 @@ button {
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
+  white-space: nowrap;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -566,5 +567,64 @@ button:hover {
 
   .sidebar {
     position: static;
+  }
+
+  .table-responsive thead {
+    display: none;
+  }
+
+  .table-responsive,
+  .table-responsive tbody,
+  .table-responsive tr,
+  .table-responsive td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-responsive tr {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 14px;
+    background: #fff;
+  }
+
+  .table-responsive td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .table-responsive td:last-child {
+    border-bottom: none;
+  }
+
+  .table-responsive td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 600;
+    flex: 0 0 40%;
+  }
+
+  .table-responsive td[colspan] {
+    justify-content: center;
+  }
+
+  .table-responsive td[colspan]::before {
+    content: '';
+  }
+
+  .table-responsive .action-row {
+    justify-content: flex-end;
+  }
+
+  .table-responsive .action-row button {
+    width: auto;
   }
 }
