@@ -6,12 +6,13 @@ const User = require('../models/User');
 const router = express.Router();
 
 const rootDir = path.join(__dirname, '..', '..');
+const frontendIndex = path.join(rootDir, 'frontend', 'dist', 'index.html');
 
 router.get('/login', (req, res) => {
   if (req.session.userId) {
     return res.redirect('/');
   }
-  return res.sendFile(path.join(rootDir, 'frontend', 'views', 'login.html'));
+  return res.sendFile(frontendIndex);
 });
 
 router.post('/login', async (req, res) => {

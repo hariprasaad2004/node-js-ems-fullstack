@@ -1,18 +1,17 @@
 ﻿# Employee Management System (EMS)
 
-Fullstack EMS built with Node.js, Express, MongoDB Atlas, and vanilla HTML/CSS/JS.
+Fullstack EMS built with Node.js, Express, MongoDB Atlas, and React (Vite).
 
 ## Folder Structure
-- frontend/
-  - views/ (HTML)
-  - public/ (CSS/JS/assets)
-- backend/
-  - server.js
-  - routes/
-  - models/
-  - middleware/
-  - seed.js
-  - package.json
+- `frontend/` React app (Vite)
+- `frontend/src/` components, pages, and styles
+- `frontend/public/` static assets
+- `frontend/views/` legacy HTML (kept for reference)
+- `backend/` API server
+- `backend/routes/` API endpoints
+- `backend/models/` MongoDB models
+- `backend/middleware/` auth middleware
+- `backend/seed.js` seed script
 
 ## Features
 - Admin dashboard to create, edit, and delete employees
@@ -36,11 +35,34 @@ Fullstack EMS built with Node.js, Express, MongoDB Atlas, and vanilla HTML/CSS/J
    ```bash
    npm run seed
    ```
-5. Start the server:
+5. Go to the frontend folder and install dependencies:
    ```bash
+   cd ..\frontend
+   npm install
+   ```
+6. Build the React app:
+   ```bash
+   npm run build
+   ```
+7. Start the backend server:
+   ```bash
+   cd ..\backend
    npm start
    ```
-6. Open `http://localhost:3000` and log in.
+8. Open `http://localhost:3000` and log in.
+
+## Dev (Optional)
+1. Start the backend server:
+   ```bash
+   cd backend
+   npm start
+   ```
+2. Start the React dev server:
+   ```bash
+   cd ..\frontend
+   npm run dev
+   ```
+3. Open `http://localhost:5173`.
 
 ## Notes
 - Sessions are stored in memory (fine for development). For production, use a persistent session store.

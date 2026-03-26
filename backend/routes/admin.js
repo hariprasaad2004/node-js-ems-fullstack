@@ -10,6 +10,7 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 const router = express.Router();
 
 const rootDir = path.join(__dirname, '..', '..');
+const frontendIndex = path.join(rootDir, 'frontend', 'dist', 'index.html');
 
 const toSafeEmployee = (user) => ({
   id: user._id.toString(),
@@ -91,8 +92,14 @@ const toSafeTask = (task) => ({
     : null
 });
 
-router.get('/admin', requireAuth, requireRole('admin'), (req, res) => {
-  return res.sendFile(path.join(rootDir, 'frontend', 'views', 'admin.html'));
+router.get('/admin', (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect('/login');
+  }
+  if (req.session.role !== 'admin') {
+    return res.redirect('/employee');
+  }
+  return res.sendFile(frontendIndex);
 });
 
 router.get('/api/admin/employees', requireAuth, requireRole('admin'), async (req, res) => {

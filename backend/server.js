@@ -10,6 +10,8 @@ const adminRoutes = require('./routes/admin');
 const employeeRoutes = require('./routes/employee');
 
 const rootDir = path.join(__dirname, '..');
+const frontendDist = path.join(rootDir, 'frontend', 'dist');
+const frontendIndex = path.join(frontendDist, 'index.html');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,7 +44,7 @@ app.use(
   })
 );
 
-app.use(express.static(path.join(rootDir, 'frontend', 'public')));
+app.use(express.static(frontendDist));
 
 app.get('/', (req, res) => {
   if (!req.session.userId) {
@@ -57,6 +59,13 @@ app.get('/', (req, res) => {
 app.use(authRoutes);
 app.use(adminRoutes);
 app.use(employeeRoutes);
+
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ message: 'Not found' });
+  }
+  return res.sendFile(frontendIndex);
+});
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Not found' });
