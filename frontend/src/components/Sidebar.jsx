@@ -2,7 +2,9 @@ export default function Sidebar({ title, items, activeSection, onSelect }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <div className="sidebar-logo">EMS</div>
+        <div className="sidebar-logo">
+          <img src="/EMS-icon.png" alt="EMS logo" />
+        </div>
         <div className="sidebar-title">{title}</div>
       </div>
       <nav className="nav-list">

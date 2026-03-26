@@ -157,6 +157,13 @@ a {
   letter-spacing: 0.04em;
 }
 
+.sidebar-logo img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  display: block;
+}
+
 .sidebar-title {
   font-weight: 700;
   font-size: 18px;
@@ -453,6 +460,7 @@ button:hover {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+  table-layout: fixed;
 }
 
 .table th,
@@ -460,6 +468,8 @@ button:hover {
   padding: 12px 10px;
   border-bottom: 1px solid var(--border);
   text-align: left;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .table th {
@@ -488,6 +498,7 @@ button:hover {
 .action-row {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .notice {

@@ -45,6 +45,7 @@ export default function AdminDashboard() {
   const [taskError, setTaskError] = useState('');
   const [formData, setFormData] = useState(initialFormState);
   const [editingId, setEditingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
   const [formStatus, setFormStatus] = useState({ message: '', isError: false });
   const [leaveStatus, setLeaveStatus] = useState({ message: '', isError: false });
   const [taskStatus, setTaskStatus] = useState({ message: '', isError: false });
@@ -174,6 +175,7 @@ export default function AdminDashboard() {
   };
 
   const handleEdit = (employee) => {
+    setShowForm(true);
     setEditingId(employee.id);
     setFormData({
       name: employee.name || '',
@@ -193,6 +195,18 @@ export default function AdminDashboard() {
     setEditingId(null);
     setFormData(initialFormState);
     setFormStatus({ message: 'Edit canceled.', isError: false });
+  };
+
+  const handleToggleForm = () => {
+    setShowForm((prev) => {
+      const next = !prev;
+      if (next) {
+        setEditingId(null);
+        setFormData(initialFormState);
+        setFormStatus({ message: '', isError: false });
+      }
+      return next;
+    });
   };
 
   const handleDelete = async (employee) => {
@@ -323,7 +337,12 @@ export default function AdminDashboard() {
         >
           <div className="grid-2">
             <div className="content-card">
-              <h2 className="content-title">Employees</h2>
+              <div className="toolbar">
+                <h2 className="content-title">Employees</h2>
+                <button className="btn-primary" type="button" onClick={handleToggleForm}>
+                  {showForm ? 'Hide Form' : 'Add Employee'}
+                </button>
+              </div>
               <table className="table">
                 <thead>
                   <tr>
@@ -385,108 +404,110 @@ export default function AdminDashboard() {
               </table>
             </div>
 
-            <div className="content-card">
-              <h2 className="content-title">Add / Edit Employee</h2>
-              <form className="form-grid" onSubmit={handleSubmit}>
-                <div>
-                  <label htmlFor="name">Full Name</label>
-                  <input
-                    id="name"
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={handleFormChange}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="email">Email</label>
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={handleFormChange}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="password">Password</label>
-                  <input
-                    id="password"
-                    type="text"
-                    placeholder={
-                      editingId ? 'Leave blank to keep existing password' : 'Set initial password'
-                    }
-                    value={formData.password}
-                    onChange={handleFormChange}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="department">Department</label>
-                  <input
-                    id="department"
-                    type="text"
-                    value={formData.department}
-                    onChange={handleFormChange}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="title">Job Title</label>
-                  <input
-                    id="title"
-                    type="text"
-                    value={formData.title}
-                    onChange={handleFormChange}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="phone">Phone</label>
-                  <input
-                    id="phone"
-                    type="text"
-                    value={formData.phone}
-                    onChange={handleFormChange}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="address">Address</label>
-                  <textarea
-                    id="address"
-                    value={formData.address}
-                    onChange={handleFormChange}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="salary">Salary</label>
-                  <input
-                    id="salary"
-                    type="number"
-                    value={formData.salary}
-                    onChange={handleFormChange}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="status">Status</label>
-                  <select id="status" value={formData.status} onChange={handleFormChange}>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-                <button className="btn-primary" type="submit">
-                  {editingId ? 'Update Employee' : 'Add Employee'}
-                </button>
-                {editingId ? (
-                  <button className="btn-ghost" type="button" onClick={handleCancelEdit}>
-                    Cancel Edit
+            {showForm ? (
+              <div className="content-card">
+                <h2 className="content-title">Add / Edit Employee</h2>
+                <form className="form-grid" onSubmit={handleSubmit}>
+                  <div>
+                    <label htmlFor="name">Full Name</label>
+                    <input
+                      id="name"
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={handleFormChange}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email">Email</label>
+                    <input
+                      id="email"
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={handleFormChange}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="password">Password</label>
+                    <input
+                      id="password"
+                      type="text"
+                      placeholder={
+                        editingId ? 'Leave blank to keep existing password' : 'Set initial password'
+                      }
+                      value={formData.password}
+                      onChange={handleFormChange}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="department">Department</label>
+                    <input
+                      id="department"
+                      type="text"
+                      value={formData.department}
+                      onChange={handleFormChange}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="title">Job Title</label>
+                    <input
+                      id="title"
+                      type="text"
+                      value={formData.title}
+                      onChange={handleFormChange}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="phone">Phone</label>
+                    <input
+                      id="phone"
+                      type="text"
+                      value={formData.phone}
+                      onChange={handleFormChange}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="address">Address</label>
+                    <textarea
+                      id="address"
+                      value={formData.address}
+                      onChange={handleFormChange}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="salary">Salary</label>
+                    <input
+                      id="salary"
+                      type="number"
+                      value={formData.salary}
+                      onChange={handleFormChange}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="status">Status</label>
+                    <select id="status" value={formData.status} onChange={handleFormChange}>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                  <button className="btn-primary" type="submit">
+                    {editingId ? 'Update Employee' : 'Add Employee'}
                   </button>
-                ) : null}
-                <p
-                  className="helper"
-                  style={{ color: formStatus.isError ? '#c13e2d' : '#0e7c7b' }}
-                >
-                  {formStatus.message}
-                </p>
-              </form>
-            </div>
+                  {editingId ? (
+                    <button className="btn-ghost" type="button" onClick={handleCancelEdit}>
+                      Cancel Edit
+                    </button>
+                  ) : null}
+                  <p
+                    className="helper"
+                    style={{ color: formStatus.isError ? '#c13e2d' : '#0e7c7b' }}
+                  >
+                    {formStatus.message}
+                  </p>
+                </form>
+              </div>
+            ) : null}
           </div>
         </section>
 
