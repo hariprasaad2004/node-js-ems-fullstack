@@ -141,14 +141,14 @@ a {
 .sidebar-header {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 24px;
-  text-align: left;
+  text-align: center;
 }
 
 .sidebar-logo {
-  width: 180px;
+  width: 100%;
   height: auto;
   border-radius: 0;
   background: transparent;
@@ -160,7 +160,7 @@ a {
 }
 
 .sidebar-logo img {
-  width: 180px;
+  width: 160px;
   max-width: 100%;
   height: auto;
   object-fit: contain;
@@ -170,6 +170,8 @@ a {
 .sidebar-title {
   font-weight: 700;
   font-size: 20px;
+  width: 100%;
+  text-align: center;
 }
 
 .nav-list {
