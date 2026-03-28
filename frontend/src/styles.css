@@ -877,6 +877,153 @@ button:focus-visible,
   font-weight: 600;
 }
 
+.task-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.task-card {
+  background: #ffffff;
+  border: 1px solid #e6ebf2;
+  border-radius: 16px;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+}
+
+.task-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.task-employee {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #101828;
+}
+
+.task-email {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #667085;
+  word-break: break-word;
+}
+
+.task-details {
+  margin: 0;
+  font-size: 14px;
+  color: #101828;
+  line-height: 1.5;
+}
+
+.task-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.task-meta-item span {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #98a2b3;
+  font-weight: 600;
+}
+
+.task-meta-item strong {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #101828;
+}
+
+.task-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.status-completed {
+  background: #e8f9ef;
+  color: #137a3c;
+  border-color: #bfead0;
+}
+
+.status-pending {
+  background: #fff7e6;
+  color: #9a5b00;
+  border-color: #f6d29a;
+}
+
+.status-planning {
+  background: #eef2ff;
+  color: #3646a3;
+  border-color: #cbd5ff;
+}
+
+.status-progress {
+  background: #ecfeff;
+  color: #0b7285;
+  border-color: #b8f1f7;
+}
+
+.status-default {
+  background: #f2f4f7;
+  color: #475467;
+  border-color: #e4e7ec;
+}
+
+.task-due {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.due-overdue {
+  background: #ffecec;
+  color: #b42318;
+  border-color: #f7b7b7;
+}
+
+.due-soon {
+  background: #fff4e5;
+  color: #9a5b00;
+  border-color: #f6d29a;
+}
+
+.due-upcoming {
+  background: #e8efff;
+  color: #1d4ed8;
+  border-color: #c7d7ff;
+}
+
+.due-ok {
+  background: #e8f9ef;
+  color: #137a3c;
+  border-color: #bfead0;
+}
+
+.due-none {
+  background: #f2f4f7;
+  color: #667085;
+  border-color: #e4e7ec;
+}
+
 .card-menu {
   background: #f3f6ff;
   border: 1px solid #dbe7ff;
@@ -1130,6 +1277,10 @@ button:focus-visible,
   }
 
   .employee-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .task-meta {
     grid-template-columns: 1fr;
   }
 

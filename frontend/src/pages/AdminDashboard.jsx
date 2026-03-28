@@ -365,6 +365,34 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     setTaskStatus({ message: '', isError: false });
   };
 
+  const getTaskStatusTone = (status) => {
+    const value = status?.toLowerCase() || '';
+    if (value === 'completed') return 'status-completed';
+    if (value === 'pending') return 'status-pending';
+    if (value === 'planning') return 'status-planning';
+    if (value === 'in-progress' || value === 'in progress') return 'status-progress';
+    return 'status-default';
+  };
+
+  const getTaskDueTone = (task) => {
+    if (!task?.dueAt) return 'due-none';
+    const dueDate = new Date(task.dueAt);
+    if (Number.isNaN(dueDate.getTime())) return 'due-none';
+    const now = new Date();
+    const statusValue = task.status?.toLowerCase() || '';
+    if (statusValue === 'completed') return 'due-ok';
+    const diff = dueDate.getTime() - now.getTime();
+    if (diff < 0) return 'due-overdue';
+    if (diff <= 24 * 60 * 60 * 1000) return 'due-soon';
+    return 'due-upcoming';
+  };
+
+  const getTaskDueText = (task) => {
+    if (!task?.dueAt) return 'No due time';
+    const formatted = formatDateTime(task.dueAt);
+    return formatted === '-' ? 'No due time' : formatted;
+  };
+
   const handleOpenInfo = (employee) => { // Open employee info modal.
     setInfoEmployee(employee);
   };
@@ -1106,40 +1134,44 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                 Assign Task
               </button>
             </div>
-            <table className="table table-responsive">
-              <thead>
-                <tr>
-                  <th>Employee</th>
-                  <th>Task</th>
-                  <th>Status</th>
-                  <th>Due Time</th>
-                  <th>Assigned</th>
-                </tr>
-              </thead>
-              <tbody>
-                {taskError ? (
-                  <tr>
-                    <td colSpan="5">{taskError}</td>
-                  </tr>
-                ) : tasks.length === 0 ? (
-                  <tr>
-                    <td colSpan="5">No tasks assigned yet.</td>
-                  </tr>
-                ) : (
-                  tasks.map((task) => (
-                    <tr key={task.id}>
-                      <td data-label="Employee">
-                        {task.employee ? `${task.employee.name} (${task.employee.email})` : 'Unknown'}
-                      </td>
-                      <td data-label="Task">{task.details}</td>
-                      <td data-label="Status">{task.status}</td>
-                      <td data-label="Due Time">{formatDateTime(task.dueAt)}</td>
-                      <td data-label="Assigned">{formatDateTime(task.createdAt)}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            {taskError ? (
+              <div className="notice">{taskError}</div>
+            ) : tasks.length === 0 ? (
+              <div className="notice">No tasks assigned yet.</div>
+            ) : (
+              <div className="task-list">
+                {tasks.map((task) => {
+                  const statusTone = getTaskStatusTone(task.status);
+                  const dueTone = getTaskDueTone(task);
+                  const employeeName = task.employee?.name || 'Unknown';
+                  const employeeEmail = task.employee?.email || '';
+                  return (
+                    <article className="task-card" key={task.id}>
+                      <div className="task-card-top">
+                        <div>
+                          <h3 className="task-employee">{employeeName}</h3>
+                          <p className="task-email">{employeeEmail || 'No email'}</p>
+                        </div>
+                        <span className={`task-pill ${statusTone}`}>
+                          {formatStatus(task.status)}
+                        </span>
+                      </div>
+                      <p className="task-details">{task.details || '-'}</p>
+                      <div className="task-meta">
+                        <div className="task-meta-item">
+                          <span>Due</span>
+                          <strong className={`task-due ${dueTone}`}>{getTaskDueText(task)}</strong>
+                        </div>
+                        <div className="task-meta-item">
+                          <span>Assigned</span>
+                          <strong>{formatDateTime(task.createdAt)}</strong>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
 
