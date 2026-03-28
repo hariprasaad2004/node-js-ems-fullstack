@@ -22,6 +22,7 @@ const initialFormState = {
   phone: '',
   address: '',
   salary: '',
+  profileImage: '',
   status: 'active'
 };
 
@@ -30,6 +31,36 @@ const initialTaskState = {
   details: '',
   dueAt: ''
 };
+
+const MAX_IMAGE_SIZE = 1_500_000; // 1.5 MB
+
+const getTaskDate = (task) => {
+  if (task?.dueAt) return new Date(task.dueAt);
+  if (task?.createdAt) return new Date(task.createdAt);
+  return null;
+};
+
+const getDayStart = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+const getNextDayStart = (date) => {
+  const next = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+  return next;
+};
+
+const getWeekStart = (date) => {
+  const day = date.getDay();
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() - day);
+};
+
+const getNextWeekStart = (date) => {
+  const start = getWeekStart(date);
+  const next = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
+  return next;
+};
+
+const getMonthStart = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
+
+const getNextMonthStart = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 1);
 
 export default function AdminDashboard() { // Admin dashboard UI and data operations.
   useBodyClass('page-dashboard');
@@ -51,6 +82,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [taskStatus, setTaskStatus] = useState({ message: '', isError: false });
   const [taskForm, setTaskForm] = useState(initialTaskState);
   const [infoEmployee, setInfoEmployee] = useState(null);
+  const [statNow, setStatNow] = useState(() => new Date());
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -93,6 +125,50 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       );
     });
   }, [employees, searchTerm, statusFilter, departmentFilter]);
+
+  useEffect(() => {
+    const now = new Date();
+    const nextTimes = [
+      getNextDayStart(now),
+      getNextWeekStart(now),
+      getNextMonthStart(now)
+    ];
+    const next = new Date(Math.min(...nextTimes.map((value) => value.getTime())));
+    const delay = Math.max(next.getTime() - now.getTime(), 1000);
+    const timer = window.setTimeout(() => setStatNow(new Date()), delay);
+    return () => window.clearTimeout(timer);
+  }, [statNow]);
+
+  const rangeStats = useMemo(() => {
+    const now = statNow;
+    const dayStart = getDayStart(now);
+    const dayEnd = getNextDayStart(now);
+    const weekStart = getWeekStart(now);
+    const weekEnd = getNextWeekStart(now);
+    const monthStart = getMonthStart(now);
+    const monthEnd = getNextMonthStart(now);
+
+    const calc = (start, end) => {
+      const items = tasks.filter((task) => {
+        const date = getTaskDate(task);
+        return date && date >= start && date < end;
+      });
+      const completed = items.filter((task) => task.status === 'completed').length;
+      const total = items.length;
+      const pending = total - completed;
+      const performance = total ? Math.round((completed / total) * 100) : 0;
+      return { total, pending, completed, performance };
+    };
+
+    return {
+      day: calc(dayStart, dayEnd),
+      week: calc(weekStart, weekEnd),
+      month: calc(monthStart, monthEnd),
+      nextDay: dayEnd,
+      nextWeek: weekEnd,
+      nextMonth: monthEnd
+    };
+  }, [tasks, statNow]);
 
   useEffect(() => {
     loadEmployees();
@@ -163,6 +239,23 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
+  const handleImageChange = (event) => { // Read profile image and store as data URL.
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      setFormStatus({ message: 'Image must be under 1.5 MB.', isError: true });
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setFormData((prev) => ({ ...prev, profileImage: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleTaskChange = (event) => { // Track task assignment form input changes.
     const { name, value } = event.target;
     setTaskForm((prev) => ({ ...prev, [name]: value }));
@@ -181,6 +274,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       phone: formData.phone.trim(),
       address: formData.address.trim(),
       salary: formData.salary.trim(),
+      profileImage: formData.profileImage || '',
       status: formData.status
     };
 
@@ -223,6 +317,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       phone: employee.phone || '',
       address: employee.address || '',
       salary: employee.salary ? String(employee.salary) : '',
+      profileImage: employee.profileImage || '',
       status: employee.status || 'active'
     });
     setFormStatus({ message: `Editing ${employee.name}`, isError: false });
@@ -399,9 +494,83 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
             ))}
           </select>
         </div>
-        <button className="btn-ghost filter-btn" type="button">
-          Search
-        </button>
+      </div>
+
+      <div className="overview-stats">
+        <div className="stat-block" data-kind="day">
+          <div className="stat-header">
+            <h3>Day Stats</h3>
+            <span className="stat-refresh">Refreshes Daily</span>
+          </div>
+          <div className="stat-row">
+            <div>
+              <span>Tasks Today</span>
+              <strong>{rangeStats.day.total}</strong>
+            </div>
+            <div>
+              <span>Pending</span>
+              <strong>{rangeStats.day.pending}</strong>
+            </div>
+            <div>
+              <span>Performance</span>
+              <strong>{rangeStats.day.performance}%</strong>
+            </div>
+          </div>
+          <div className="stat-progress">
+            <span style={{ width: `${rangeStats.day.performance}%` }} />
+          </div>
+          <div className="stat-next">Next refresh: {formatDateTime(rangeStats.nextDay)}</div>
+        </div>
+
+        <div className="stat-block" data-kind="week">
+          <div className="stat-header">
+            <h3>Week Stats</h3>
+            <span className="stat-refresh">Refreshes Sunday</span>
+          </div>
+          <div className="stat-row">
+            <div>
+              <span>Tasks This Week</span>
+              <strong>{rangeStats.week.total}</strong>
+            </div>
+            <div>
+              <span>Pending</span>
+              <strong>{rangeStats.week.pending}</strong>
+            </div>
+            <div>
+              <span>Performance</span>
+              <strong>{rangeStats.week.performance}%</strong>
+            </div>
+          </div>
+          <div className="stat-progress">
+            <span style={{ width: `${rangeStats.week.performance}%` }} />
+          </div>
+          <div className="stat-next">Next refresh: {formatDateTime(rangeStats.nextWeek)}</div>
+        </div>
+
+        <div className="stat-block" data-kind="month">
+          <div className="stat-header">
+            <h3>Month Stats</h3>
+            <span className="stat-refresh">Refreshes Month End</span>
+          </div>
+          <div className="stat-row">
+            <div>
+              <span>Finished</span>
+              <strong>{rangeStats.month.completed}</strong>
+            </div>
+            <div>
+              <span>Pending</span>
+              <strong>{rangeStats.month.pending}</strong>
+            </div>
+            <div>
+              <span>Performance</span>
+              <strong>{rangeStats.month.performance}%</strong>
+            </div>
+          </div>
+          <div className="stat-progress">
+            <span style={{ width: `${rangeStats.month.performance}%` }} />
+          </div>
+          <div className="stat-next">Next refresh: {formatDateTime(rangeStats.nextMonth)}</div>
+        </div>
       </div>
     </>
   );
@@ -478,7 +647,13 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                             ...
                           </button>
                         </div>
-                        <div className="employee-avatar">{initials}</div>
+                        <div className="employee-avatar">
+                          {employee.profileImage ? (
+                            <img src={employee.profileImage} alt={employee.name} />
+                          ) : (
+                            initials
+                          )}
+                        </div>
                         <h3 className="employee-name">{employee.name}</h3>
                         <p className="employee-role">{employee.title || 'Employee'}</p>
                         <div className="employee-id">ID: {idSuffix}</div>
@@ -518,6 +693,25 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               </div>
 
               <form className="form-grid modal-grid" onSubmit={handleSubmit}>
+                <div className="span-2 image-field">
+                  <label htmlFor="profileImage">Profile Image</label>
+                  <div className="image-input">
+                    <div className="image-preview">
+                      {formData.profileImage ? (
+                        <img src={formData.profileImage} alt="Profile preview" />
+                      ) : (
+                        <span>Upload</span>
+                      )}
+                    </div>
+                    <input
+                      id="profileImage"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                  </div>
+                  <p className="helper">PNG/JPG up to 1.5 MB.</p>
+                </div>
                 <div>
                   <label htmlFor="name">Full Name</label>
                   <input

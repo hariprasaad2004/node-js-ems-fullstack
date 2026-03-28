@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, trim: true },
     address: { type: String, trim: true },
     salary: { type: Number },
+    profileImage: { type: String, trim: true },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' }
   },
   { timestamps: true }

@@ -22,6 +22,7 @@ const toSafeEmployee = (user) => ({ // Sanitize employee data for API responses.
   phone: user.phone || '',
   address: user.address || '',
   salary: user.salary || 0,
+  profileImage: user.profileImage || '',
   status: user.status,
   createdAt: user.createdAt
 });
@@ -111,7 +112,18 @@ router.get('/api/admin/employees', requireAuth, requireRole('admin'), async (req
 
 router.post('/api/admin/employees', requireAuth, requireRole('admin'), async (req, res) => { // Create a new employee.
   try {
-    const { name, email, password, department, title, phone, address, salary, status } = req.body;
+    const {
+      name,
+      email,
+      password,
+      department,
+      title,
+      phone,
+      address,
+      salary,
+      status,
+      profileImage
+    } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required.' });
@@ -134,6 +146,7 @@ router.post('/api/admin/employees', requireAuth, requireRole('admin'), async (re
       phone,
       address,
       salary: Number.isFinite(Number(salary)) ? Number(salary) : undefined,
+      profileImage: profileImage || '',
       status: status || 'active'
     });
 
@@ -146,7 +159,18 @@ router.post('/api/admin/employees', requireAuth, requireRole('admin'), async (re
 router.put('/api/admin/employees/:id', requireAuth, requireRole('admin'), async (req, res) => { // Update an employee.
   try {
     const { id } = req.params;
-    const { name, email, password, department, title, phone, address, salary, status } = req.body;
+    const {
+      name,
+      email,
+      password,
+      department,
+      title,
+      phone,
+      address,
+      salary,
+      status,
+      profileImage
+    } = req.body;
 
     const employee = await User.findOne({ _id: id, role: 'employee' });
     if (!employee) {
@@ -169,6 +193,7 @@ router.put('/api/admin/employees/:id', requireAuth, requireRole('admin'), async 
     if (salary !== undefined) employee.salary = Number.isFinite(Number(salary)) ? Number(salary) : employee.salary;
     if (status) employee.status = status;
     if (password) employee.passwordHash = await bcrypt.hash(password, 10);
+    if (profileImage !== undefined) employee.profileImage = profileImage;
 
     await employee.save();
     return res.json(toSafeEmployee(employee));

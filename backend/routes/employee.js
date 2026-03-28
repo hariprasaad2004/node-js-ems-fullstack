@@ -21,6 +21,7 @@ const toSafeEmployee = (user) => ({ // Sanitize employee data for API responses.
   phone: user.phone || '',
   address: user.address || '',
   salary: user.salary || 0,
+  profileImage: user.profileImage || '',
   status: user.status,
   createdAt: user.createdAt
 });

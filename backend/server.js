@@ -31,8 +31,8 @@ mongoose
     process.exit(1);
   });
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '3mb' }));
+app.use(express.urlencoded({ extended: false, limit: '3mb' }));
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
