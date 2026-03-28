@@ -460,27 +460,19 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                     return (
                       <div className="employee-card" key={employee.id}>
                         <div className="employee-card-top">
-                          <div className="employee-avatar">{initials}</div>
-                          <span
-                            className={`status-pill ${
-                              employee.status === 'active' ? '' : 'inactive'
-                            }`}
-                          >
-                            {employee.status}
-                          </span>
+                          <button className="card-menu" type="button" aria-label="More options">
+                            ...
+                          </button>
                         </div>
+                        <div className="employee-avatar">{initials}</div>
                         <h3 className="employee-name">{employee.name}</h3>
                         <p className="employee-role">{employee.title || 'Employee'}</p>
                         <div className="employee-meta">
-                          <div>
+                          <div className="employee-meta-row">
                             <span>Employee ID</span>
                             <strong>{idSuffix}</strong>
                           </div>
-                          <div>
-                            <span>Department</span>
-                            <strong>{employee.department || '-'}</strong>
-                          </div>
-                          <div>
+                          <div className="employee-meta-row">
                             <span>Join Date</span>
                             <strong>
                               {employee.createdAt ? formatDate(employee.createdAt) : '-'}
@@ -489,18 +481,20 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                         </div>
                         <div className="employee-actions">
                           <button
-                            className="btn-ghost"
+                            className="icon-btn"
                             type="button"
+                            aria-label="Edit employee"
                             onClick={() => handleEdit(employee)}
                           >
-                            Edit
+                            E
                           </button>
                           <button
-                            className="btn-danger"
+                            className="icon-btn danger"
                             type="button"
+                            aria-label="Delete employee"
                             onClick={() => handleDelete(employee)}
                           >
-                            Delete
+                            D
                           </button>
                         </div>
                       </div>
