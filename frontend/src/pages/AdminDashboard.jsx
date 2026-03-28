@@ -502,7 +502,8 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
             <h3>Day Stats</h3>
             <span className="stat-refresh">Refreshes Daily</span>
           </div>
-          <div className="stat-row">
+          <div className="stat-body">
+            <div className="stat-row">
             <div>
               <span>Tasks Today</span>
               <strong>{rangeStats.day.total}</strong>
@@ -511,13 +512,16 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               <span>Pending</span>
               <strong>{rangeStats.day.pending}</strong>
             </div>
-            <div>
-              <span>Performance</span>
-              <strong>{rangeStats.day.performance}%</strong>
-            </div>
           </div>
-          <div className="stat-progress">
-            <span style={{ width: `${rangeStats.day.performance}%` }} />
+            <div
+              className="stat-circle"
+              style={{ '--percent': rangeStats.day.performance }}
+            >
+              <div className="stat-circle-inner">
+                <span className="stat-circle-value">{rangeStats.day.performance}%</span>
+                <span className="stat-circle-label">Performance</span>
+              </div>
+            </div>
           </div>
           <div className="stat-next">Next refresh: {formatDateTime(rangeStats.nextDay)}</div>
         </div>
@@ -527,7 +531,8 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
             <h3>Week Stats</h3>
             <span className="stat-refresh">Refreshes Sunday</span>
           </div>
-          <div className="stat-row">
+          <div className="stat-body">
+            <div className="stat-row">
             <div>
               <span>Tasks This Week</span>
               <strong>{rangeStats.week.total}</strong>
@@ -536,13 +541,16 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               <span>Pending</span>
               <strong>{rangeStats.week.pending}</strong>
             </div>
-            <div>
-              <span>Performance</span>
-              <strong>{rangeStats.week.performance}%</strong>
-            </div>
           </div>
-          <div className="stat-progress">
-            <span style={{ width: `${rangeStats.week.performance}%` }} />
+            <div
+              className="stat-circle"
+              style={{ '--percent': rangeStats.week.performance }}
+            >
+              <div className="stat-circle-inner">
+                <span className="stat-circle-value">{rangeStats.week.performance}%</span>
+                <span className="stat-circle-label">Performance</span>
+              </div>
+            </div>
           </div>
           <div className="stat-next">Next refresh: {formatDateTime(rangeStats.nextWeek)}</div>
         </div>
@@ -552,7 +560,8 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
             <h3>Month Stats</h3>
             <span className="stat-refresh">Refreshes Month End</span>
           </div>
-          <div className="stat-row">
+          <div className="stat-body">
+            <div className="stat-row">
             <div>
               <span>Finished</span>
               <strong>{rangeStats.month.completed}</strong>
@@ -561,13 +570,16 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               <span>Pending</span>
               <strong>{rangeStats.month.pending}</strong>
             </div>
-            <div>
-              <span>Performance</span>
-              <strong>{rangeStats.month.performance}%</strong>
-            </div>
           </div>
-          <div className="stat-progress">
-            <span style={{ width: `${rangeStats.month.performance}%` }} />
+            <div
+              className="stat-circle"
+              style={{ '--percent': rangeStats.month.performance }}
+            >
+              <div className="stat-circle-inner">
+                <span className="stat-circle-value">{rangeStats.month.performance}%</span>
+                <span className="stat-circle-label">Performance</span>
+              </div>
+            </div>
           </div>
           <div className="stat-next">Next refresh: {formatDateTime(rangeStats.nextMonth)}</div>
         </div>

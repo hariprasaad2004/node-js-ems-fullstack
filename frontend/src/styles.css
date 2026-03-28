@@ -743,7 +743,7 @@ button:focus-visible,
 
 .stat-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   text-align: left;
 }
@@ -763,18 +763,46 @@ button:focus-visible,
   color: #101828;
 }
 
-.stat-progress {
-  height: 6px;
-  background: #e4e9f2;
-  border-radius: 999px;
-  overflow: hidden;
+.stat-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.stat-progress span {
-  display: block;
-  height: 100%;
-  background: var(--stat-accent);
-  border-radius: 999px;
+.stat-circle {
+  --size: 86px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: conic-gradient(var(--stat-accent) calc(var(--percent, 0) * 1%), #e4e9f2 0);
+  display: grid;
+  place-items: center;
+}
+
+.stat-circle-inner {
+  width: calc(var(--size) - 12px);
+  height: calc(var(--size) - 12px);
+  border-radius: 50%;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 6px;
+}
+
+.stat-circle-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #101828;
+}
+
+.stat-circle-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #98a2b3;
 }
 
 .stat-next {
@@ -1108,5 +1136,14 @@ button:focus-visible,
 
   .stat-row {
     grid-template-columns: 1fr;
+  }
+
+  .stat-body {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .stat-circle {
+    align-self: center;
   }
 }
