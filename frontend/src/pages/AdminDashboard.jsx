@@ -408,9 +408,13 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       />
 
       <main className="content">
-        <div className="page-header">
-          <h1 className="page-title">Admin Dashboard</h1>
-          <p className="helper">Manage employees, roles, and active status.</p>
+        <div className="content-card page-hero">
+          <div className="toolbar">
+            <div>
+              <h1 className="page-title">Admin Dashboard</h1>
+              <p className="helper">Manage employees, roles, and active status.</p>
+            </div>
+          </div>
         </div>
 
         <section

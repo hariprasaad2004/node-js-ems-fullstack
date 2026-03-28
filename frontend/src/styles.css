@@ -352,13 +352,6 @@ a {
   padding: 4px 2px;
 }
 
-.page-header .page-title {
-  margin-bottom: 0;
-}
-
-.page-header .helper {
-  margin: 0;
-}
 
 .overview-panel {
   background: linear-gradient(135deg, #f2fbfb 0%, #f8fffb 100%);

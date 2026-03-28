@@ -237,9 +237,13 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
         />
 
         <main className="content">
-          <div className="page-header">
-            <h1 className="page-title">Employee Dashboard</h1>
-            <p className="helper">View your profile and update personal contact info.</p>
+          <div className="content-card page-hero">
+            <div className="toolbar">
+              <div>
+                <h1 className="page-title">Employee Dashboard</h1>
+                <p className="helper">View your profile and update personal contact info.</p>
+              </div>
+            </div>
           </div>
 
           <section
