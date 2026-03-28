@@ -679,13 +679,6 @@ button:focus-visible,
   font-weight: 700;
 }
 
-.employee-filters {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(2, minmax(200px, 1fr));
-  align-items: end;
-  margin-top: 16px;
-}
 
 .overview-stats {
   display: grid;
@@ -765,7 +758,7 @@ button:focus-visible,
 
 .stat-body {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 20px;
 }
@@ -779,6 +772,7 @@ button:focus-visible,
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  align-self: center;
 }
 
 .stat-circle-inner {
@@ -797,6 +791,8 @@ button:focus-visible,
   font-size: 16px;
   font-weight: 700;
   color: #101828;
+  line-height: 1;
+  display: block;
 }
 
 .stat-circle-label {
@@ -804,6 +800,8 @@ button:focus-visible,
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #98a2b3;
+  line-height: 1.1;
+  display: block;
 }
 
 .stat-next {

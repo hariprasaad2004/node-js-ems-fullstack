@@ -456,35 +456,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
         </div>
       </div>
 
-      <div className="employee-filters">
-        <div className="filter-field">
-          <label htmlFor={`${idPrefix}-employee-status`}>Select Status</label>
-          <select
-            id={`${idPrefix}-employee-status`}
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
-        <div className="filter-field">
-          <label htmlFor={`${idPrefix}-employee-dept`}>Select Department</label>
-          <select
-            id={`${idPrefix}-employee-dept`}
-            value={departmentFilter}
-            onChange={(event) => setDepartmentFilter(event.target.value)}
-          >
-            <option value="all">All Departments</option>
-            {departments.map((dept) => (
-              <option key={dept} value={dept}>
-                {dept}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+
 
       <div className="overview-stats">
         <div className="stat-block" data-kind="day">
