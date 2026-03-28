@@ -298,7 +298,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       />
 
       <main className="content">
-        <div className="content-card">
+        <div className="content-card page-hero">
           <div className="toolbar">
             <div>
               <h1 className="page-title">Admin Dashboard</h1>
