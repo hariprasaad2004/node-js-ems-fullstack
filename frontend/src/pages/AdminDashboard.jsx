@@ -331,6 +331,72 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     window.location.assign('/login');
   };
 
+  const renderEmployeeOverview = (idPrefix) => (
+    <>
+      <div className="employee-metrics">
+        <div className="metric-card metric-total">
+          <div className="metric-label">Total Employees</div>
+          <div className="metric-value">{stats.total}</div>
+        </div>
+        <div className="metric-card metric-new">
+          <div className="metric-label">New (30 Days)</div>
+          <div className="metric-value">{stats.recent}</div>
+        </div>
+        <div className="metric-card metric-active">
+          <div className="metric-label">Active</div>
+          <div className="metric-value">{stats.active}</div>
+        </div>
+        <div className="metric-card metric-inactive">
+          <div className="metric-label">Inactive</div>
+          <div className="metric-value">{stats.inactive}</div>
+        </div>
+      </div>
+
+      <div className="employee-filters">
+        <div className="filter-field">
+          <label htmlFor={`${idPrefix}-employee-search`}>Employee Name</label>
+          <input
+            id={`${idPrefix}-employee-search`}
+            type="text"
+            placeholder="Search by name, email, or title"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </div>
+        <div className="filter-field">
+          <label htmlFor={`${idPrefix}-employee-status`}>Select Status</label>
+          <select
+            id={`${idPrefix}-employee-status`}
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div className="filter-field">
+          <label htmlFor={`${idPrefix}-employee-dept`}>Select Department</label>
+          <select
+            id={`${idPrefix}-employee-dept`}
+            value={departmentFilter}
+            onChange={(event) => setDepartmentFilter(event.target.value)}
+          >
+            <option value="all">All Departments</option>
+            {departments.map((dept) => (
+              <option key={dept} value={dept}>
+                {dept}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button className="btn-ghost filter-btn" type="button">
+          Search
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div className="dashboard">
       <Sidebar
@@ -338,6 +404,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
         items={navItems}
         activeSection={activeSection}
         onSelect={setActiveSection}
+        onLogout={handleLogout}
       />
 
       <main className="content">
@@ -347,9 +414,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               <h1 className="page-title">Admin Dashboard</h1>
               <p className="helper">Manage employees, roles, and active status.</p>
             </div>
-            <button className="btn-ghost" type="button" onClick={handleLogout}>
-              Logout
-            </button>
           </div>
         </div>
 
@@ -357,24 +421,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           className={`section ${activeSection === 'overview' ? 'active' : ''}`}
           data-section="overview"
         >
-          <div className="content-card">
-            <h2 className="content-title">Dashboard Overview</h2>
-            <p className="helper">Quick snapshot of your workforce and recent activity.</p>
-          </div>
-          <div className="stats">
-            <div className="content-card stat-card">
-              <div className="helper">Total Employees</div>
-              <div className="stat-value">{stats.total}</div>
-            </div>
-            <div className="content-card stat-card">
-              <div className="helper">Active</div>
-              <div className="stat-value">{stats.active}</div>
-            </div>
-            <div className="content-card stat-card">
-              <div className="helper">Inactive</div>
-              <div className="stat-value">{stats.inactive}</div>
-            </div>
-          </div>
+          <div className="content-card overview-panel">{renderEmployeeOverview('overview')}</div>
         </section>
 
         <section
@@ -393,67 +440,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                 </button>
               </div>
 
-              <div className="employee-metrics">
-                <div className="metric-card metric-total">
-                  <div className="metric-label">Total Employees</div>
-                  <div className="metric-value">{stats.total}</div>
-                </div>
-                <div className="metric-card metric-new">
-                  <div className="metric-label">New (30 Days)</div>
-                  <div className="metric-value">{stats.recent}</div>
-                </div>
-                <div className="metric-card metric-active">
-                  <div className="metric-label">Active</div>
-                  <div className="metric-value">{stats.active}</div>
-                </div>
-                <div className="metric-card metric-inactive">
-                  <div className="metric-label">Inactive</div>
-                  <div className="metric-value">{stats.inactive}</div>
-                </div>
-              </div>
-
-              <div className="employee-filters">
-                <div className="filter-field">
-                  <label htmlFor="employee-search">Employee Name</label>
-                  <input
-                    id="employee-search"
-                    type="text"
-                    placeholder="Search by name, email, or title"
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                  />
-                </div>
-                <div className="filter-field">
-                  <label htmlFor="employee-status">Select Status</label>
-                  <select
-                    id="employee-status"
-                    value={statusFilter}
-                    onChange={(event) => setStatusFilter(event.target.value)}
-                  >
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-                <div className="filter-field">
-                  <label htmlFor="employee-dept">Select Department</label>
-                  <select
-                    id="employee-dept"
-                    value={departmentFilter}
-                    onChange={(event) => setDepartmentFilter(event.target.value)}
-                  >
-                    <option value="all">All Departments</option>
-                    {departments.map((dept) => (
-                      <option key={dept} value={dept}>
-                        {dept}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button className="btn-ghost filter-btn" type="button">
-                  Search
-                </button>
-              </div>
+              {renderEmployeeOverview('employees')}
 
               {employeeError ? (
                 <div className="notice">{employeeError}</div>

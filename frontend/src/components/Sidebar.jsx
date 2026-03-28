@@ -1,4 +1,11 @@
-export default function Sidebar({ title, items, activeSection, onSelect }) { // Sidebar navigation component.
+export default function Sidebar({
+  title,
+  items,
+  activeSection,
+  onSelect,
+  onLogout,
+  logoutLabel = 'Logout'
+}) { // Sidebar navigation component.
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -27,6 +34,13 @@ export default function Sidebar({ title, items, activeSection, onSelect }) { // 
           </div>
         ))}
       </nav>
+      {onLogout ? (
+        <div className="sidebar-footer">
+          <button className="btn-ghost sidebar-logout" type="button" onClick={onLogout}>
+            {logoutLabel}
+          </button>
+        </div>
+      ) : null}
     </aside>
   );
 }
