@@ -393,6 +393,16 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     return formatted === '-' ? 'No due time' : formatted;
   };
 
+  const getTaskInitials = (name) => {
+    if (!name) return 'UN';
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0].toUpperCase())
+      .join('');
+  };
+
   const handleOpenInfo = (employee) => { // Open employee info modal.
     setInfoEmployee(employee);
   };
@@ -1145,17 +1155,19 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                   const dueTone = getTaskDueTone(task);
                   const employeeName = task.employee?.name || 'Unknown';
                   const employeeEmail = task.employee?.email || '';
+                  const initials = getTaskInitials(employeeName);
                   return (
                     <article className="task-card" key={task.id}>
                       <div className="task-card-top">
-                        <div>
-                          <h3 className="task-employee">{employeeName}</h3>
-                          <p className="task-email">{employeeEmail || 'No email'}</p>
-                        </div>
                         <span className={`task-pill ${statusTone}`}>
                           {formatStatus(task.status)}
                         </span>
                       </div>
+                      <div className="task-avatar" aria-hidden="true">
+                        {initials}
+                      </div>
+                      <h3 className="task-employee">{employeeName}</h3>
+                      <p className="task-email">{employeeEmail || 'No email'}</p>
                       <p className="task-details">{task.details || '-'}</p>
                       <div className="task-meta">
                         <div className="task-meta-item">
