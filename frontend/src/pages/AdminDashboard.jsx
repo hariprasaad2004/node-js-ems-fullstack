@@ -440,8 +440,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                 </button>
               </div>
 
-              {renderEmployeeOverview('employees')}
-
               {employeeError ? (
                 <div className="notice">{employeeError}</div>
               ) : filteredEmployees.length === 0 ? (
