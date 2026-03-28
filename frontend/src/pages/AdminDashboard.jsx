@@ -469,7 +469,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                     return (
                       <div className="employee-card" key={employee.id}>
                         <div className="employee-card-top">
-                          <div className="employee-avatar">{initials}</div>
                           <button
                             className="card-menu"
                             type="button"
@@ -479,7 +478,9 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                             ...
                           </button>
                         </div>
+                        <div className="employee-avatar">{initials}</div>
                         <h3 className="employee-name">{employee.name}</h3>
+                        <p className="employee-role">{employee.title || 'Employee'}</p>
                         <div className="employee-id">ID: {idSuffix}</div>
                       </div>
                     );
