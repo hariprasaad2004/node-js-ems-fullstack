@@ -4,7 +4,7 @@ const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const LeaveRequest = require('../models/LeaveRequest');
 const Task = require('../models/Task');
-const { requireAuth, requireRole } = require('../middleware/auth');
+const { requireAuth, requireRole, getRoleSession } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -67,18 +67,16 @@ const toSafeTask = (task) => ({ // Sanitize task records for API responses.
 });
 
 router.get('/employee', (req, res) => { // Serve the SPA for the employee route with role checks.
-  if (!req.session.userId) {
+  const employeeSession = getRoleSession(req, 'employee');
+  if (!employeeSession?.userId) {
     return res.redirect('/login');
-  }
-  if (req.session.role !== 'employee') {
-    return res.redirect('/admin');
   }
   return res.sendFile(frontendIndex);
 });
 
 router.get('/api/employee/me', requireAuth, requireRole('employee'), async (req, res) => { // Fetch employee profile.
   try {
-    const user = await User.findById(req.session.userId);
+    const user = await User.findById(req.userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
@@ -91,7 +89,7 @@ router.get('/api/employee/me', requireAuth, requireRole('employee'), async (req,
 router.put('/api/employee/me', requireAuth, requireRole('employee'), async (req, res) => { // Update employee profile.
   try {
     const { phone, address } = req.body;
-    const user = await User.findById(req.session.userId);
+    const user = await User.findById(req.userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
@@ -108,7 +106,7 @@ router.put('/api/employee/me', requireAuth, requireRole('employee'), async (req,
 
 router.get('/api/employee/attendance', requireAuth, requireRole('employee'), async (req, res) => { // List attendance records.
   try {
-    const records = await Attendance.find({ employee: req.session.userId })
+    const records = await Attendance.find({ employee: req.userId })
       .sort({ checkInAt: -1 })
       .limit(20);
     return res.json(records.map(toSafeAttendance));
@@ -121,7 +119,7 @@ router.post('/api/employee/attendance/check-in', requireAuth, requireRole('emplo
   try {
     const now = new Date();
     const dateKey = formatDateKey(now);
-    const existing = await Attendance.findOne({ employee: req.session.userId, dateKey });
+    const existing = await Attendance.findOne({ employee: req.userId, dateKey });
     if (existing) {
       const message = existing.checkOutAt
         ? 'Attendance already recorded for today.'
@@ -130,7 +128,7 @@ router.post('/api/employee/attendance/check-in', requireAuth, requireRole('emplo
     }
 
     const record = await Attendance.create({
-      employee: req.session.userId,
+      employee: req.userId,
       dateKey,
       checkInAt: now
     });
@@ -139,7 +137,7 @@ router.post('/api/employee/attendance/check-in', requireAuth, requireRole('emplo
   } catch (err) {
     if (err && err.code === 11000) {
       const dateKey = formatDateKey();
-      const existing = await Attendance.findOne({ employee: req.session.userId, dateKey });
+      const existing = await Attendance.findOne({ employee: req.userId, dateKey });
       if (existing) {
         return res.status(200).json({
           ...toSafeAttendance(existing),
@@ -159,7 +157,7 @@ router.post(
     try {
       const now = new Date();
       const dateKey = formatDateKey(now);
-      const record = await Attendance.findOne({ employee: req.session.userId, dateKey });
+      const record = await Attendance.findOne({ employee: req.userId, dateKey });
       if (!record) {
         return res.status(400).json({ message: 'No check-in found for today.' });
       }
@@ -180,7 +178,7 @@ router.post(
 
 router.get('/api/employee/leave', requireAuth, requireRole('employee'), async (req, res) => { // List leave requests.
   try {
-    const leaves = await LeaveRequest.find({ employee: req.session.userId })
+    const leaves = await LeaveRequest.find({ employee: req.userId })
       .sort({ createdAt: -1 })
       .limit(20);
     return res.json(leaves.map(toSafeLeave));
@@ -223,7 +221,7 @@ router.post('/api/employee/leave', requireAuth, requireRole('employee'), async (
     }
 
     const leave = await LeaveRequest.create({
-      employee: req.session.userId,
+      employee: req.userId,
       fromDate: from,
       toDate: to,
       category: leaveCategory,
@@ -238,7 +236,7 @@ router.post('/api/employee/leave', requireAuth, requireRole('employee'), async (
 
 router.get('/api/employee/tasks', requireAuth, requireRole('employee'), async (req, res) => { // List assigned tasks.
   try {
-    const tasks = await Task.find({ employee: req.session.userId })
+    const tasks = await Task.find({ employee: req.userId })
       .sort({ createdAt: -1 })
       .limit(20)
       .populate('assignedBy', 'name email');
@@ -256,7 +254,7 @@ router.patch('/api/employee/tasks/:id', requireAuth, requireRole('employee'), as
       return res.status(400).json({ message: 'Invalid task status.' });
     }
 
-    const task = await Task.findOne({ _id: id, employee: req.session.userId }).populate(
+    const task = await Task.findOne({ _id: id, employee: req.userId }).populate(
       'assignedBy',
       'name email'
     );

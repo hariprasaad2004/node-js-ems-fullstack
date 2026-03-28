@@ -218,7 +218,10 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
   };
 
   const handleLogout = async () => { // Logout and redirect to login.
-    await apiRequest('/logout', { method: 'POST' });
+    await apiRequest('/logout', {
+      method: 'POST',
+      body: JSON.stringify({ role: 'employee' })
+    });
     window.location.assign('/login');
   };
 

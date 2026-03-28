@@ -281,7 +281,10 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   };
 
   const handleLogout = async () => { // Logout and redirect to login.
-    await apiRequest('/logout', { method: 'POST' });
+    await apiRequest('/logout', {
+      method: 'POST',
+      body: JSON.stringify({ role: 'admin' })
+    });
     window.location.assign('/login');
   };
 

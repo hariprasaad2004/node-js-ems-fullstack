@@ -9,9 +9,6 @@ const rootDir = path.join(__dirname, '..', '..');
 const frontendIndex = path.join(rootDir, 'frontend', 'dist', 'index.html');
 
 router.get('/login', (req, res) => { // Serve the SPA for the login route.
-  if (req.session.userId) {
-    return res.redirect('/');
-  }
   return res.sendFile(frontendIndex);
 });
 
@@ -41,8 +38,11 @@ router.post('/login', async (req, res) => { // Handle login and create a session
       }
     }
 
-    req.session.userId = user._id.toString();
-    req.session.role = user.role;
+    if (!req.session.roles) {
+      req.session.roles = {};
+    }
+    req.session.roles[user.role] = { userId: user._id.toString() };
+    req.session.lastRole = user.role;
 
     return res.json({ role: user.role });
   } catch (err) {
@@ -51,9 +51,20 @@ router.post('/login', async (req, res) => { // Handle login and create a session
 });
 
 router.post('/logout', (req, res) => { // Destroy the session and log out.
-  req.session.destroy(() => {
-    res.json({ ok: true });
-  });
+  const role = req.body?.role || req.query?.role;
+
+  if (role) {
+    if (req.session?.roles?.[role]) {
+      delete req.session.roles[role];
+      if (Object.keys(req.session.roles).length === 0) {
+        return req.session.destroy(() => res.json({ ok: true }));
+      }
+      return req.session.save(() => res.json({ ok: true }));
+    }
+    return res.json({ ok: true });
+  }
+
+  return req.session.destroy(() => res.json({ ok: true }));
 });
 
 module.exports = router;

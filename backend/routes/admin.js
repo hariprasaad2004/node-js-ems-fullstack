@@ -5,7 +5,7 @@ const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const LeaveRequest = require('../models/LeaveRequest');
 const Task = require('../models/Task');
-const { requireAuth, requireRole } = require('../middleware/auth');
+const { requireAuth, requireRole, getRoleSession } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -93,11 +93,9 @@ const toSafeTask = (task) => ({ // Sanitize task records for API responses.
 });
 
 router.get('/admin', (req, res) => { // Serve the SPA for the admin route with role checks.
-  if (!req.session.userId) {
+  const adminSession = getRoleSession(req, 'admin');
+  if (!adminSession?.userId) {
     return res.redirect('/login');
-  }
-  if (req.session.role !== 'admin') {
-    return res.redirect('/employee');
   }
   return res.sendFile(frontendIndex);
 });
@@ -353,7 +351,7 @@ router.patch('/api/admin/leave/:id', requireAuth, requireRole('admin'), async (r
     }
 
     leave.status = status;
-    leave.reviewedBy = req.session.userId;
+    leave.reviewedBy = req.userId;
     leave.reviewedAt = new Date();
     await leave.save();
 
@@ -398,7 +396,7 @@ router.post('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, r
 
     const task = await Task.create({
       employee: employee._id,
-      assignedBy: req.session.userId,
+      assignedBy: req.userId,
       details: String(details).trim(),
       status: 'planning',
       dueAt: parsedDueAt
