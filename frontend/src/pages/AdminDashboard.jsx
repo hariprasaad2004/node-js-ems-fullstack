@@ -458,16 +458,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
 
       <div className="employee-filters">
         <div className="filter-field">
-          <label htmlFor={`${idPrefix}-employee-search`}>Employee Name</label>
-          <input
-            id={`${idPrefix}-employee-search`}
-            type="text"
-            placeholder="Search by name, email, or title"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-        </div>
-        <div className="filter-field">
           <label htmlFor={`${idPrefix}-employee-status`}>Select Status</label>
           <select
             id={`${idPrefix}-employee-status`}
