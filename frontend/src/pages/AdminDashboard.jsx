@@ -469,6 +469,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                     return (
                       <div className="employee-card" key={employee.id}>
                         <div className="employee-card-top">
+                          <div className="employee-avatar">{initials}</div>
                           <button
                             className="card-menu"
                             type="button"
@@ -478,47 +479,8 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                             ...
                           </button>
                         </div>
-                        <div className="employee-avatar">{initials}</div>
                         <h3 className="employee-name">{employee.name}</h3>
-                        <div className="employee-role-pill">{employee.title || 'Employee'}</div>
-                        <div className="employee-meta">
-                          <div className="employee-meta-row">
-                            <span>Employee ID</span>
-                            <strong>{idSuffix}</strong>
-                          </div>
-                          <div className="employee-meta-row">
-                            <span>Join Date</span>
-                            <strong>
-                              {employee.createdAt ? formatDate(employee.createdAt) : '-'}
-                            </strong>
-                          </div>
-                        </div>
-                        <div className="employee-actions icon-row">
-                          <button
-                            className="icon-btn"
-                            type="button"
-                            aria-label="Edit employee"
-                            onClick={() => handleEdit(employee)}
-                          >
-                            E
-                          </button>
-                          <button
-                            className="icon-btn"
-                            type="button"
-                            aria-label="Employee details"
-                            onClick={() => handleOpenInfo(employee)}
-                          >
-                            I
-                          </button>
-                          <button
-                            className="icon-btn danger"
-                            type="button"
-                            aria-label="Delete employee"
-                            onClick={() => handleDelete(employee)}
-                          >
-                            D
-                          </button>
-                        </div>
+                        <div className="employee-id">ID: {idSuffix}</div>
                       </div>
                     );
                   })}
