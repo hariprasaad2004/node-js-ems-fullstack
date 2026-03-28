@@ -50,6 +50,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [leaveStatus, setLeaveStatus] = useState({ message: '', isError: false });
   const [taskStatus, setTaskStatus] = useState({ message: '', isError: false });
   const [taskForm, setTaskForm] = useState(initialTaskState);
+  const [infoEmployee, setInfoEmployee] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -250,6 +251,14 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     setEditingId(null);
     setFormData(initialFormState);
     setFormStatus({ message: '', isError: false });
+  };
+
+  const handleOpenInfo = (employee) => { // Open employee info modal.
+    setInfoEmployee(employee);
+  };
+
+  const handleCloseInfo = () => { // Close employee info modal.
+    setInfoEmployee(null);
   };
 
   const handleDelete = async (employee) => { // Delete an employee after confirmation.
@@ -461,46 +470,17 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                       <div className="employee-card" key={employee.id}>
                         <div className="employee-card-top">
                           <div className="employee-avatar">{initials}</div>
-                          <span
-                            className={`status-pill ${employee.status === 'active' ? '' : 'inactive'}`}
+                          <button
+                            className="card-menu"
+                            type="button"
+                            aria-label="Employee info"
+                            onClick={() => handleOpenInfo(employee)}
                           >
-                            {employee.status}
-                          </span>
+                            ...
+                          </button>
                         </div>
                         <h3 className="employee-name">{employee.name}</h3>
-                        <p className="employee-role">{employee.title || 'Employee'}</p>
-                        <div className="employee-meta">
-                          <div>
-                            <span>Employee ID</span>
-                            <strong>{idSuffix}</strong>
-                          </div>
-                          <div>
-                            <span>Department</span>
-                            <strong>{employee.department || '-'}</strong>
-                          </div>
-                          <div>
-                            <span>Join Date</span>
-                            <strong>
-                              {employee.createdAt ? formatDate(employee.createdAt) : '-'}
-                            </strong>
-                          </div>
-                        </div>
-                        <div className="employee-actions">
-                          <button
-                            className="btn-ghost"
-                            type="button"
-                            onClick={() => handleEdit(employee)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="btn-danger"
-                            type="button"
-                            onClick={() => handleDelete(employee)}
-                          >
-                            Delete
-                          </button>
-                        </div>
+                        <div className="employee-id">ID: {idSuffix}</div>
                       </div>
                     );
                   })}
@@ -637,6 +617,88 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                   </p>
                 </div>
               </form>
+            </div>
+          </div>
+        ) : null}
+
+        {infoEmployee ? (
+          <div className="modal active" aria-hidden={!infoEmployee}>
+            <div className="modal-backdrop" onClick={handleCloseInfo} />
+            <div
+              className="modal-card info-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="employee-info-title"
+            >
+              <div className="modal-header">
+                <div>
+                  <h3 id="employee-info-title">Employee Details</h3>
+                  <p className="helper">{infoEmployee.name}</p>
+                </div>
+                <button className="btn-ghost modal-close" type="button" onClick={handleCloseInfo}>
+                  Close
+                </button>
+              </div>
+
+              <div className="info-grid">
+                <div>
+                  <span>Employee ID</span>
+                  <strong>{infoEmployee.id ? infoEmployee.id.slice(-6).toUpperCase() : 'N/A'}</strong>
+                </div>
+                <div>
+                  <span>Status</span>
+                  <strong>{infoEmployee.status}</strong>
+                </div>
+                <div>
+                  <span>Title</span>
+                  <strong>{infoEmployee.title || '-'}</strong>
+                </div>
+                <div>
+                  <span>Department</span>
+                  <strong>{infoEmployee.department || '-'}</strong>
+                </div>
+                <div>
+                  <span>Email</span>
+                  <strong>{infoEmployee.email}</strong>
+                </div>
+                <div>
+                  <span>Phone</span>
+                  <strong>{infoEmployee.phone || '-'}</strong>
+                </div>
+                <div>
+                  <span>Address</span>
+                  <strong>{infoEmployee.address || '-'}</strong>
+                </div>
+                <div>
+                  <span>Join Date</span>
+                  <strong>
+                    {infoEmployee.createdAt ? formatDate(infoEmployee.createdAt) : '-'}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button
+                  className="btn-ghost"
+                  type="button"
+                  onClick={() => {
+                    handleCloseInfo();
+                    handleEdit(infoEmployee);
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  className="btn-danger"
+                  type="button"
+                  onClick={() => {
+                    handleCloseInfo();
+                    handleDelete(infoEmployee);
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         ) : null}
