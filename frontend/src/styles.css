@@ -684,6 +684,7 @@ button:focus-visible,
   gap: 12px;
   grid-template-columns: minmax(200px, 1.4fr) repeat(2, minmax(160px, 1fr)) auto;
   align-items: end;
+  margin-top: 16px;
 }
 
 .filter-field {
