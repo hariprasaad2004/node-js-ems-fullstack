@@ -77,6 +77,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [formData, setFormData] = useState(initialFormState);
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [showTaskForm, setShowTaskForm] = useState(false);
   const [formStatus, setFormStatus] = useState({ message: '', isError: false });
   const [leaveStatus, setLeaveStatus] = useState({ message: '', isError: false });
   const [taskStatus, setTaskStatus] = useState({ message: '', isError: false });
@@ -346,6 +347,22 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     setEditingId(null);
     setFormData(initialFormState);
     setFormStatus({ message: '', isError: false });
+  };
+
+  const handleToggleTaskForm = () => { // Show or hide the assign task form.
+    setShowTaskForm((prev) => {
+      const next = !prev;
+      if (next) {
+        setTaskStatus({ message: '', isError: false });
+      }
+      return next;
+    });
+  };
+
+  const handleCloseTaskForm = () => { // Close the task modal and reset state.
+    setShowTaskForm(false);
+    setTaskForm(initialTaskState);
+    setTaskStatus({ message: '', isError: false });
   };
 
   const handleOpenInfo = (employee) => { // Open employee info modal.
@@ -799,6 +816,79 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           </div>
         ) : null}
 
+        {showTaskForm ? (
+          <div className="modal active" aria-hidden={!showTaskForm}>
+            <div className="modal-backdrop" onClick={handleCloseTaskForm} />
+            <div
+              className="modal-card form-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="task-form-title"
+            >
+              <div className="modal-header">
+                <div>
+                  <h3 id="task-form-title">Assign Task</h3>
+                  <p className="helper">Select an employee and set a due time.</p>
+                </div>
+                <button className="btn-ghost modal-close" type="button" onClick={handleCloseTaskForm}>
+                  Close
+                </button>
+              </div>
+
+              <form className="form-grid" onSubmit={handleAssignTask}>
+                <div>
+                  <label htmlFor="task-employee">Employee</label>
+                  <select
+                    id="task-employee"
+                    name="employeeId"
+                    value={taskForm.employeeId}
+                    onChange={handleTaskChange}
+                    disabled={employees.length === 0}
+                  >
+                    <option value="">
+                      {employees.length === 0 ? 'No employees available' : 'Select employee'}
+                    </option>
+                    {employees.map((employee) => (
+                      <option key={employee.id} value={employee.id}>
+                        {formatEmployeeLabel(employee)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="task-details">Task</label>
+                  <textarea
+                    id="task-details"
+                    name="details"
+                    placeholder="Describe the task"
+                    value={taskForm.details}
+                    onChange={handleTaskChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="task-due">Due Time</label>
+                  <input
+                    id="task-due"
+                    name="dueAt"
+                    type="datetime-local"
+                    value={taskForm.dueAt}
+                    onChange={handleTaskChange}
+                  />
+                </div>
+                <button className="btn-primary" type="submit">
+                  Assign
+                </button>
+                <p
+                  className="helper"
+                  style={{ color: taskStatus.isError ? '#c13e2d' : '#0e7c7b' }}
+                >
+                  {taskStatus.message}
+                </p>
+              </form>
+            </div>
+          </div>
+        ) : null}
+
         {infoEmployee ? (
           <div className="modal active" aria-hidden={!infoEmployee}>
             <div className="modal-backdrop" onClick={handleCloseInfo} />
@@ -1007,57 +1097,15 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           data-section="tasks"
         >
           <div className="content-card">
-            <h2 className="content-title">Assign Task</h2>
-            <form className="form-grid" onSubmit={handleAssignTask}>
+            <div className="employee-header">
               <div>
-                <label htmlFor="task-employee">Employee</label>
-                <select
-                  id="task-employee"
-                  name="employeeId"
-                  value={taskForm.employeeId}
-                  onChange={handleTaskChange}
-                  disabled={employees.length === 0}
-                >
-                  <option value="">
-                    {employees.length === 0 ? 'No employees available' : 'Select employee'}
-                  </option>
-                  {employees.map((employee) => (
-                    <option key={employee.id} value={employee.id}>
-                      {formatEmployeeLabel(employee)}
-                    </option>
-                  ))}
-                </select>
+                <h2 className="content-title">Assign Task</h2>
+                <p className="helper">Assign tasks and track progress.</p>
               </div>
-              <div>
-                <label htmlFor="task-details">Task</label>
-                <textarea
-                  id="task-details"
-                  name="details"
-                  placeholder="Describe the task"
-                  value={taskForm.details}
-                  onChange={handleTaskChange}
-                />
-              </div>
-              <div>
-                <label htmlFor="task-due">Due Time</label>
-                <input
-                  id="task-due"
-                  name="dueAt"
-                  type="datetime-local"
-                  value={taskForm.dueAt}
-                  onChange={handleTaskChange}
-                />
-              </div>
-              <button className="btn-primary" type="submit">
-                Assign
+              <button className="btn-primary" type="button" onClick={handleToggleTaskForm}>
+                Assign Task
               </button>
-              <p
-                className="helper"
-                style={{ color: taskStatus.isError ? '#c13e2d' : '#0e7c7b' }}
-              >
-                {taskStatus.message}
-              </p>
-            </form>
+            </div>
             <table className="table table-responsive">
               <thead>
                 <tr>
