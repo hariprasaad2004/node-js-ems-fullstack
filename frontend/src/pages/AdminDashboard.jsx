@@ -245,6 +245,13 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     });
   };
 
+  const handleCloseForm = () => { // Close the form modal and reset state.
+    setShowForm(false);
+    setEditingId(null);
+    setFormData(initialFormState);
+    setFormStatus({ message: '', isError: false });
+  };
+
   const handleDelete = async (employee) => { // Delete an employee after confirmation.
     if (!window.confirm('Delete this employee?')) return;
 
@@ -518,93 +525,119 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               )}
             </div>
 
-            {showForm ? (
-              <div className="content-card">
-                <h2 className="content-title">Add / Edit Employee</h2>
-                <form className="form-grid" onSubmit={handleSubmit}>
-                  <div>
-                    <label htmlFor="name">Full Name</label>
-                    <input
-                      id="name"
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={handleFormChange}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="email">Email</label>
-                    <input
-                      id="email"
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={handleFormChange}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="password">Password</label>
-                    <input
-                      id="password"
-                      type="text"
-                      placeholder={
-                        editingId ? 'Leave blank to keep existing password' : 'Set initial password'
-                      }
-                      value={formData.password}
-                      onChange={handleFormChange}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="department">Department</label>
-                    <input
-                      id="department"
-                      type="text"
-                      value={formData.department}
-                      onChange={handleFormChange}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="title">Job Title</label>
-                    <input
-                      id="title"
-                      type="text"
-                      value={formData.title}
-                      onChange={handleFormChange}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="phone">Phone</label>
-                    <input
-                      id="phone"
-                      type="text"
-                      value={formData.phone}
-                      onChange={handleFormChange}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="address">Address</label>
-                    <textarea
-                      id="address"
-                      value={formData.address}
-                      onChange={handleFormChange}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="salary">Salary</label>
-                    <input
-                      id="salary"
-                      type="number"
-                      value={formData.salary}
-                      onChange={handleFormChange}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="status">Status</label>
-                    <select id="status" value={formData.status} onChange={handleFormChange}>
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
-                  </div>
+          </div>
+        </section>
+
+        {showForm ? (
+          <div className="modal active" aria-hidden={!showForm}>
+            <div className="modal-backdrop" onClick={handleCloseForm} />
+            <div
+              className="modal-card form-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="employee-form-title"
+            >
+              <div className="modal-header">
+                <div>
+                  <h3 id="employee-form-title">
+                    {editingId ? 'Edit Employee' : 'Add Employee'}
+                  </h3>
+                  <p className="helper">
+                    {editingId
+                      ? 'Update employee details and status.'
+                      : 'Fill in employee details to add them to the system.'}
+                  </p>
+                </div>
+                <button className="btn-ghost modal-close" type="button" onClick={handleCloseForm}>
+                  Close
+                </button>
+              </div>
+
+              <form className="form-grid modal-grid" onSubmit={handleSubmit}>
+                <div>
+                  <label htmlFor="name">Full Name</label>
+                  <input
+                    id="name"
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={handleFormChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email">Email</label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={handleFormChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password">Password</label>
+                  <input
+                    id="password"
+                    type="text"
+                    placeholder={
+                      editingId ? 'Leave blank to keep existing password' : 'Set initial password'
+                    }
+                    value={formData.password}
+                    onChange={handleFormChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="department">Department</label>
+                  <input
+                    id="department"
+                    type="text"
+                    value={formData.department}
+                    onChange={handleFormChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="title">Job Title</label>
+                  <input
+                    id="title"
+                    type="text"
+                    value={formData.title}
+                    onChange={handleFormChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="phone">Phone</label>
+                  <input
+                    id="phone"
+                    type="text"
+                    value={formData.phone}
+                    onChange={handleFormChange}
+                  />
+                </div>
+                <div className="span-2">
+                  <label htmlFor="address">Address</label>
+                  <textarea
+                    id="address"
+                    value={formData.address}
+                    onChange={handleFormChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="salary">Salary</label>
+                  <input
+                    id="salary"
+                    type="number"
+                    value={formData.salary}
+                    onChange={handleFormChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="status">Status</label>
+                  <select id="status" value={formData.status} onChange={handleFormChange}>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+                <div className="span-2 form-actions">
                   <button className="btn-primary" type="submit">
                     {editingId ? 'Update Employee' : 'Add Employee'}
                   </button>
@@ -619,11 +652,11 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                   >
                     {formStatus.message}
                   </p>
-                </form>
-              </div>
-            ) : null}
+                </div>
+              </form>
+            </div>
           </div>
-        </section>
+        ) : null}
 
         <section
           className={`section ${activeSection === 'leave' ? 'active' : ''}`}
