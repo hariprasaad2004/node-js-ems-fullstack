@@ -848,7 +848,7 @@ button:focus-visible,
   font-weight: 700;
   color: #2f6fed;
   font-size: 14px;
-  margin: 4px auto 0;
+  margin: 6px auto 8px;
 }
 
 .employee-avatar img {
