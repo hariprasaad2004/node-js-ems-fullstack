@@ -233,19 +233,13 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
           items={navItems}
           activeSection={activeSection}
           onSelect={setActiveSection}
+          onLogout={handleLogout}
         />
 
         <main className="content">
-          <div className="content-card page-hero">
-            <div className="toolbar">
-              <div>
-                <h1 className="page-title">Employee Dashboard</h1>
-                <p className="helper">View your profile and update personal contact info.</p>
-              </div>
-              <button className="btn-ghost" type="button" onClick={handleLogout}>
-                Logout
-              </button>
-            </div>
+          <div className="page-header">
+            <h1 className="page-title">Employee Dashboard</h1>
+            <p className="helper">View your profile and update personal contact info.</p>
           </div>
 
           <section

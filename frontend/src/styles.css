@@ -346,6 +346,12 @@ a {
   box-shadow: 0 22px 40px rgba(47, 111, 237, 0.08);
 }
 
+.page-header {
+  display: grid;
+  gap: 6px;
+  padding: 4px 2px;
+}
+
 .overview-panel {
   background: linear-gradient(135deg, #f2fbfb 0%, #f8fffb 100%);
   border: 1px solid #d7f0ed;
