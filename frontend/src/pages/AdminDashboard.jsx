@@ -51,11 +51,47 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [taskStatus, setTaskStatus] = useState({ message: '', isError: false });
   const [taskForm, setTaskForm] = useState(initialTaskState);
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [departmentFilter, setDepartmentFilter] = useState('all');
+
   const stats = useMemo(() => {
     const total = employees.length;
     const active = employees.filter((emp) => emp.status === 'active').length;
-    return { total, active, inactive: total - active };
+    const recentCutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const recent = employees.filter((emp) => {
+      if (!emp.createdAt) return false;
+      return new Date(emp.createdAt).getTime() >= recentCutoff;
+    }).length;
+    return { total, active, inactive: total - active, recent };
   }, [employees]);
+
+  const departments = useMemo(() => {
+    const unique = new Set();
+    employees.forEach((emp) => {
+      if (emp.department) unique.add(emp.department);
+    });
+    return Array.from(unique).sort((a, b) => a.localeCompare(b));
+  }, [employees]);
+
+  const filteredEmployees = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return employees.filter((emp) => {
+      if (statusFilter !== 'all' && emp.status !== statusFilter) {
+        return false;
+      }
+      if (departmentFilter !== 'all' && emp.department !== departmentFilter) {
+        return false;
+      }
+      if (!term) return true;
+      return (
+        emp.name?.toLowerCase().includes(term) ||
+        emp.email?.toLowerCase().includes(term) ||
+        emp.title?.toLowerCase().includes(term) ||
+        emp.department?.toLowerCase().includes(term)
+      );
+    });
+  }, [employees, searchTerm, statusFilter, departmentFilter]);
 
   useEffect(() => {
     loadEmployees();
@@ -339,41 +375,100 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           data-section="employees"
         >
           <div className="grid-2">
-            <div className="content-card">
-              <div className="toolbar">
-                <h2 className="content-title">Employees</h2>
+            <div className="content-card employee-panel">
+              <div className="employee-header">
+                <div>
+                  <h2 className="content-title">Employee</h2>
+                  <p className="helper">Manage team members, roles, and status.</p>
+                </div>
                 <button className="btn-primary" type="button" onClick={handleToggleForm}>
                   {showForm ? 'Hide Form' : 'Add Employee'}
                 </button>
               </div>
-              <table className="table table-responsive">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Department</th>
-                    <th>Title</th>
-                    <th>Email</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {employeeError ? (
-                    <tr>
-                      <td colSpan="6">{employeeError}</td>
-                    </tr>
-                  ) : employees.length === 0 ? (
-                    <tr>
-                      <td colSpan="6">No employees found.</td>
-                    </tr>
-                  ) : (
-                    employees.map((employee) => (
-                      <tr key={employee.id}>
-                        <td data-label="Name">{employee.name}</td>
-                        <td data-label="Department">{employee.department || '-'}</td>
-                        <td data-label="Title">{employee.title || '-'}</td>
-                        <td data-label="Email">{employee.email}</td>
-                        <td data-label="Status">
+
+              <div className="employee-metrics">
+                <div className="metric-card metric-total">
+                  <div className="metric-label">Total Employees</div>
+                  <div className="metric-value">{stats.total}</div>
+                </div>
+                <div className="metric-card metric-new">
+                  <div className="metric-label">New (30 Days)</div>
+                  <div className="metric-value">{stats.recent}</div>
+                </div>
+                <div className="metric-card metric-active">
+                  <div className="metric-label">Active</div>
+                  <div className="metric-value">{stats.active}</div>
+                </div>
+                <div className="metric-card metric-inactive">
+                  <div className="metric-label">Inactive</div>
+                  <div className="metric-value">{stats.inactive}</div>
+                </div>
+              </div>
+
+              <div className="employee-filters">
+                <div className="filter-field">
+                  <label htmlFor="employee-search">Employee Name</label>
+                  <input
+                    id="employee-search"
+                    type="text"
+                    placeholder="Search by name, email, or title"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                  />
+                </div>
+                <div className="filter-field">
+                  <label htmlFor="employee-status">Select Status</label>
+                  <select
+                    id="employee-status"
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value)}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+                <div className="filter-field">
+                  <label htmlFor="employee-dept">Select Department</label>
+                  <select
+                    id="employee-dept"
+                    value={departmentFilter}
+                    onChange={(event) => setDepartmentFilter(event.target.value)}
+                  >
+                    <option value="all">All Departments</option>
+                    {departments.map((dept) => (
+                      <option key={dept} value={dept}>
+                        {dept}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button className="btn-ghost filter-btn" type="button">
+                  Search
+                </button>
+              </div>
+
+              {employeeError ? (
+                <div className="notice">{employeeError}</div>
+              ) : filteredEmployees.length === 0 ? (
+                <div className="notice">No employees match your filters.</div>
+              ) : (
+                <div className="employee-grid">
+                  {filteredEmployees.map((employee) => {
+                    const initials = employee.name
+                      ? employee.name
+                          .split(' ')
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .map((part) => part[0])
+                          .join('')
+                          .toUpperCase()
+                      : 'EM';
+                    const idSuffix = employee.id ? employee.id.slice(-6).toUpperCase() : 'N/A';
+                    return (
+                      <div className="employee-card" key={employee.id}>
+                        <div className="employee-card-top">
+                          <div className="employee-avatar">{initials}</div>
                           <span
                             className={`status-pill ${
                               employee.status === 'active' ? '' : 'inactive'
@@ -381,30 +476,46 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                           >
                             {employee.status}
                           </span>
-                        </td>
-                        <td data-label="Actions">
-                          <div className="action-row">
-                            <button
-                              className="btn-ghost"
-                              type="button"
-                              onClick={() => handleEdit(employee)}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              className="btn-danger"
-                              type="button"
-                              onClick={() => handleDelete(employee)}
-                            >
-                              Delete
-                            </button>
+                        </div>
+                        <h3 className="employee-name">{employee.name}</h3>
+                        <p className="employee-role">{employee.title || 'Employee'}</p>
+                        <div className="employee-meta">
+                          <div>
+                            <span>Employee ID</span>
+                            <strong>{idSuffix}</strong>
                           </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                          <div>
+                            <span>Department</span>
+                            <strong>{employee.department || '-'}</strong>
+                          </div>
+                          <div>
+                            <span>Join Date</span>
+                            <strong>
+                              {employee.createdAt ? formatDate(employee.createdAt) : '-'}
+                            </strong>
+                          </div>
+                        </div>
+                        <div className="employee-actions">
+                          <button
+                            className="btn-ghost"
+                            type="button"
+                            onClick={() => handleEdit(employee)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn-danger"
+                            type="button"
+                            onClick={() => handleDelete(employee)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {showForm ? (
