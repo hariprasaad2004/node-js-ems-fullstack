@@ -281,6 +281,8 @@ a {
 .content {
   display: grid;
   gap: 20px;
+  align-content: start;
+  align-items: start;
 }
 
 .section {
