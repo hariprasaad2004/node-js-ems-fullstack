@@ -475,13 +475,16 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               <strong>{rangeStats.day.pending}</strong>
             </div>
           </div>
-            <div
-              className="stat-circle"
-              style={{ '--percent': rangeStats.day.performance }}
-            >
-              <div className="stat-circle-inner">
-                <span className="stat-circle-value">{rangeStats.day.performance}%</span>
-                <span className="stat-circle-label">Performance</span>
+            <div className="stat-performance">
+              <div className="stat-performance-header">
+                <span>Performance</span>
+                <strong>{rangeStats.day.performance}%</strong>
+              </div>
+              <div
+                className="stat-bar"
+                style={{ '--percent': rangeStats.day.performance }}
+              >
+                <span className="stat-bar-fill" />
               </div>
             </div>
           </div>
@@ -504,13 +507,16 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               <strong>{rangeStats.week.pending}</strong>
             </div>
           </div>
-            <div
-              className="stat-circle"
-              style={{ '--percent': rangeStats.week.performance }}
-            >
-              <div className="stat-circle-inner">
-                <span className="stat-circle-value">{rangeStats.week.performance}%</span>
-                <span className="stat-circle-label">Performance</span>
+            <div className="stat-performance">
+              <div className="stat-performance-header">
+                <span>Performance</span>
+                <strong>{rangeStats.week.performance}%</strong>
+              </div>
+              <div
+                className="stat-bar"
+                style={{ '--percent': rangeStats.week.performance }}
+              >
+                <span className="stat-bar-fill" />
               </div>
             </div>
           </div>
@@ -533,13 +539,16 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               <strong>{rangeStats.month.pending}</strong>
             </div>
           </div>
-            <div
-              className="stat-circle"
-              style={{ '--percent': rangeStats.month.performance }}
-            >
-              <div className="stat-circle-inner">
-                <span className="stat-circle-value">{rangeStats.month.performance}%</span>
-                <span className="stat-circle-label">Performance</span>
+            <div className="stat-performance">
+              <div className="stat-performance-header">
+                <span>Performance</span>
+                <strong>{rangeStats.month.performance}%</strong>
+              </div>
+              <div
+                className="stat-bar"
+                style={{ '--percent': rangeStats.month.performance }}
+              >
+                <span className="stat-bar-fill" />
               </div>
             </div>
           </div>
