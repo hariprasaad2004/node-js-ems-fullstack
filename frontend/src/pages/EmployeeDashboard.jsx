@@ -946,55 +946,51 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
           >
             <div className="content-card">
               <h2 className="content-title">My Tasks</h2>
-              <table className="table table-responsive">
-                <thead>
-                  <tr>
-                    <th>Task</th>
-                    <th>Status</th>
-                    <th>Due Time</th>
-                    <th>Assigned By</th>
-                    <th>Assigned On</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {taskError ? (
-                    <tr>
-                      <td colSpan="5">{taskError}</td>
-                    </tr>
-                  ) : tasks.length === 0 ? (
-                    <tr>
-                      <td colSpan="5">No tasks assigned yet.</td>
-                    </tr>
-                  ) : (
-                    tasks.map((task) => {
-                      const assignedBy = task.assignedBy
-                        ? `${task.assignedBy.name || 'Admin'} (${task.assignedBy.email || ''})`
-                        : 'Admin';
-                      const statusValue = task.status || 'planning';
-                      return (
-                        <tr key={task.id}>
-                          <td data-label="Task">{task.details}</td>
-                          <td data-label="Status">
-                            <select
-                              value={statusValue}
-                              onChange={(event) =>
-                                handleTaskStatusChange(task.id, event.target.value)
-                              }
-                            >
-                              <option value="planning">Planning</option>
-                              <option value="processing">Processing</option>
-                              <option value="completed">Completed</option>
-                            </select>
-                          </td>
-                          <td data-label="Due Time">{formatDateTime(task.dueAt)}</td>
-                          <td data-label="Assigned By">{assignedBy}</td>
-                          <td data-label="Assigned On">{formatDateTime(task.createdAt)}</td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+              {taskError ? (
+                <div className="notice">{taskError}</div>
+              ) : tasks.length === 0 ? (
+                <div className="notice">No tasks assigned yet.</div>
+              ) : (
+                <div className="task-card-grid">
+                  {tasks.map((task) => {
+                    const assignedBy = task.assignedBy
+                      ? `${task.assignedBy.name || 'Admin'} (${task.assignedBy.email || ''})`
+                      : 'Admin';
+                    const statusValue = task.status || 'planning';
+                    return (
+                      <div className="task-card" key={task.id}>
+                        <div className="task-card-header">
+                          <div>
+                            <div className="task-title">{task.details}</div>
+                            <div className="task-meta">
+                              Due: {formatDateTime(task.dueAt) || '-'}
+                            </div>
+                          </div>
+                          <select
+                            className="task-status"
+                            value={statusValue}
+                            onChange={(event) =>
+                              handleTaskStatusChange(task.id, event.target.value)
+                            }
+                          >
+                            <option value="planning">Planning</option>
+                            <option value="processing">Processing</option>
+                            <option value="completed">Completed</option>
+                          </select>
+                        </div>
+                        <div className="task-card-row">
+                          <span>Assigned By</span>
+                          <strong>{assignedBy}</strong>
+                        </div>
+                        <div className="task-card-row">
+                          <span>Assigned On</span>
+                          <strong>{formatDateTime(task.createdAt) || '-'}</strong>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               <p
                 className="helper"
                 style={{ color: taskStatus.isError ? '#c13e2d' : '#0e7c7b' }}
