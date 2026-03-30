@@ -1341,6 +1341,15 @@ body.theme-dark .insight-stat-row strong {
   box-shadow: 0 0 0 2px rgba(47, 111, 237, 0.4);
 }
 
+.calendar-cell.is-weekend {
+  background: #f1f5ff;
+  border-color: #d7e3ff;
+}
+
+.calendar-cell.is-weekend .calendar-mark {
+  color: #4f46e5;
+}
+
 .calendar-tooltip {
   position: absolute;
   left: 50%;
@@ -1469,6 +1478,15 @@ body.theme-dark .calendar-cell.is-absent .calendar-mark {
 
 body.theme-dark .calendar-cell.is-leave .calendar-mark {
   color: #fde68a;
+}
+
+body.theme-dark .calendar-cell.is-weekend {
+  background: #0c1731;
+  border-color: #1f3a6b;
+}
+
+body.theme-dark .calendar-cell.is-weekend .calendar-mark {
+  color: #93c5fd;
 }
 
 body.theme-dark .calendar-tooltip {

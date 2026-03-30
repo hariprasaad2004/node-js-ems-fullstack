@@ -247,6 +247,7 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
     for (let day = 1; day <= daysInMonth; day += 1) {
       const date = new Date(today.getFullYear(), today.getMonth(), day);
       const key = formatDateKey(date);
+      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
       const record = attendanceByDate.get(key);
       const onLeave = approvedLeaveDates.has(key);
       const tasksDone = tasksCompletedByDate.get(key) || [];
@@ -306,6 +307,7 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
         tooltip,
         details,
         isToday,
+        isWeekend,
         empty: false
       });
     }
@@ -792,7 +794,9 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
                         key={cell.key}
                         className={`calendar-cell ${cell.empty ? 'is-empty' : ''} ${
                           cell.status ? `is-${cell.status}` : ''
-                        } ${cell.isToday ? 'is-today' : ''}`}
+                        } ${cell.isToday ? 'is-today' : ''} ${
+                          cell.isWeekend ? 'is-weekend' : ''
+                        }`}
                         title={cell.details ? '' : cell.tooltip || ''}
                       >
                         {cell.empty ? null : (
