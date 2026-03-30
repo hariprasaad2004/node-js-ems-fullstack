@@ -679,51 +679,60 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
                   <h3>Work Insights</h3>
                   <span className="helper">Progress snapshot</span>
                 </div>
-                <div className="stat-performance">
-                  <div className="stat-performance-header">
-                    <span>Task Completion</span>
-                    <strong>{taskSummary.completionRate}%</strong>
-                  </div>
-                  <div
-                    className="stat-bar"
-                    style={{ '--percent': taskSummary.completionRate }}
-                  >
-                    <span className="stat-bar-fill" />
-                  </div>
-                </div>
-                <div className="stat-row">
-                  <div>
-                    <span>Completed</span>
-                    <strong>{taskSummary.completed}</strong>
-                  </div>
-                  <div>
-                    <span>Pending</span>
-                    <strong>{taskSummary.pending}</strong>
-                  </div>
-                </div>
-                <div className="stat-performance">
-                  <div className="stat-performance-header">
-                    <span>On-Time Accuracy</span>
-                    <strong>{taskTiming.percent}%</strong>
-                  </div>
-                  <div className="stat-bar" style={{ '--percent': taskTiming.percent }}>
-                    <span className="stat-bar-fill" />
-                  </div>
-                </div>
-                {taskTiming.total > 0 ? (
-                  <div className="stat-row">
-                    <div>
-                      <span>On Time</span>
-                      <strong>{taskTiming.onTime}</strong>
+                <div className="insight-grid">
+                  <div className="insight-card">
+                    <div className="insight-header">
+                      <span className="metric-label">Task Completion</span>
+                      <span className="helper">Completed vs pending</span>
                     </div>
-                    <div>
-                      <span>Late</span>
-                      <strong>{taskTiming.late}</strong>
+                    <div
+                      className="progress-ring"
+                      style={{ '--percent': taskSummary.completionRate, '--ring': 'var(--accent)' }}
+                    >
+                      <span className="progress-ring-value">
+                        {taskSummary.completionRate}%
+                      </span>
+                    </div>
+                    <div className="insight-stat-row">
+                      <div>
+                        <span>Completed</span>
+                        <strong>{taskSummary.completed}</strong>
+                      </div>
+                      <div>
+                        <span>Pending</span>
+                        <strong>{taskSummary.pending}</strong>
+                      </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="helper">No due-date completions yet.</div>
-                )}
+                  <div className="insight-card">
+                    <div className="insight-header">
+                      <span className="metric-label">On-Time Accuracy</span>
+                      <span className="helper">Tasks finished on time</span>
+                    </div>
+                    <div
+                      className="progress-ring"
+                      style={{ '--percent': taskTiming.percent, '--ring': 'var(--success)' }}
+                    >
+                      <span className="progress-ring-value">
+                        {taskTiming.percent}%
+                      </span>
+                    </div>
+                    {taskTiming.total > 0 ? (
+                      <div className="insight-stat-row">
+                        <div>
+                          <span>On Time</span>
+                          <strong>{taskTiming.onTime}</strong>
+                        </div>
+                        <div>
+                          <span>Late</span>
+                          <strong>{taskTiming.late}</strong>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="helper">No due-date completions yet.</div>
+                    )}
+                  </div>
+                </div>
                 <div className="stat-next">
                   Last check-in:{' '}
                   {attendanceStats.lastCheckIn
