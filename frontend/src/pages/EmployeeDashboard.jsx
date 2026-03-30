@@ -196,8 +196,8 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
     return map;
   }, [attendance]);
 
-  const approvedLeaveDates = useMemo(() => {
-    const set = new Set();
+  const approvedLeaveByDate = useMemo(() => {
+    const map = new Map();
     leaves.forEach((leave) => {
       if (leave.status !== 'approved') return;
       const start = new Date(leave.fromDate);
@@ -206,11 +206,28 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
       start.setHours(0, 0, 0, 0);
       end.setHours(0, 0, 0, 0);
       for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
-        set.add(formatDateKey(day));
+        const key = formatDateKey(day);
+        if (!map.has(key)) {
+          map.set(key, leave);
+        }
       }
     });
-    return set;
+    return map;
   }, [leaves]);
+
+  const tasksCompletedByDate = useMemo(() => {
+    const map = new Map();
+    tasks.forEach((task) => {
+      if ((task.status || '').toLowerCase() !== 'completed') return;
+      const completedAt = toTime(task.updatedAt) || toTime(task.completedAt) || 0;
+      if (!completedAt) return;
+      const key = formatDateKey(new Date(completedAt));
+      const list = map.get(key) || [];
+      list.push(task);
+      map.set(key, list);
+    });
+    return map;
+  }, [tasks]);
 
   const calendarDays = useMemo(() => {
     const today = new Date();
@@ -233,19 +250,24 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
       const date = new Date(today.getFullYear(), today.getMonth(), day);
       const key = formatDateKey(date);
       const record = attendanceByDate.get(key);
-      const onLeave = approvedLeaveDates.has(key);
+      const leave = approvedLeaveByDate.get(key);
+      const tasksDone = tasksCompletedByDate.get(key) || [];
       const isToday = key === todayKey;
       const isPast = date < todayStart;
       const isFuture = date > todayStart;
 
       let status = 'pending';
       let mark = '';
-      let tooltip = '';
+      let details = null;
 
-      if (onLeave) {
+      if (leave) {
         status = 'leave';
-        mark = '✕';
-        tooltip = 'Approved leave (absent)';
+        mark = '\u2715';
+        details = {
+          type: 'leave',
+          category: leave.category || 'leave',
+          reason: leave.reason || 'No reason provided'
+        };
       } else if (record?.checkInAt) {
         const checkInDate = new Date(record.checkInAt);
         const checkInHour = checkInDate.getHours() + checkInDate.getMinutes() / 60;
@@ -255,32 +277,36 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
           ? formatDuration(record.checkInAt, record.checkOutAt)
           : 'In progress';
         status = withinWindow ? 'present' : 'absent';
-        mark = withinWindow ? '✓' : '✕';
-        tooltip = withinWindow
-          ? `Worked: ${workedLabel}`
-          : 'Checked in outside 9am - 7pm';
+        mark = withinWindow ? '\u2713' : '\u2715';
+        if (withinWindow) {
+          details = {
+            type: 'present',
+            checkIn: formatDateTime(record.checkInAt),
+            checkOut: record.checkOutAt ? formatDateTime(record.checkOutAt) : 'In progress',
+            worked: workedLabel,
+            tasksDone
+          };
+        }
       } else if (isPast || (isToday && nowHour >= 19)) {
         status = 'absent';
-        mark = '✕';
-        tooltip = 'Absent (no check-in)';
+        mark = '\u2715';
       } else if (isFuture) {
         status = 'pending';
       }
-
       cells.push({
         key,
         date,
         day,
         status,
         mark,
-        tooltip,
+        details,
         isToday,
         empty: false
       });
     }
 
     return { monthLabel, cells };
-  }, [attendanceByDate, approvedLeaveDates, formatDuration]);
+  }, [attendanceByDate, approvedLeaveByDate, tasksCompletedByDate, formatDuration, formatDateTime]);
 
   useEffect(() => {
     if (!showNotifications) return undefined;

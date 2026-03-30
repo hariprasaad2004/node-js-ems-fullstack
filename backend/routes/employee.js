@@ -47,7 +47,8 @@ const toSafeLeave = (leave) => ({ // Sanitize leave request for API responses.
   category: leave.category || 'casual',
   reason: leave.reason || '',
   status: leave.status,
-  createdAt: leave.createdAt
+  createdAt: leave.createdAt,
+  updatedAt: leave.updatedAt
 });
 
 const normalizeTaskStatus = (status) => (status === 'assigned' ? 'planning' : status); // Normalize task status to UI-friendly values.
@@ -58,6 +59,7 @@ const toSafeTask = (task) => ({ // Sanitize task records for API responses.
   status: normalizeTaskStatus(task.status),
   dueAt: task.dueAt || null,
   createdAt: task.createdAt,
+  updatedAt: task.updatedAt,
   assignedBy: task.assignedBy
     ? {
         id: task.assignedBy._id?.toString?.() || task.assignedBy.toString(),

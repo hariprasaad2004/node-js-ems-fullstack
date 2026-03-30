@@ -58,6 +58,7 @@ const toSafeLeave = (leave) => ({ // Sanitize leave request for API responses.
   reason: leave.reason || '',
   status: leave.status,
   createdAt: leave.createdAt,
+  updatedAt: leave.updatedAt,
   employee: leave.employee
     ? {
         id: leave.employee._id?.toString?.() || leave.employee.toString(),
@@ -76,6 +77,7 @@ const toSafeTask = (task) => ({ // Sanitize task records for API responses.
   status: normalizeTaskStatus(task.status),
   dueAt: task.dueAt || null,
   createdAt: task.createdAt,
+  updatedAt: task.updatedAt,
   employee: task.employee
     ? {
         id: task.employee._id?.toString?.() || task.employee.toString(),
