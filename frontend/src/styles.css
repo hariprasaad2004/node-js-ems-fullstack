@@ -1005,6 +1005,16 @@ body.theme-dark textarea:focus {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
+body.theme-dark .stat-card {
+  background: #0f172a;
+  border-color: #1f2a44;
+  box-shadow: 0 14px 28px rgba(2, 6, 23, 0.35);
+}
+
+body.theme-dark .stat-value {
+  color: #e2e8f0;
+}
+
 
 .stats {
   display: grid;
@@ -1022,6 +1032,10 @@ body.theme-dark textarea:focus {
 .stat-value {
   font-size: 24px;
   font-weight: 700;
+}
+
+.employee-insights {
+  margin-top: 18px;
 }
 
 .table {

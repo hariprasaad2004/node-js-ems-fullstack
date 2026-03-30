@@ -114,6 +114,51 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
 
   const unreadCount = unreadNotifications.length;
 
+  const attendanceStats = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - 6);
+
+    let totalMinutes = 0;
+    let weekMinutes = 0;
+    let days = 0;
+    let lastCheckIn = 0;
+    let lastCheckOut = 0;
+
+    attendance.forEach((record) => {
+      const checkIn = toTime(record.checkInAt);
+      const checkOut = toTime(record.checkOutAt);
+      if (checkIn) lastCheckIn = Math.max(lastCheckIn, checkIn);
+      if (checkOut) lastCheckOut = Math.max(lastCheckOut, checkOut);
+      if (checkIn && checkOut) {
+        const minutes = Math.max(0, Math.round((checkOut - checkIn) / 60000));
+        totalMinutes += minutes;
+        days += 1;
+        if (checkIn >= weekStart.getTime()) {
+          weekMinutes += minutes;
+        }
+      }
+    });
+
+    return { totalMinutes, weekMinutes, days, lastCheckIn, lastCheckOut };
+  }, [attendance]);
+
+  const taskSummary = useMemo(() => {
+    const total = tasks.length;
+    const completed = tasks.filter(
+      (task) => (task.status || '').toLowerCase() === 'completed'
+    ).length;
+    const pending = Math.max(0, total - completed);
+    const completionRate = total ? Math.round((completed / total) * 100) : 0;
+    return { total, completed, pending, completionRate };
+  }, [tasks]);
+
+  const formatHours = (minutes) => {
+    if (!minutes) return '0.0';
+    return (minutes / 60).toFixed(1);
+  };
+
   useEffect(() => {
     if (!showNotifications) return undefined;
     const handleClick = (event) => {
@@ -437,30 +482,84 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
             data-section="profile"
           >
             <div className="content-card">
-              <h2 className="content-title">Profile Overview</h2>
-              {profileError ? (
-                <div className="helper">{profileError}</div>
-              ) : profile ? (
-                <div className="helper">
-                  <p>
-                    <strong>Name:</strong> {profile.name}
-                  </p>
-                  <p>
-                    <strong>Email:</strong> {profile.email}
-                  </p>
-                  <p>
-                    <strong>Department:</strong> {profile.department || '-'}
-                  </p>
-                  <p>
-                    <strong>Title:</strong> {profile.title || '-'}
-                  </p>
-                  <p>
-                    <strong>Status:</strong> {profile.status}
-                  </p>
+              <h2 className="content-title">Work Overview</h2>
+              <p className="helper">Your total hours, weekly focus, and task progress.</p>
+              {profileError ? <div className="notice">{profileError}</div> : null}
+
+              <div className="stats">
+                <div className="stat-card">
+                  <div className="metric-label">Total Hours</div>
+                  <div className="stat-value">
+                    {formatHours(attendanceStats.totalMinutes)}h
+                  </div>
+                  <div className="helper">All time</div>
                 </div>
-              ) : (
-                <div className="helper">No profile found.</div>
-              )}
+                <div className="stat-card">
+                  <div className="metric-label">This Week</div>
+                  <div className="stat-value">
+                    {formatHours(attendanceStats.weekMinutes)}h
+                  </div>
+                  <div className="helper">Last 7 days</div>
+                </div>
+                <div className="stat-card">
+                  <div className="metric-label">Avg / Day</div>
+                  <div className="stat-value">
+                    {formatHours(
+                      attendanceStats.days
+                        ? attendanceStats.totalMinutes / attendanceStats.days
+                        : 0
+                    )}
+                    h
+                  </div>
+                  <div className="helper">{attendanceStats.days} days tracked</div>
+                </div>
+                <div className="stat-card">
+                  <div className="metric-label">Tasks Done</div>
+                  <div className="stat-value">{taskSummary.completed}</div>
+                  <div className="helper">{taskSummary.pending} pending</div>
+                </div>
+              </div>
+
+              <div className="overview-card employee-insights">
+                <div className="overview-card-header">
+                  <h3>Work Insights</h3>
+                  <span className="helper">Progress snapshot</span>
+                </div>
+                <div className="stat-performance">
+                  <div className="stat-performance-header">
+                    <span>Task Completion</span>
+                    <strong>{taskSummary.completionRate}%</strong>
+                  </div>
+                  <div
+                    className="stat-bar"
+                    style={{ '--percent': taskSummary.completionRate }}
+                  >
+                    <span className="stat-bar-fill" />
+                  </div>
+                </div>
+                <div className="stat-row">
+                  <div>
+                    <span>Completed</span>
+                    <strong>{taskSummary.completed}</strong>
+                  </div>
+                  <div>
+                    <span>Pending</span>
+                    <strong>{taskSummary.pending}</strong>
+                  </div>
+                </div>
+                <div className="stat-next">
+                  Last check-in:{' '}
+                  {attendanceStats.lastCheckIn
+                    ? formatDateTime(attendanceStats.lastCheckIn)
+                    : '-'}
+                </div>
+                <div className="stat-next">
+                  Last check-out:{' '}
+                  {attendanceStats.lastCheckOut
+                    ? formatDateTime(attendanceStats.lastCheckOut)
+                    : '-'}
+                </div>
+              </div>
             </div>
           </section>
 
