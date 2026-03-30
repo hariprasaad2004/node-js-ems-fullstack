@@ -196,8 +196,8 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
     return map;
   }, [attendance]);
 
-  const approvedLeaveByDate = useMemo(() => {
-    const map = new Map();
+  const approvedLeaveDates = useMemo(() => {
+    const set = new Set();
     leaves.forEach((leave) => {
       if (leave.status !== 'approved') return;
       const start = new Date(leave.fromDate);
@@ -207,19 +207,17 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
       end.setHours(0, 0, 0, 0);
       for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
         const key = formatDateKey(day);
-        if (!map.has(key)) {
-          map.set(key, leave);
-        }
+        set.add(key);
       }
     });
-    return map;
+    return set;
   }, [leaves]);
 
   const tasksCompletedByDate = useMemo(() => {
     const map = new Map();
     tasks.forEach((task) => {
       if ((task.status || '').toLowerCase() !== 'completed') return;
-      const completedAt = toTime(task.updatedAt) || toTime(task.completedAt) || 0;
+      const completedAt = toTime(task.completedAt) || toTime(task.updatedAt);
       if (!completedAt) return;
       const key = formatDateKey(new Date(completedAt));
       const list = map.get(key) || [];
@@ -250,7 +248,7 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
       const date = new Date(today.getFullYear(), today.getMonth(), day);
       const key = formatDateKey(date);
       const record = attendanceByDate.get(key);
-      const leave = approvedLeaveByDate.get(key);
+      const onLeave = approvedLeaveDates.has(key);
       const tasksDone = tasksCompletedByDate.get(key) || [];
       const isToday = key === todayKey;
       const isPast = date < todayStart;
@@ -258,47 +256,54 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
 
       let status = 'pending';
       let mark = '';
+      let tooltip = '';
       let details = null;
 
-      if (leave) {
+      if (onLeave) {
         status = 'leave';
         mark = '\u2715';
-        details = {
-          type: 'leave',
-          category: leave.category || 'leave',
-          reason: leave.reason || 'No reason provided'
-        };
+        tooltip = 'Leave approved';
       } else if (record?.checkInAt) {
         const checkInDate = new Date(record.checkInAt);
         const checkInHour = checkInDate.getHours() + checkInDate.getMinutes() / 60;
         const withinWindow = checkInHour >= 9 && checkInHour <= 19;
+        status = withinWindow ? 'present' : 'absent';
+        mark = withinWindow ? '\u2713' : '\u2715';
+        tooltip = withinWindow ? 'Present' : 'Absent';
         const hasCheckout = Boolean(record.checkOutAt);
         const workedLabel = hasCheckout
           ? formatDuration(record.checkInAt, record.checkOutAt)
           : 'In progress';
-        status = withinWindow ? 'present' : 'absent';
-        mark = withinWindow ? '\u2713' : '\u2715';
-        if (withinWindow) {
-          details = {
-            type: 'present',
-            checkIn: formatDateTime(record.checkInAt),
-            checkOut: record.checkOutAt ? formatDateTime(record.checkOutAt) : 'In progress',
-            worked: workedLabel,
-            tasksDone
-          };
-        }
+        details = {
+          checkInLabel: formatDateTime(record.checkInAt),
+          checkOutLabel: hasCheckout ? formatDateTime(record.checkOutAt) : 'In progress',
+          workedLabel,
+          tasksDone
+        };
       } else if (isPast || (isToday && nowHour >= 19)) {
         status = 'absent';
         mark = '\u2715';
+        tooltip = 'Absent';
       } else if (isFuture) {
         status = 'pending';
       }
+
+      if (!details && tasksDone.length) {
+        details = {
+          checkInLabel: '-',
+          checkOutLabel: '-',
+          workedLabel: '-',
+          tasksDone
+        };
+      }
+
       cells.push({
         key,
         date,
         day,
         status,
         mark,
+        tooltip,
         details,
         isToday,
         empty: false
@@ -306,7 +311,7 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
     }
 
     return { monthLabel, cells };
-  }, [attendanceByDate, approvedLeaveByDate, tasksCompletedByDate, formatDuration, formatDateTime]);
+  }, [attendanceByDate, approvedLeaveDates, tasksCompletedByDate, formatDateTime, formatDuration]);
 
   useEffect(() => {
     if (!showNotifications) return undefined;
@@ -763,7 +768,7 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
                     <div>
                       <h3>{calendarDays.monthLabel}</h3>
                       <p className="helper">
-                        ✓ Present (9am - 7pm) · ✕ Absent/Leave
+                        Present (9am - 7pm) - Absent/Leave
                       </p>
                     </div>
                   </div>
@@ -779,12 +784,48 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
                         className={`calendar-cell ${cell.empty ? 'is-empty' : ''} ${
                           cell.status ? `is-${cell.status}` : ''
                         } ${cell.isToday ? 'is-today' : ''}`}
-                        title={cell.tooltip || ''}
+                        title={cell.details ? '' : cell.tooltip || ''}
                       >
                         {cell.empty ? null : (
                           <>
                             <span className="calendar-date">{cell.day}</span>
                             <span className="calendar-mark">{cell.mark}</span>
+                            {cell.details ? (
+                              <div className="calendar-tooltip" role="tooltip">
+                                <div className="tooltip-title">
+                                  {formatDate(cell.date)}
+                                </div>
+                                <div className="tooltip-row">
+                                  <span>Check in</span>
+                                  <strong>{cell.details.checkInLabel}</strong>
+                                </div>
+                                <div className="tooltip-row">
+                                  <span>Check out</span>
+                                  <strong>{cell.details.checkOutLabel}</strong>
+                                </div>
+                                <div className="tooltip-row">
+                                  <span>Working hours</span>
+                                  <strong>{cell.details.workedLabel}</strong>
+                                </div>
+                                <div className="tooltip-subtitle">Tasks done</div>
+                                {cell.details.tasksDone.length ? (
+                                  <ul className="tooltip-list">
+                                    {cell.details.tasksDone.slice(0, 3).map((task) => (
+                                      <li key={task.id}>
+                                        {task.details || 'Task completed'}
+                                      </li>
+                                    ))}
+                                    {cell.details.tasksDone.length > 3 ? (
+                                      <li className="tooltip-muted">
+                                        +{cell.details.tasksDone.length - 3} more
+                                      </li>
+                                    ) : null}
+                                  </ul>
+                                ) : (
+                                  <div className="tooltip-empty">No tasks completed.</div>
+                                )}
+                              </div>
+                            ) : null}
                           </>
                         )}
                       </div>
