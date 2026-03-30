@@ -40,6 +40,12 @@ const getTaskDate = (task) => {
   return null;
 };
 
+const toTime = (value) => {
+  if (!value) return 0;
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? 0 : time;
+};
+
 const getDayStart = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
 const getNextDayStart = (date) => {
@@ -107,6 +113,49 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     });
     return Array.from(unique).sort((a, b) => a.localeCompare(b));
   }, [employees]);
+
+  const departmentBreakdown = useMemo(() => {
+    const total = employees.length;
+    const tally = new Map();
+    employees.forEach((emp) => {
+      const key = emp.department?.trim() || 'Unassigned';
+      tally.set(key, (tally.get(key) || 0) + 1);
+    });
+    return Array.from(tally.entries())
+      .map(([name, count]) => ({
+        name,
+        count,
+        percent: total ? Math.round((count / total) * 100) : 0
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [employees]);
+
+  const recentHires = useMemo(() => {
+    if (employees.length === 0) return [];
+    const withDates = employees.filter((emp) => emp.createdAt);
+    const base = withDates.length ? withDates : employees;
+    return base
+      .slice()
+      .sort((a, b) => toTime(b.createdAt) - toTime(a.createdAt))
+      .slice(0, 4);
+  }, [employees]);
+
+  const upcomingTasks = useMemo(() => {
+    const now = Date.now();
+    return tasks
+      .filter((task) => task.dueAt && toTime(task.dueAt) >= now)
+      .slice()
+      .sort((a, b) => toTime(a.dueAt) - toTime(b.dueAt))
+      .slice(0, 4);
+  }, [tasks]);
+
+  const pendingLeaves = useMemo(() => {
+    return leaves
+      .filter((leave) => leave.status === 'pending')
+      .slice()
+      .sort((a, b) => toTime(a.fromDate) - toTime(b.fromDate))
+      .slice(0, 4);
+  }, [leaves]);
 
   const filteredEmployees = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -608,6 +657,116 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
             </div>
           </div>
           <div className="stat-next">Next refresh: {formatDateTime(rangeStats.nextMonth)}</div>
+        </div>
+      </div>
+
+      <div className="overview-grid">
+        <div className="overview-card">
+          <div className="overview-card-header">
+            <h3>Department Mix</h3>
+            <span className="helper">Top teams</span>
+          </div>
+          {departmentBreakdown.length === 0 ? (
+            <p className="helper">Add department names to see the breakdown.</p>
+          ) : (
+            <div className="dept-list">
+              {departmentBreakdown.slice(0, 5).map((dept) => (
+                <div className="dept-item" key={`${idPrefix}-dept-${dept.name}`}>
+                  <div className="dept-meta">
+                    <span>{dept.name}</span>
+                    <strong>{dept.count}</strong>
+                  </div>
+                  <div className="dept-bar" style={{ '--percent': dept.percent }}>
+                    <span className="dept-bar-fill" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="overview-card">
+          <div className="overview-card-header">
+            <h3>Recent Hires</h3>
+            <span className="helper">Latest additions</span>
+          </div>
+          <div className="mini-list">
+            {recentHires.length === 0 ? (
+              <p className="helper">No employees yet.</p>
+            ) : (
+              recentHires.map((employee) => (
+                <div
+                  className="mini-item"
+                  key={`${idPrefix}-hire-${employee.id || employee.email || employee.name}`}
+                >
+                  <div>
+                    <div className="mini-title">{employee.name || 'Employee'}</div>
+                    <div className="mini-sub">
+                      {employee.title || employee.department || 'New hire'}
+                    </div>
+                  </div>
+                  <div className="mini-meta">
+                    {employee.createdAt ? formatDate(employee.createdAt) : '—'}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="overview-card">
+          <div className="overview-card-header">
+            <h3>Upcoming Tasks</h3>
+            <span className="helper">Due soon</span>
+          </div>
+          <div className="mini-list">
+            {upcomingTasks.length === 0 ? (
+              <p className="helper">No upcoming tasks scheduled.</p>
+            ) : (
+              upcomingTasks.map((task) => (
+                <div className="mini-item" key={`${idPrefix}-task-${task.id}`}>
+                  <div>
+                    <div className="mini-title">{task.details || 'Task'}</div>
+                    <div className="mini-sub">
+                      {task.employee?.name || 'Unassigned'}
+                    </div>
+                  </div>
+                  <div className="mini-side">
+                    <span className={`task-pill ${getTaskStatusTone(task.status)}`}>
+                      {formatStatus(task.status)}
+                    </span>
+                    <span className="mini-meta">
+                      {task.dueAt ? formatDateTime(task.dueAt) : 'No due time'}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="overview-card">
+          <div className="overview-card-header">
+            <h3>Pending Leaves</h3>
+            <span className="helper">Awaiting approval</span>
+          </div>
+          <div className="mini-list">
+            {pendingLeaves.length === 0 ? (
+              <p className="helper">No pending leave requests.</p>
+            ) : (
+              pendingLeaves.map((leave) => (
+                <div className="mini-item" key={`${idPrefix}-leave-${leave.id}`}>
+                  <div>
+                    <div className="mini-title">{leave.employee?.name || 'Employee'}</div>
+                    <div className="mini-sub">{leave.category || 'Leave request'}</div>
+                  </div>
+                  <div className="mini-meta">
+                    {formatDate(leave.fromDate)} - {formatDate(leave.toDate)}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </>

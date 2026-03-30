@@ -367,6 +367,8 @@ a {
 .overview-panel {
   background: linear-gradient(135deg, #f2fbfb 0%, #f8fffb 100%);
   border: 1px solid #d7f0ed;
+  display: grid;
+  gap: 26px;
 }
 
 .content-title {
@@ -693,7 +695,119 @@ button:focus-visible,
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  margin-top: 20px;
+}
+
+.overview-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.overview-card {
+  background: #ffffff;
+  border: 1px solid #e6ebf2;
+  border-radius: 18px;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+  min-height: 220px;
+}
+
+.overview-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.overview-card-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.dept-list {
+  display: grid;
+  gap: 12px;
+}
+
+.dept-item {
+  display: grid;
+  gap: 8px;
+}
+
+.dept-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2a44;
+}
+
+.dept-meta span {
+  font-weight: 600;
+}
+
+.dept-bar {
+  --percent: 0;
+  height: 8px;
+  border-radius: 999px;
+  background: #e6edf7;
+  overflow: hidden;
+}
+
+.dept-bar-fill {
+  display: block;
+  height: 100%;
+  width: calc(var(--percent, 0) * 1%);
+  background: linear-gradient(90deg, #2f6fed 0%, #6aa0ff 100%);
+}
+
+.mini-list {
+  display: grid;
+  gap: 10px;
+}
+
+.mini-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+}
+
+.mini-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #101828;
+}
+
+.mini-sub {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #667085;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.mini-meta {
+  font-size: 12px;
+  color: #475467;
+  font-weight: 600;
+  text-align: right;
+}
+
+.mini-side {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+  text-align: right;
 }
 
 .stat-block {
@@ -1324,5 +1438,20 @@ button:focus-visible,
 
   .stat-body {
     gap: 10px;
+  }
+
+  .overview-card {
+    min-height: auto;
+  }
+
+  .mini-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mini-meta,
+  .mini-side {
+    text-align: left;
+    justify-items: start;
   }
 }
