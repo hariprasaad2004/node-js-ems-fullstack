@@ -663,30 +663,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       <div className="overview-grid">
         <div className="overview-card">
           <div className="overview-card-header">
-            <h3>Department Mix</h3>
-            <span className="helper">Top teams</span>
-          </div>
-          {departmentBreakdown.length === 0 ? (
-            <p className="helper">Add department names to see the breakdown.</p>
-          ) : (
-            <div className="dept-list">
-              {departmentBreakdown.slice(0, 5).map((dept) => (
-                <div className="dept-item" key={`${idPrefix}-dept-${dept.name}`}>
-                  <div className="dept-meta">
-                    <span>{dept.name}</span>
-                    <strong>{dept.count}</strong>
-                  </div>
-                  <div className="dept-bar" style={{ '--percent': dept.percent }}>
-                    <span className="dept-bar-fill" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="overview-card">
-          <div className="overview-card-header">
             <h3>Recent Hires</h3>
             <span className="helper">Latest additions</span>
           </div>
