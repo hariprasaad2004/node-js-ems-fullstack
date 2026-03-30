@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiRequest, readJson } from '../api/client.js';
 import Sidebar from '../components/Sidebar.jsx';
 import { useBodyClass } from '../hooks/useBodyClass.js';
@@ -72,7 +72,10 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   useBodyClass('page-dashboard');
 
   const [activeSection, setActiveSection] = useState('overview');
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [lastSeenAt, setLastSeenAt] = useState(0);
+  const notificationRef = useRef(null);
   const [employees, setEmployees] = useState([]);
   const [employeeError, setEmployeeError] = useState('');
   const [attendance, setAttendance] = useState([]);
@@ -91,7 +94,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [taskForm, setTaskForm] = useState(initialTaskState);
   const [infoEmployee, setInfoEmployee] = useState(null);
   const [statNow, setStatNow] = useState(() => new Date());
-  const notificationCount = 3;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -106,30 +108,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       return new Date(emp.createdAt).getTime() >= recentCutoff;
     }).length;
     return { total, active, inactive: total - active, recent };
-  }, [employees]);
-
-  const departments = useMemo(() => {
-    const unique = new Set();
-    employees.forEach((emp) => {
-      if (emp.department) unique.add(emp.department);
-    });
-    return Array.from(unique).sort((a, b) => a.localeCompare(b));
-  }, [employees]);
-
-  const departmentBreakdown = useMemo(() => {
-    const total = employees.length;
-    const tally = new Map();
-    employees.forEach((emp) => {
-      const key = emp.department?.trim() || 'Unassigned';
-      tally.set(key, (tally.get(key) || 0) + 1);
-    });
-    return Array.from(tally.entries())
-      .map(([name, count]) => ({
-        name,
-        count,
-        percent: total ? Math.round((count / total) * 100) : 0
-      }))
-      .sort((a, b) => b.count - a.count);
   }, [employees]);
 
   const recentHires = useMemo(() => {
@@ -158,6 +136,71 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       .sort((a, b) => toTime(a.fromDate) - toTime(b.fromDate))
       .slice(0, 4);
   }, [leaves]);
+
+  const notifications = useMemo(() => {
+    const items = [];
+
+    leaves.forEach((leave) => {
+      if (leave.status !== 'pending') return;
+      const employeeName = leave.employee?.name || 'Employee';
+      const time = toTime(leave.createdAt) || toTime(leave.fromDate);
+      items.push({
+        id: `leave-${leave.id}`,
+        type: 'leave',
+        title: `${employeeName} requested leave`,
+        description: `${formatDate(leave.fromDate)} - ${formatDate(leave.toDate)}`,
+        time,
+        timeLabel: time ? formatDateTime(time) : '-'
+      });
+    });
+
+    attendance.forEach((record, index) => {
+      const employeeName = record.employee?.name || 'Employee';
+      if (record.checkOutAt) {
+        const time = toTime(record.checkOutAt);
+        items.push({
+          id: `attendance-out-${record.employee?.id || index}-${record.checkOutAt}`,
+          type: 'attendance',
+          title: `${employeeName} checked out`,
+          description: `Checkout: ${formatDateTime(record.checkOutAt)}`,
+          time,
+          timeLabel: time ? formatDateTime(time) : '-'
+        });
+      } else if (record.checkInAt) {
+        const time = toTime(record.checkInAt);
+        items.push({
+          id: `attendance-in-${record.employee?.id || index}-${record.checkInAt}`,
+          type: 'attendance',
+          title: `${employeeName} checked in`,
+          description: `Check-in: ${formatDateTime(record.checkInAt)}`,
+          time,
+          timeLabel: time ? formatDateTime(time) : '-'
+        });
+      }
+    });
+
+    tasks.forEach((task) => {
+      const statusValue = task.status?.toLowerCase() || '';
+      if (statusValue !== 'completed') return;
+      const employeeName = task.employee?.name || 'Employee';
+      const time =
+        toTime(task.completedAt) || toTime(task.updatedAt) || toTime(task.createdAt);
+      items.push({
+        id: `task-${task.id}`,
+        type: 'task',
+        title: `${employeeName} completed a task`,
+        description: task.details || 'Task completed.',
+        time,
+        timeLabel: time ? formatDateTime(time) : '-'
+      });
+    });
+
+    return items.sort((a, b) => b.time - a.time).slice(0, 8);
+  }, [leaves, attendance, tasks]);
+
+  const unreadCount = useMemo(() => {
+    return notifications.filter((item) => item.time > lastSeenAt).length;
+  }, [notifications, lastSeenAt]);
 
   const filteredEmployees = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -202,6 +245,27 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       classList.remove('theme-dark');
     };
   }, [isDark]);
+
+  useEffect(() => {
+    if (!showNotifications) return undefined;
+    const handleClick = (event) => {
+      if (!notificationRef.current) return;
+      if (notificationRef.current.contains(event.target)) return;
+      setShowNotifications(false);
+    };
+    window.addEventListener('mousedown', handleClick);
+    return () => window.removeEventListener('mousedown', handleClick);
+  }, [showNotifications]);
+
+  const handleToggleNotifications = () => {
+    setShowNotifications((prev) => {
+      const next = !prev;
+      if (next) {
+        setLastSeenAt(Date.now());
+      }
+      return next;
+    });
+  };
 
   const rangeStats = useMemo(() => {
     const now = statNow;
@@ -803,17 +867,52 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                   </svg>
                 )}
               </button>
-              <button className="icon-button" type="button" aria-label="Notifications">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M12 3a6 6 0 0 0-6 6v2.2c0 .7-.28 1.37-.78 1.86L4 14.3V16h16v-1.7l-1.22-1.24a2.64 2.64 0 0 1-.78-1.86V9a6 6 0 0 0-6-6Zm0 18a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 21Z"
-                    fill="currentColor"
-                  />
-                </svg>
-                {notificationCount > 0 ? (
-                  <span className="icon-badge">{notificationCount}</span>
+              <div className="notification-wrapper" ref={notificationRef}>
+                <button
+                  className={`icon-button ${showNotifications ? 'is-open' : ''}`}
+                  type="button"
+                  aria-label="Notifications"
+                  aria-expanded={showNotifications}
+                  onClick={handleToggleNotifications}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M12 3a6 6 0 0 0-6 6v2.2c0 .7-.28 1.37-.78 1.86L4 14.3V16h16v-1.7l-1.22-1.24a2.64 2.64 0 0 1-.78-1.86V9a6 6 0 0 0-6-6Zm0 18a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 21Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  {unreadCount > 0 ? (
+                    <span className="icon-badge">{unreadCount}</span>
+                  ) : null}
+                </button>
+                {showNotifications ? (
+                  <div className="notification-panel" role="dialog" aria-label="Notifications">
+                    <div className="notification-header">
+                      <span>Notifications</span>
+                      <span className="notification-total">{notifications.length}</span>
+                    </div>
+                    {notifications.length === 0 ? (
+                      <p className="helper">No notifications yet.</p>
+                    ) : (
+                      <div className="notification-list">
+                        {notifications.map((item) => (
+                          <div
+                            className="notification-item"
+                            data-type={item.type}
+                            key={item.id}
+                          >
+                            <div className="notification-text">
+                              <div className="notification-title">{item.title}</div>
+                              <div className="notification-desc">{item.description}</div>
+                            </div>
+                            <div className="notification-time">{item.timeLabel}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ) : null}
-              </button>
+              </div>
               <div className="admin-profile" aria-label="Admin profile">
                 <div className="admin-avatar">A</div>
                 <div className="admin-meta">

@@ -660,27 +660,129 @@ button:focus-visible,
   font-weight: 600;
 }
 
+.notification-wrapper {
+  position: relative;
+}
+
+.icon-button.is-open {
+  box-shadow: 0 12px 24px rgba(47, 111, 237, 0.2);
+  transform: translateY(-1px);
+}
+
+.notification-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  width: min(360px, 90vw);
+  background: #ffffff;
+  border: 1px solid #e4e8f0;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  z-index: 20;
+  display: grid;
+  gap: 12px;
+}
+
+.notification-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 14px;
+  color: #101828;
+}
+
+.notification-total {
+  background: #eef2ff;
+  color: #2f6fed;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.notification-list {
+  display: grid;
+  gap: 10px;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.notification-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+}
+
+.notification-item[data-type='leave'] {
+  border-left: 4px solid #f59e0b;
+}
+
+.notification-item[data-type='attendance'] {
+  border-left: 4px solid #2f6fed;
+}
+
+.notification-item[data-type='task'] {
+  border-left: 4px solid #12b76a;
+}
+
+.notification-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.notification-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #101828;
+}
+
+.notification-desc {
+  font-size: 12px;
+  color: #667085;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notification-time {
+  font-size: 11px;
+  color: #98a2b3;
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: right;
+}
+
 body.theme-dark {
-  background: #0f172a;
+  background: #0b1220;
   color: #e2e8f0;
 }
 
-body.theme-dark .page-dashboard {
-  background: #0b1120;
+body.theme-dark.page-dashboard {
+  background: #0b1220;
 }
 
 body.theme-dark .content-card,
 body.theme-dark .overview-card,
 body.theme-dark .stat-block,
 body.theme-dark .sidebar,
-body.theme-dark .admin-profile {
-  background: #121a2e;
+body.theme-dark .admin-profile,
+body.theme-dark .notification-panel {
+  background: #0f172a;
   border-color: #1f2a44;
   box-shadow: 0 18px 40px rgba(2, 6, 23, 0.4);
 }
 
 body.theme-dark .page-hero {
-  background: linear-gradient(135deg, #131c33 0%, #0f172a 60%);
+  background: linear-gradient(135deg, #0f1a33 0%, #0b1220 60%);
   border-color: #1f2a44;
 }
 
@@ -691,7 +793,7 @@ body.theme-dark .nav-item {
 }
 
 body.theme-dark .nav-item:hover {
-  background: #18233c;
+  background: #15213a;
   border-color: #2a3a5c;
 }
 
@@ -704,7 +806,7 @@ body.theme-dark .btn-ghost,
 body.theme-dark .icon-button {
   background: #0f172a;
   border-color: #2a3a5c;
-  color: #e6edff;
+  color: #dbe7ff;
 }
 
 body.theme-dark .btn-ghost:hover,
@@ -713,16 +815,24 @@ body.theme-dark .icon-button:hover {
   border-color: #3b4b6b;
 }
 
-body.theme-dark .mini-item {
-  background: #0f172a;
+body.theme-dark .mini-item,
+body.theme-dark .notification-item {
+  background: #0b1326;
   border-color: #1f2a44;
+}
+
+body.theme-dark .notification-total {
+  background: #1f2a44;
+  color: #93c5fd;
 }
 
 body.theme-dark .helper,
 body.theme-dark .admin-role,
 body.theme-dark .mini-sub,
 body.theme-dark .stat-refresh,
-body.theme-dark .policy-list {
+body.theme-dark .policy-list,
+body.theme-dark .notification-desc,
+body.theme-dark .notification-time {
   color: #94a3b8;
 }
 
@@ -731,7 +841,9 @@ body.theme-dark .page-title,
 body.theme-dark .admin-name,
 body.theme-dark .stat-row strong,
 body.theme-dark .stat-performance-header strong,
-body.theme-dark .mini-title {
+body.theme-dark .mini-title,
+body.theme-dark .notification-title,
+body.theme-dark .notification-header {
   color: #e2e8f0;
 }
 
@@ -751,6 +863,7 @@ body.theme-dark .table tbody tr:nth-child(even) {
 body.theme-dark .table tbody tr:hover {
   background: #18233c;
 }
+
 
 .stats {
   display: grid;
