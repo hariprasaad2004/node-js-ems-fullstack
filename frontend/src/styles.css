@@ -871,6 +871,40 @@ body.theme-dark .card-menu:hover {
   box-shadow: 0 10px 18px rgba(59, 130, 246, 0.18);
 }
 
+body.theme-dark .task-card {
+  background: #0f172a;
+  border-color: #1f2a44;
+  box-shadow: 0 14px 28px rgba(2, 6, 23, 0.35);
+}
+
+body.theme-dark .task-avatar {
+  background: linear-gradient(135deg, #1d2b4d 0%, #0f172a 100%);
+  color: #93c5fd;
+}
+
+body.theme-dark .task-employee {
+  color: #e2e8f0;
+}
+
+body.theme-dark .task-email,
+body.theme-dark .task-details,
+body.theme-dark .task-meta-item span {
+  color: #94a3b8;
+}
+
+body.theme-dark .task-meta-item strong {
+  color: #e2e8f0;
+}
+
+body.theme-dark .task-due {
+  background: #0b1326;
+  border-color: #1f2a44;
+}
+
+body.theme-dark .task-pill {
+  border-color: transparent;
+}
+
 body.theme-dark .metric-card {
   background: #0f172a;
   border-color: #1f2a44;
