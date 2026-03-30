@@ -1140,7 +1140,7 @@ body.theme-dark .insight-stat-row strong {
 
 .task-card-grid {
   display: grid;
-  gap: 16px;
+  gap: 22px;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
@@ -1150,21 +1150,24 @@ body.theme-dark .insight-stat-row strong {
   border-radius: 16px;
   padding: 16px;
   display: grid;
-  gap: 12px;
+  gap: 14px;
   box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+  min-height: 170px;
 }
 
 .task-card-header {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 }
 
 .task-title {
   font-size: 14px;
   font-weight: 700;
   color: #101828;
+  text-align: left;
+  word-break: break-word;
 }
 
 .task-meta {
@@ -1175,6 +1178,7 @@ body.theme-dark .insight-stat-row strong {
 
 .task-status {
   min-width: 140px;
+  align-self: flex-end;
 }
 
 .task-card-row {
@@ -1183,6 +1187,8 @@ body.theme-dark .insight-stat-row strong {
   gap: 12px;
   font-size: 12px;
   color: #667085;
+  padding-top: 6px;
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
 }
 
 .task-card-row strong {
