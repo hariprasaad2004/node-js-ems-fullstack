@@ -38,6 +38,14 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
   const [modalMessage, setModalMessage] = useState('');
 
   useEffect(() => {
+    const { classList } = document.body;
+    classList.add('theme-dark');
+    return () => {
+      classList.remove('theme-dark');
+    };
+  }, []);
+
+  useEffect(() => {
     loadProfile();
     loadAttendance();
     loadLeaves();
