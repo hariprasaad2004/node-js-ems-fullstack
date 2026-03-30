@@ -834,6 +834,28 @@ body.theme-dark .notification-item {
   border-color: #1f2a44;
 }
 
+body.theme-dark .metric-card {
+  background: #0f172a;
+  border-color: #1f2a44;
+  box-shadow: 0 14px 28px rgba(2, 6, 23, 0.35);
+}
+
+body.theme-dark .metric-card.metric-total {
+  border-left: 4px solid #6d28d9;
+}
+
+body.theme-dark .metric-card.metric-new {
+  border-left: 4px solid #f59e0b;
+}
+
+body.theme-dark .metric-card.metric-active {
+  border-left: 4px solid #22c55e;
+}
+
+body.theme-dark .metric-card.metric-inactive {
+  border-left: 4px solid #f04438;
+}
+
 body.theme-dark .notification-total {
   background: #1f2a44;
   color: #93c5fd;
@@ -844,6 +866,7 @@ body.theme-dark .admin-role,
 body.theme-dark .mini-sub,
 body.theme-dark .stat-refresh,
 body.theme-dark .policy-list,
+body.theme-dark .metric-label,
 body.theme-dark .notification-desc,
 body.theme-dark .notification-time {
   color: #94a3b8;
@@ -854,6 +877,7 @@ body.theme-dark .page-title,
 body.theme-dark .admin-name,
 body.theme-dark .stat-row strong,
 body.theme-dark .stat-performance-header strong,
+body.theme-dark .metric-value,
 body.theme-dark .mini-title,
 body.theme-dark .notification-title,
 body.theme-dark .notification-header {
