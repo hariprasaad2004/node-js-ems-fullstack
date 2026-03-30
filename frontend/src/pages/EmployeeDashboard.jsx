@@ -154,10 +154,133 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
     return { total, completed, pending, completionRate };
   }, [tasks]);
 
+  const taskTiming = useMemo(() => {
+    let total = 0;
+    let onTime = 0;
+    let late = 0;
+    tasks.forEach((task) => {
+      if ((task.status || '').toLowerCase() !== 'completed') return;
+      const dueAt = toTime(task.dueAt);
+      const completedAt = toTime(task.completedAt) || toTime(task.updatedAt);
+      if (!dueAt || !completedAt) return;
+      total += 1;
+      if (completedAt <= dueAt) {
+        onTime += 1;
+      } else {
+        late += 1;
+      }
+    });
+    const percent = total ? Math.round((onTime / total) * 100) : 0;
+    return { total, onTime, late, percent };
+  }, [tasks]);
+
   const formatHours = (minutes) => {
     if (!minutes) return '0.0';
     return (minutes / 60).toFixed(1);
   };
+
+  const formatDateKey = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const attendanceByDate = useMemo(() => {
+    const map = new Map();
+    attendance.forEach((record) => {
+      if (record.date) {
+        map.set(record.date, record);
+      }
+    });
+    return map;
+  }, [attendance]);
+
+  const approvedLeaveDates = useMemo(() => {
+    const set = new Set();
+    leaves.forEach((leave) => {
+      if (leave.status !== 'approved') return;
+      const start = new Date(leave.fromDate);
+      const end = new Date(leave.toDate);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return;
+      start.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
+        set.add(formatDateKey(day));
+      }
+    });
+    return set;
+  }, [leaves]);
+
+  const calendarDays = useMemo(() => {
+    const today = new Date();
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const monthLabel = today.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+    const startWeekday = monthStart.getDay();
+    const daysInMonth = monthEnd.getDate();
+    const todayKey = formatDateKey(today);
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const now = new Date();
+    const nowHour = now.getHours() + now.getMinutes() / 60;
+
+    const cells = [];
+    for (let i = 0; i < startWeekday; i += 1) {
+      cells.push({ key: `empty-${i}`, empty: true });
+    }
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      const date = new Date(today.getFullYear(), today.getMonth(), day);
+      const key = formatDateKey(date);
+      const record = attendanceByDate.get(key);
+      const onLeave = approvedLeaveDates.has(key);
+      const isToday = key === todayKey;
+      const isPast = date < todayStart;
+      const isFuture = date > todayStart;
+
+      let status = 'pending';
+      let mark = '';
+      let tooltip = '';
+
+      if (onLeave) {
+        status = 'leave';
+        mark = '✕';
+        tooltip = 'Approved leave (absent)';
+      } else if (record?.checkInAt) {
+        const checkInDate = new Date(record.checkInAt);
+        const checkInHour = checkInDate.getHours() + checkInDate.getMinutes() / 60;
+        const withinWindow = checkInHour >= 9 && checkInHour <= 19;
+        const hasCheckout = Boolean(record.checkOutAt);
+        const workedLabel = hasCheckout
+          ? formatDuration(record.checkInAt, record.checkOutAt)
+          : 'In progress';
+        status = withinWindow ? 'present' : 'absent';
+        mark = withinWindow ? '✓' : '✕';
+        tooltip = withinWindow
+          ? `Worked: ${workedLabel}`
+          : 'Checked in outside 9am - 7pm';
+      } else if (isPast || (isToday && nowHour >= 19)) {
+        status = 'absent';
+        mark = '✕';
+        tooltip = 'Absent (no check-in)';
+      } else if (isFuture) {
+        status = 'pending';
+      }
+
+      cells.push({
+        key,
+        date,
+        day,
+        status,
+        mark,
+        tooltip,
+        isToday,
+        empty: false
+      });
+    }
+
+    return { monthLabel, cells };
+  }, [attendanceByDate, approvedLeaveDates, formatDuration]);
 
   useEffect(() => {
     if (!showNotifications) return undefined;
@@ -547,6 +670,29 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
                     <strong>{taskSummary.pending}</strong>
                   </div>
                 </div>
+                <div className="stat-performance">
+                  <div className="stat-performance-header">
+                    <span>On-Time Accuracy</span>
+                    <strong>{taskTiming.percent}%</strong>
+                  </div>
+                  <div className="stat-bar" style={{ '--percent': taskTiming.percent }}>
+                    <span className="stat-bar-fill" />
+                  </div>
+                </div>
+                {taskTiming.total > 0 ? (
+                  <div className="stat-row">
+                    <div>
+                      <span>On Time</span>
+                      <strong>{taskTiming.onTime}</strong>
+                    </div>
+                    <div>
+                      <span>Late</span>
+                      <strong>{taskTiming.late}</strong>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="helper">No due-date completions yet.</div>
+                )}
                 <div className="stat-next">
                   Last check-in:{' '}
                   {attendanceStats.lastCheckIn
@@ -583,38 +729,43 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
               >
                 {attendanceStatus.message}
               </p>
-              <table className="table table-responsive">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Check In</th>
-                    <th>Check Out</th>
-                    <th>Hours</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attendanceError ? (
-                    <tr>
-                      <td colSpan="4">{attendanceError}</td>
-                    </tr>
-                  ) : attendance.length === 0 ? (
-                    <tr>
-                      <td colSpan="4">No attendance yet.</td>
-                    </tr>
-                  ) : (
-                    attendance.map((record) => (
-                    <tr key={record.id}>
-                      <td data-label="Date">{record.date}</td>
-                      <td data-label="Check In">{formatDateTime(record.checkInAt)}</td>
-                      <td data-label="Check Out">{formatDateTime(record.checkOutAt)}</td>
-                      <td data-label="Hours">
-                        {formatDuration(record.checkInAt, record.checkOutAt)}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+              {attendanceError ? (
+                <div className="notice">{attendanceError}</div>
+              ) : (
+                <div className="attendance-calendar">
+                  <div className="calendar-header">
+                    <div>
+                      <h3>{calendarDays.monthLabel}</h3>
+                      <p className="helper">
+                        ✓ Present (9am - 7pm) · ✕ Absent/Leave
+                      </p>
+                    </div>
+                  </div>
+                  <div className="calendar-weekdays">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                      <span key={day}>{day}</span>
+                    ))}
+                  </div>
+                  <div className="calendar-grid">
+                    {calendarDays.cells.map((cell) => (
+                      <div
+                        key={cell.key}
+                        className={`calendar-cell ${cell.empty ? 'is-empty' : ''} ${
+                          cell.status ? `is-${cell.status}` : ''
+                        } ${cell.isToday ? 'is-today' : ''}`}
+                        title={cell.tooltip || ''}
+                      >
+                        {cell.empty ? null : (
+                          <>
+                            <span className="calendar-date">{cell.day}</span>
+                            <span className="calendar-mark">{cell.mark}</span>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 

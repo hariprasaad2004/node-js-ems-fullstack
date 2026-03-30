@@ -1092,6 +1092,140 @@ body.theme-dark .stat-value {
   font-size: 13px;
 }
 
+.attendance-calendar {
+  display: grid;
+  gap: 16px;
+}
+
+.calendar-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  text-align: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.calendar-cell {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  min-height: 72px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.calendar-cell.is-empty {
+  background: transparent;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+}
+
+.calendar-date {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.calendar-mark {
+  font-size: 18px;
+  font-weight: 800;
+  align-self: flex-end;
+  color: var(--accent);
+}
+
+.calendar-cell.is-present {
+  background: #e9f9f0;
+  border-color: #bfead0;
+}
+
+.calendar-cell.is-absent {
+  background: #ffecec;
+  border-color: #f7b7b7;
+}
+
+.calendar-cell.is-leave {
+  background: #fff4e5;
+  border-color: #f6d29a;
+}
+
+.calendar-cell.is-present .calendar-mark {
+  color: #137a3c;
+}
+
+.calendar-cell.is-absent .calendar-mark {
+  color: #b42318;
+}
+
+.calendar-cell.is-leave .calendar-mark {
+  color: #b45309;
+}
+
+.calendar-cell.is-today {
+  box-shadow: 0 0 0 2px rgba(47, 111, 237, 0.4);
+}
+
+body.theme-dark .calendar-weekdays {
+  color: #94a3b8;
+}
+
+body.theme-dark .calendar-cell {
+  background: #0f172a;
+  border-color: #1f2a44;
+}
+
+body.theme-dark .calendar-cell.is-empty {
+  background: transparent;
+  border-color: #1f2a44;
+}
+
+body.theme-dark .calendar-date {
+  color: #94a3b8;
+}
+
+body.theme-dark .calendar-cell.is-present {
+  background: #0f2a1f;
+  border-color: #1f4d3a;
+}
+
+body.theme-dark .calendar-cell.is-absent {
+  background: #2a1010;
+  border-color: #4c1d1d;
+}
+
+body.theme-dark .calendar-cell.is-leave {
+  background: #2a1a0f;
+  border-color: #5c3d1c;
+}
+
+body.theme-dark .calendar-cell.is-present .calendar-mark {
+  color: #86efac;
+}
+
+body.theme-dark .calendar-cell.is-absent .calendar-mark {
+  color: #fca5a5;
+}
+
+body.theme-dark .calendar-cell.is-leave .calendar-mark {
+  color: #fde68a;
+}
+
 .grid-2 {
   display: grid;
   gap: 18px;
