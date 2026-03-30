@@ -964,12 +964,45 @@ body.theme-dark .table td {
   border-bottom-color: #1f2a44;
 }
 
+body.theme-dark .table th {
+  color: #94a3b8;
+}
+
+body.theme-dark .table td {
+  color: #e2e8f0;
+}
+
 body.theme-dark .table tbody tr:nth-child(even) {
   background: #111a2e;
 }
 
 body.theme-dark .table tbody tr:hover {
   background: #18233c;
+}
+
+body.theme-dark input,
+body.theme-dark select,
+body.theme-dark textarea {
+  background: #0f172a;
+  border-color: #1f2a44;
+  color: #e2e8f0;
+}
+
+body.theme-dark input::placeholder,
+body.theme-dark textarea::placeholder {
+  color: #94a3b8;
+}
+
+body.theme-dark select option {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+body.theme-dark input:focus,
+body.theme-dark select:focus,
+body.theme-dark textarea:focus {
+  border-color: rgba(147, 197, 253, 0.7);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
 

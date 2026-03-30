@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiRequest, readJson } from '../api/client.js';
 import Sidebar from '../components/Sidebar.jsx';
 import { useBodyClass } from '../hooks/useBodyClass.js';
@@ -16,6 +16,12 @@ const initialLeaveForm = {
   fromDate: '',
   toDate: '',
   reason: ''
+};
+
+const toTime = (value) => {
+  if (!value) return 0;
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? 0 : time;
 };
 
 export default function EmployeeDashboard() { // Employee dashboard UI and data operations.
@@ -36,13 +42,31 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
   const [taskStatus, setTaskStatus] = useState({ message: '', isError: false });
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
+  const [isDark, setIsDark] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [lastSeenAt, setLastSeenAt] = useState(0);
+  const notificationRef = useRef(null);
+  const storageKey = 'ems-employee-lastSeenAt';
 
   useEffect(() => {
     const { classList } = document.body;
-    classList.add('theme-dark');
+    if (isDark) {
+      classList.add('theme-dark');
+    } else {
+      classList.remove('theme-dark');
+    }
     return () => {
       classList.remove('theme-dark');
     };
+  }, [isDark]);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(storageKey);
+    if (!stored) return;
+    const value = Number(stored);
+    if (!Number.isNaN(value)) {
+      setLastSeenAt(value);
+    }
   }, []);
 
   useEffect(() => {
@@ -51,6 +75,76 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
     loadLeaves();
     loadTasks();
   }, []);
+
+  const notifications = useMemo(() => {
+    const items = [];
+
+    tasks.forEach((task) => {
+      const time = toTime(task.createdAt) || toTime(task.dueAt);
+      items.push({
+        id: `task-${task.id}`,
+        type: 'task',
+        title: 'New task assigned',
+        description: task.details || 'Task assigned by admin.',
+        time,
+        timeLabel: time ? formatDateTime(time) : '-'
+      });
+    });
+
+    leaves.forEach((leave) => {
+      if (leave.status !== 'approved' && leave.status !== 'rejected') return;
+      const time = toTime(leave.updatedAt) || toTime(leave.createdAt);
+      const statusLabel = leave.status === 'approved' ? 'approved' : 'rejected';
+      items.push({
+        id: `leave-${leave.id}-${statusLabel}`,
+        type: 'leave',
+        title: `Leave request ${statusLabel}`,
+        description: `${formatDate(leave.fromDate)} - ${formatDate(leave.toDate)}`,
+        time,
+        timeLabel: time ? formatDateTime(time) : '-'
+      });
+    });
+
+    return items.sort((a, b) => b.time - a.time).slice(0, 8);
+  }, [tasks, leaves]);
+
+  const unreadNotifications = useMemo(() => {
+    return notifications.filter((item) => item.time > lastSeenAt);
+  }, [notifications, lastSeenAt]);
+
+  const unreadCount = unreadNotifications.length;
+
+  useEffect(() => {
+    if (!showNotifications) return undefined;
+    const handleClick = (event) => {
+      if (!notificationRef.current) return;
+      if (notificationRef.current.contains(event.target)) return;
+      handleCloseNotifications();
+    };
+    window.addEventListener('mousedown', handleClick);
+    return () => window.removeEventListener('mousedown', handleClick);
+  }, [showNotifications]);
+
+  const markNotificationsSeen = () => {
+    const now = Date.now();
+    setLastSeenAt(now);
+    window.localStorage.setItem(storageKey, String(now));
+  };
+
+  const handleCloseNotifications = () => {
+    setShowNotifications(false);
+    markNotificationsSeen();
+  };
+
+  const handleToggleNotifications = () => {
+    setShowNotifications((prev) => {
+      const next = !prev;
+      if (prev && !next) {
+        markNotificationsSeen();
+      }
+      return next;
+    });
+  };
 
   async function loadProfile() { // Fetch employee profile.
     setProfileError('');
@@ -250,6 +344,90 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
               <div>
                 <h1 className="page-title">Employee Dashboard</h1>
                 <p className="helper">View your profile and update personal contact info.</p>
+              </div>
+              <div className="toolbar-actions">
+                <button
+                  className="icon-button"
+                  type="button"
+                  aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+                  onClick={() => setIsDark((prev) => !prev)}
+                  title={isDark ? 'Light theme' : 'Dark theme'}
+                >
+                  {isDark ? (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M12 4.5a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 12 4.5Zm6.36 1.64a.75.75 0 0 1 1.06 0l.35.35a.75.75 0 0 1-1.06 1.06l-.35-.35a.75.75 0 0 1 0-1.06ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm7.5 3.5a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 19.5 12Zm-1.14 6.36a.75.75 0 0 1 1.06 0l.35.35a.75.75 0 0 1-1.06 1.06l-.35-.35a.75.75 0 0 1 0-1.06ZM12 18.75a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75ZM4.5 12a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 4.5 12Zm1.14-5.86a.75.75 0 0 1 1.06 0l.35.35a.75.75 0 0 1-1.06 1.06l-.35-.35a.75.75 0 0 1 0-1.06Zm.35 12.27a.75.75 0 0 1 1.06 0l.35.35a.75.75 0 0 1-1.06 1.06l-.35-.35a.75.75 0 0 1 0-1.06Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M21 14.5A8.5 8.5 0 0 1 9.5 3a.75.75 0 0 0-.83.93 6.5 6.5 0 1 0 9.4 9.4.75.75 0 0 0 .93-.83Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  )}
+                </button>
+                <div className="notification-wrapper" ref={notificationRef}>
+                  <button
+                    className={`icon-button ${showNotifications ? 'is-open' : ''}`}
+                    type="button"
+                    aria-label="Notifications"
+                    aria-expanded={showNotifications}
+                    onClick={handleToggleNotifications}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M12 3a6 6 0 0 0-6 6v2.2c0 .7-.28 1.37-.78 1.86L4 14.3V16h16v-1.7l-1.22-1.24a2.64 2.64 0 0 1-.78-1.86V9a6 6 0 0 0-6-6Zm0 18a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 21Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    {unreadCount > 0 ? (
+                      <span className="icon-badge">{unreadCount}</span>
+                    ) : null}
+                  </button>
+                  {showNotifications ? (
+                    <div className="notification-panel" role="dialog" aria-label="Notifications">
+                      <div className="notification-header">
+                        <span>Notifications</span>
+                        <span className="notification-total">
+                          {unreadNotifications.length}
+                        </span>
+                      </div>
+                      {unreadNotifications.length === 0 ? (
+                        <p className="helper">No notifications yet.</p>
+                      ) : (
+                        <div className="notification-list">
+                          {unreadNotifications.map((item) => (
+                            <div
+                              className="notification-item"
+                              data-type={item.type}
+                              key={item.id}
+                            >
+                              <div className="notification-text">
+                                <div className="notification-title">{item.title}</div>
+                                <div className="notification-desc">{item.description}</div>
+                              </div>
+                              <div className="notification-time">{item.timeLabel}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="admin-profile" aria-label="Employee profile">
+                  <div className="admin-avatar">
+                    {profile?.name ? profile.name.charAt(0).toUpperCase() : 'E'}
+                  </div>
+                  <div className="admin-meta">
+                    <span className="admin-name">{profile?.name || 'Employee'}</span>
+                    <span className="admin-role">
+                      ID: {profile?.id ? profile.id.slice(-6).toUpperCase() : '—'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
