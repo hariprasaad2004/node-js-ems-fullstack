@@ -839,6 +839,38 @@ body.theme-dark .notification-item {
   border-color: #1f2a44;
 }
 
+body.theme-dark .employee-card {
+  background: #0f172a;
+  border-color: #1f2a44;
+  box-shadow: 0 14px 28px rgba(2, 6, 23, 0.35);
+}
+
+body.theme-dark .employee-avatar {
+  background: linear-gradient(135deg, #1d2b4d 0%, #0f172a 100%);
+  color: #93c5fd;
+}
+
+body.theme-dark .employee-name {
+  color: #e2e8f0;
+}
+
+body.theme-dark .employee-role,
+body.theme-dark .employee-id {
+  color: #94a3b8;
+}
+
+body.theme-dark .card-menu {
+  background: #0f172a;
+  border-color: #1f2a44;
+  color: #93c5fd;
+}
+
+body.theme-dark .card-menu:hover {
+  background: #17233c;
+  border-color: #2a3a5c;
+  box-shadow: 0 10px 18px rgba(59, 130, 246, 0.18);
+}
+
 body.theme-dark .metric-card {
   background: #0f172a;
   border-color: #1f2a44;
