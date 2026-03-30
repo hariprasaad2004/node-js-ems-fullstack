@@ -98,6 +98,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
+  const storageKey = 'ems-admin-lastSeenAt';
 
   const stats = useMemo(() => {
     const total = employees.length;
@@ -198,9 +199,11 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     return items.sort((a, b) => b.time - a.time).slice(0, 8);
   }, [leaves, attendance, tasks]);
 
-  const unreadCount = useMemo(() => {
-    return notifications.filter((item) => item.time > lastSeenAt).length;
+  const unreadNotifications = useMemo(() => {
+    return notifications.filter((item) => item.time > lastSeenAt);
   }, [notifications, lastSeenAt]);
+
+  const unreadCount = unreadNotifications.length;
 
   const filteredEmployees = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -247,21 +250,41 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   }, [isDark]);
 
   useEffect(() => {
+    const stored = window.localStorage.getItem(storageKey);
+    if (!stored) return;
+    const value = Number(stored);
+    if (!Number.isNaN(value)) {
+      setLastSeenAt(value);
+    }
+  }, []);
+
+  useEffect(() => {
     if (!showNotifications) return undefined;
     const handleClick = (event) => {
       if (!notificationRef.current) return;
       if (notificationRef.current.contains(event.target)) return;
-      setShowNotifications(false);
+      handleCloseNotifications();
     };
     window.addEventListener('mousedown', handleClick);
     return () => window.removeEventListener('mousedown', handleClick);
   }, [showNotifications]);
 
+  const markNotificationsSeen = () => {
+    const now = Date.now();
+    setLastSeenAt(now);
+    window.localStorage.setItem(storageKey, String(now));
+  };
+
+  const handleCloseNotifications = () => {
+    setShowNotifications(false);
+    markNotificationsSeen();
+  };
+
   const handleToggleNotifications = () => {
     setShowNotifications((prev) => {
       const next = !prev;
-      if (next) {
-        setLastSeenAt(Date.now());
+      if (prev && !next) {
+        markNotificationsSeen();
       }
       return next;
     });
@@ -889,13 +912,13 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                   <div className="notification-panel" role="dialog" aria-label="Notifications">
                     <div className="notification-header">
                       <span>Notifications</span>
-                      <span className="notification-total">{notifications.length}</span>
+                      <span className="notification-total">{unreadNotifications.length}</span>
                     </div>
-                    {notifications.length === 0 ? (
+                    {unreadNotifications.length === 0 ? (
                       <p className="helper">No notifications yet.</p>
                     ) : (
                       <div className="notification-list">
-                        {notifications.map((item) => (
+                        {unreadNotifications.map((item) => (
                           <div
                             className="notification-item"
                             data-type={item.type}
