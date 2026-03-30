@@ -128,7 +128,12 @@ a {
 }
 
 .page-dashboard {
-  background: var(--dash-bg);
+  background:
+    radial-gradient(circle at 12% 12%, rgba(99, 102, 241, 0.18) 0%, rgba(99, 102, 241, 0) 42%),
+    radial-gradient(circle at 88% 8%, rgba(244, 178, 72, 0.22) 0%, rgba(244, 178, 72, 0) 38%),
+    radial-gradient(circle at 18% 78%, rgba(56, 189, 248, 0.2) 0%, rgba(56, 189, 248, 0) 40%),
+    linear-gradient(135deg, #f7f9ff 0%, #f5f7ff 48%, #f9fbff 100%);
+  background-attachment: fixed;
 }
 
 .page-dashboard::before,
