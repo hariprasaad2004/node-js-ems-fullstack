@@ -10,7 +10,8 @@ export default function Sidebar({
     <aside className="sidebar">
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <img src="/EMS-icon.png" alt="EMS logo" />
+          <img className="logo-light" src="/EMS-icon.png" alt="EMS logo" />
+          <img className="logo-dark" src="/EMS-logo-dark.png" alt="EMS logo dark" />
         </div>
         <div className="sidebar-title">{title}</div>
       </div>
