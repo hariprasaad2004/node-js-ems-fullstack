@@ -72,6 +72,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   useBodyClass('page-dashboard');
 
   const [activeSection, setActiveSection] = useState('overview');
+  const [isDark, setIsDark] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [employeeError, setEmployeeError] = useState('');
   const [attendance, setAttendance] = useState([]);
@@ -90,6 +91,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [taskForm, setTaskForm] = useState(initialTaskState);
   const [infoEmployee, setInfoEmployee] = useState(null);
   const [statNow, setStatNow] = useState(() => new Date());
+  const notificationCount = 3;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -188,6 +190,18 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     const timer = window.setTimeout(() => setStatNow(new Date()), delay);
     return () => window.clearTimeout(timer);
   }, [statNow]);
+
+  useEffect(() => {
+    const { classList } = document.body;
+    if (isDark) {
+      classList.add('theme-dark');
+    } else {
+      classList.remove('theme-dark');
+    }
+    return () => {
+      classList.remove('theme-dark');
+    };
+  }, [isDark]);
 
   const rangeStats = useMemo(() => {
     const now = statNow;
@@ -764,6 +778,49 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
             <div>
               <h1 className="page-title">Admin Dashboard</h1>
               <p className="helper">Manage employees, roles, and active status.</p>
+            </div>
+            <div className="toolbar-actions">
+              <button
+                className="icon-button"
+                type="button"
+                aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+                onClick={() => setIsDark((prev) => !prev)}
+                title={isDark ? 'Light theme' : 'Dark theme'}
+              >
+                {isDark ? (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M12 4.5a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 12 4.5Zm6.36 1.64a.75.75 0 0 1 1.06 0l.35.35a.75.75 0 0 1-1.06 1.06l-.35-.35a.75.75 0 0 1 0-1.06ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm7.5 3.5a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 19.5 12Zm-1.14 6.36a.75.75 0 0 1 1.06 0l.35.35a.75.75 0 0 1-1.06 1.06l-.35-.35a.75.75 0 0 1 0-1.06ZM12 18.75a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75ZM4.5 12a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 4.5 12Zm1.14-5.86a.75.75 0 0 1 1.06 0l.35.35a.75.75 0 0 1-1.06 1.06l-.35-.35a.75.75 0 0 1 0-1.06Zm.35 12.27a.75.75 0 0 1 1.06 0l.35.35a.75.75 0 0 1-1.06 1.06l-.35-.35a.75.75 0 0 1 0-1.06Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M21 14.5A8.5 8.5 0 0 1 9.5 3a.75.75 0 0 0-.83.93 6.5 6.5 0 1 0 9.4 9.4.75.75 0 0 0 .93-.83Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                )}
+              </button>
+              <button className="icon-button" type="button" aria-label="Notifications">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 3a6 6 0 0 0-6 6v2.2c0 .7-.28 1.37-.78 1.86L4 14.3V16h16v-1.7l-1.22-1.24a2.64 2.64 0 0 1-.78-1.86V9a6 6 0 0 0-6-6Zm0 18a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 21Z"
+                    fill="currentColor"
+                  />
+                </svg>
+                {notificationCount > 0 ? (
+                  <span className="icon-badge">{notificationCount}</span>
+                ) : null}
+              </button>
+              <div className="admin-profile" aria-label="Admin profile">
+                <div className="admin-avatar">A</div>
+                <div className="admin-meta">
+                  <span className="admin-name">Admin</span>
+                  <span className="admin-role">Administrator</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
