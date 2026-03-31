@@ -1118,41 +1118,43 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                     const statusTone = getTaskStatusTone(task.status);
                     const dueTone = getTaskDueTone(task);
                     const employeeName = task.employee?.name || 'Unknown';
-                    const initials = getTaskInitials(employeeName);
                     const dueLabel = getTaskDueText(task);
                     const cardStatus = task.isOverdue ? 'status-overdue' : `status-${task.status}`;
                     return (
                       <article
-                        className={`monitor-card ${cardStatus}`}
+                        className={`monitor-card compact ${cardStatus}`}
                         key={`monitor-${task.id}`}
                         data-status={task.status}
                       >
-                        <div className="monitor-card-top">
-                          <div className="monitor-title">{task.details || 'Task'}</div>
-                          <span className={`pill ${statusTone}`}>{formatStatus(task.status)}</span>
+                        <div className="monitor-accent" aria-hidden="true" />
+                        <div className="monitor-body">
+                          <div className="monitor-card-top">
+                            <div className="monitor-title">{task.details || 'Task'}</div>
+                            <span className={`pill ${statusTone}`}>{formatStatus(task.status)}</span>
+                          </div>
+                          <div className="monitor-line">
+                            <span className="monitor-icon">👤</span>
+                            <span className="monitor-text">
+                              {employeeName}
+                              {task.assignedBy?.name ? ` (${task.assignedBy.name})` : ''}
+                            </span>
+                          </div>
+                          <div className="monitor-line">
+                            <span className="monitor-icon">🗓</span>
+                            <span className="monitor-text">Assigned: {formatDateTime(task.createdAt)}</span>
+                          </div>
+                          <div className="monitor-line">
+                            <span className="monitor-icon">⏳</span>
+                            <span className="monitor-text">
+                              Due: <span className={`task-due ${dueTone}`}>{dueLabel}</span>
+                            </span>
+                          </div>
                         </div>
-                        <div className="monitor-meta">
-                          <div className="avatar mini">{initials}</div>
-                          <div>
-                            <div className="mini-title">{employeeName}</div>
-                            <div className="mini-sub">{task.employee?.email || 'No email'}</div>
-                          </div>
-                          <div className="monitor-meta-spacer" />
-                          <div className="monitor-chip">{task.assignedBy?.name || 'Admin'}</div>
-                        </div>
-                        <div className="monitor-stats">
-                          <div>
-                            <span>Due</span>
-                            <strong className={`task-due ${dueTone}`}>{dueLabel}</strong>
-                          </div>
-                          <div>
-                            <span>Assigned</span>
-                            <strong>{formatDateTime(task.createdAt)}</strong>
-                          </div>
-                          <div>
-                            <span>Elapsed</span>
-                            <strong>{task.isOverdue ? 'Overdue' : 'On track'}</strong>
-                          </div>
+                        <div className="monitor-footer">
+                          <span className="monitor-status-label">{formatStatus(task.status)}</span>
+                          <span className="monitor-elapsed">
+                            {task.isOverdue ? 'Overdue' : 'On track'}
+                          </span>
                         </div>
                       </article>
                     );

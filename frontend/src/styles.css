@@ -2021,9 +2021,11 @@ body.theme-dark .tooltip-list {
 }
 
 .task-due {
-  padding: 4px 8px;
+  padding: 2px 10px;
   border-radius: 999px;
   border: 1px solid transparent;
+  font-size: 12px;
+  letter-spacing: 0.01em;
 }
 
 .due-overdue {
@@ -2432,12 +2434,29 @@ body.theme-dark .tooltip-list {
   background: linear-gradient(180deg, #0f172a 0%, #0b1222 100%);
   border: 1px solid #1e293b;
   border-radius: 16px;
-  padding: 14px;
+  padding: 0;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.35);
   color: #e2e8f0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+}
+
+.monitor-card.compact {
+  min-height: 180px;
+}
+
+.monitor-accent {
+  width: 4px;
+  background: linear-gradient(180deg, #22d3ee, #3b82f6);
+  border-radius: 16px 0 0 16px;
+}
+
+.monitor-body {
+  flex: 1;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .monitor-card.status-overdue {
@@ -2478,6 +2497,24 @@ body.theme-dark .tooltip-list {
   color: #f8fafc;
 }
 
+.monitor-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.monitor-icon {
+  width: 18px;
+  text-align: center;
+  opacity: 0.9;
+}
+
+.monitor-text .task-due {
+  margin-left: 4px;
+}
+
 .monitor-meta {
   display: flex;
   align-items: center;
@@ -2513,6 +2550,33 @@ body.theme-dark .tooltip-list {
 
 .monitor-stats span {
   color: #94a3b8;
+  font-size: 12px;
+}
+
+.monitor-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-top: 1px solid #1f2937;
+  background: rgba(15, 23, 42, 0.65);
+  border-radius: 0 0 16px 16px;
+}
+
+.monitor-status-label {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #e2e8f0;
+}
+
+.monitor-elapsed {
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: #1f2937;
+  border: 1px solid #273548;
+  font-weight: 700;
+  color: #cbd5e1;
   font-size: 12px;
 }
 
