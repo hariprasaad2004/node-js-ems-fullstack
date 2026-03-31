@@ -42,23 +42,25 @@ export default function Login() { // Login page and auth redirect logic.
   };
 
   return (
-    <div className="shell">
-      <div className="card brand-card">
-        <h1 className="brand-title">Employee Management Suite</h1>
-        <p className="brand-subtitle">
-          Centralize your workforce data with a simple admin dashboard and a clean employee
-          self-service portal. Log in to manage profiles, roles, and contact details.
-        </p>
-        <div className="notice">Tip: Create your admin account using the seed script.</div>
+    <div className="auth-layout page-auth">
+      <div className="auth-visual">
+        <div className="visual-overlay" />
+        <div className="visual-content">
+          <h1>EMS Portal</h1>
+          <p>Log in to manage your team and stay ahead of daily updates.</p>
+        </div>
       </div>
 
-      <div className="card auth-card">
-        <h1>Welcome back</h1>
-        <p className="helper">Sign in to continue to your dashboard.</p>
+      <div className="auth-panel">
+        <div className="auth-heading">
+          <span className="brand-kicker">Employee Management Suite</span>
+          <h2>Login</h2>
+          <p>Enter your credentials to continue.</p>
+        </div>
 
-        <form id="login-form" className="form-grid" onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="email">Email</label>
+        <form id="login-form" className="auth-form" onSubmit={handleSubmit}>
+          <label className="auth-field">
+            <span>Email</span>
             <input
               id="email"
               type="email"
@@ -67,26 +69,34 @@ export default function Login() { // Login page and auth redirect logic.
               value={email}
               onChange={(event) => setEmail(event.target.value)}
             />
-          </div>
+          </label>
 
-          <div>
-            <label htmlFor="password">Password (optional if passwordless is enabled)</label>
+          <label className="auth-field">
+            <span>Password</span>
             <input
               id="password"
               type="password"
-              placeholder="********"
+              placeholder="••••••••"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
+          </label>
+
+          <div className="auth-actions">
+            <label className="checkbox">
+              <input type="checkbox" /> <span>Remember me</span>
+            </label>
+            <button className="link-button" type="button">
+              Forgot password?
+            </button>
           </div>
 
-          <button className="btn-primary" type="submit">
+          <button className="btn-primary auth-submit" type="submit">
             Sign In
           </button>
-          <p className="helper">{error}</p>
+          {error ? <p className="helper error-text">{error}</p> : null}
         </form>
       </div>
     </div>
   );
 }
-
