@@ -373,6 +373,37 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     return { total, checkedIn, checkedOut, missing, presenceRate };
   }, [attendance]);
 
+  const attendanceChart = useMemo(() => {
+    const counts = { present: 0, absent: 0, leave: 0 };
+    const dayMap = new Map();
+    attendance.forEach((record) => {
+      const dateKey = record.date || record.dateKey;
+      const status = record.status;
+      const bucket =
+        status === 'checked_in' || status === 'checked_out'
+          ? 'present'
+          : status === 'on_leave'
+            ? 'leave'
+            : 'absent';
+      counts[bucket] += 1;
+      if (dateKey) {
+        const day = dayMap.get(dateKey) || { present: 0, total: 0 };
+        if (bucket === 'present') day.present += 1;
+        day.total += 1;
+        dayMap.set(dateKey, day);
+      }
+    });
+    const total = counts.present + counts.absent + counts.leave;
+    const last7 = Array.from(dayMap.entries())
+      .sort((a, b) => (a[0] > b[0] ? 1 : -1))
+      .slice(-7)
+      .map(([day, data]) => ({
+        day,
+        rate: data.total ? Math.round((data.present / data.total) * 100) : 0
+      }));
+    return { counts, total, last7 };
+  }, [attendance]);
+
   const eodInsights = useMemo(() => {
     const summary = eodSummary || {};
     const topPerformer = summary.perEmployee?.[0] || null;
@@ -1663,6 +1694,88 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           <div className="content-card">
             <h2 className="content-title">Attendance Snapshot</h2>
             <p className="helper">Monitor daily check-ins and hours.</p>
+            <div className="attendance-visuals">
+              <div className="mini-chart">
+                <div className="mini-chart-header">
+                  <span>Daily attendance rate (last 7 days)</span>
+                  <strong>{attendanceChart.last7.slice(-1)[0]?.rate || 0}%</strong>
+                </div>
+                <svg viewBox="0 0 240 80" role="img" aria-label="Attendance rate line">
+                  <polyline
+                    fill="none"
+                    stroke="#2f6fed"
+                    strokeWidth="3"
+                    points={attendanceChart.last7
+                      .map((item, idx) => {
+                        const x = (idx / Math.max(1, attendanceChart.last7.length - 1)) * 230 + 5;
+                        const y = 70 - (item.rate / 100) * 60;
+                        return `${x},${y}`;
+                      })
+                      .join(' ')}
+                  />
+                  {attendanceChart.last7.map((item, idx) => {
+                    const x = (idx / Math.max(1, attendanceChart.last7.length - 1)) * 230 + 5;
+                    const y = 70 - (item.rate / 100) * 60;
+                    return <circle key={item.day} cx={x} cy={y} r="4" fill="#7dd3fc" />;
+                  })}
+                </svg>
+                <div className="mini-chart-footer">
+                  {attendanceChart.last7.map((item) => (
+                    <span key={item.day}>{item.day?.slice(5) || '-'}</span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="donut-card">
+                <div className="mini-chart-header">
+                  <span>Present / Absent / Leave</span>
+                </div>
+                {(() => {
+                  const { present, absent, leave } = attendanceChart.counts;
+                  const total = attendanceChart.total || 1;
+                  const segments = [
+                    { value: present, color: '#22c55e' },
+                    { value: absent, color: '#ef4444' },
+                    { value: leave, color: '#3b82f6' }
+                  ];
+                  let current = 0;
+                  const stops = segments
+                    .map((seg) => {
+                      const start = (current / total) * 360;
+                      current += seg.value;
+                      const end = (current / total) * 360;
+                      return `${seg.color} ${start}deg ${end}deg`;
+                    })
+                    .join(', ');
+                  const background = `conic-gradient(${stops || '#1f2937 0deg'})`;
+                  return (
+                    <div className="donut sm" style={{ background }}>
+                      <div className="donut-center">
+                        <div className="donut-value">{total === 0 ? 0 : present}</div>
+                        <div className="donut-label">Present</div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                <div className="donut-legend">
+                  <div className="legend-row">
+                    <span className="legend-dot" style={{ background: '#22c55e' }} />
+                    <span>Present</span>
+                    <strong>{attendanceChart.counts.present}</strong>
+                  </div>
+                  <div className="legend-row">
+                    <span className="legend-dot" style={{ background: '#ef4444' }} />
+                    <span>Absent</span>
+                    <strong>{attendanceChart.counts.absent}</strong>
+                  </div>
+                  <div className="legend-row">
+                    <span className="legend-dot" style={{ background: '#3b82f6' }} />
+                    <span>Leave</span>
+                    <strong>{attendanceChart.counts.leave}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div className="insight-row compact">
               <div className="insight-chip">
                 <span>Presence</span>
