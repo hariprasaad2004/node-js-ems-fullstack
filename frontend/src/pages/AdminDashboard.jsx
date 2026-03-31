@@ -6,10 +6,11 @@ import { formatDate, formatDateTime, formatEmployeeLabel, formatStatus } from '.
 
 const navItems = [
   { id: 'overview', label: 'Overview' },
+  { id: 'task-monitor', label: 'Task Monitor' },
+  { id: 'eods', label: 'EOD Reports' },
   { id: 'employees', label: 'Employees' },
   { id: 'leave', label: 'Leave' },
   { id: 'attendance', label: 'Attendance' },
-  { id: 'eods', label: 'EODs' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'policies', label: 'Policies' }
 ];
@@ -89,6 +90,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [eodSummary, setEodSummary] = useState(null);
   const [eodError, setEodError] = useState('');
   const [eodFilter, setEodFilter] = useState('all');
+  const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
   const [formData, setFormData] = useState(initialFormState);
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -387,6 +389,41 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     };
   }, [eodSummary]);
 
+  const taskMonitor = useMemo(() => {
+    const now = Date.now();
+    const counts = { pending: 0, planning: 0, processing: 0, completed: 0, overdue: 0 };
+    const list = tasks.map((task) => {
+      const status = (task.status || 'planning').toLowerCase();
+      const due = toTime(task.dueAt);
+      const isCompleted = status === 'completed';
+      const isOverdue = !isCompleted && due && due < now;
+      if (status === 'pending') counts.pending += 1;
+      else if (status === 'processing') counts.processing += 1;
+      else if (status === 'completed') counts.completed += 1;
+      else counts.planning += 1;
+      if (isOverdue) counts.overdue += 1;
+      return { ...task, status, due, isOverdue };
+    });
+
+    const filtered =
+      taskMonitorStatus === 'all'
+        ? list
+        : list.filter((task) =>
+            taskMonitorStatus === 'overdue' ? task.isOverdue : task.status === taskMonitorStatus
+          );
+
+    const total = list.length || 1;
+    const segments = [
+      { key: 'completed', color: '#10b981', value: counts.completed },
+      { key: 'processing', color: '#3b82f6', value: counts.processing },
+      { key: 'planning', color: '#f59e0b', value: counts.planning },
+      { key: 'pending', color: '#eab308', value: counts.pending },
+      { key: 'overdue', color: '#ef4444', value: counts.overdue }
+    ];
+
+    return { list: filtered, counts, segments, total: list.length };
+  }, [tasks, taskMonitorStatus]);
+
   useEffect(() => {
     loadEmployees();
     loadLeaves();
@@ -598,6 +635,10 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     setShowTaskForm(false);
     setTaskForm(initialTaskState);
     setTaskStatus({ message: '', isError: false });
+  };
+
+  const handleTaskMonitorFilter = (value) => {
+    setTaskMonitorStatus(value);
   };
 
   const handleEodFilterChange = (value) => { // Filter EODs by employee.
@@ -1042,6 +1083,135 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           data-section="overview"
         >
           <div className="content-card overview-panel">{renderEmployeeOverview('overview')}</div>
+        </section>
+
+        <section
+          className={`section ${activeSection === 'task-monitor' ? 'active' : ''}`}
+          data-section="task-monitor"
+        >
+          <div className="content-card task-monitor">
+            <div className="section-header">
+              <div>
+                <h2 className="content-title">Task Monitor</h2>
+                <p className="helper">Analytics-first view of task velocity and risk.</p>
+              </div>
+              <div className="chip-row">
+                {['all', 'planning', 'processing', 'completed', 'pending', 'overdue'].map((key) => (
+                  <button
+                    key={`tm-${key}`}
+                    type="button"
+                    className={`chip ${taskMonitorStatus === key ? 'chip-active' : ''}`}
+                    onClick={() => handleTaskMonitorFilter(key)}
+                  >
+                    {key === 'all' ? 'All' : formatStatus(key)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="monitor-grid">
+              <div className="monitor-cards">
+                {taskMonitor.list.length === 0 ? (
+                  <div className="notice">No tasks in this filter.</div>
+                ) : (
+                  taskMonitor.list.map((task) => {
+                    const statusTone = getTaskStatusTone(task.status);
+                    const dueTone = getTaskDueTone(task);
+                    const employeeName = task.employee?.name || 'Unknown';
+                    const initials = getTaskInitials(employeeName);
+                    const dueLabel = getTaskDueText(task);
+                    return (
+                      <article className="monitor-card" key={`monitor-${task.id}`} data-status={task.status}>
+                        <div className="monitor-card-top">
+                          <div className="monitor-title">{task.details || 'Task'}</div>
+                          <span className={`pill ${statusTone}`}>{formatStatus(task.status)}</span>
+                        </div>
+                        <div className="monitor-meta">
+                          <div className="avatar mini">{initials}</div>
+                          <div>
+                            <div className="mini-title">{employeeName}</div>
+                            <div className="mini-sub">{task.employee?.email || 'No email'}</div>
+                          </div>
+                          <div className="monitor-meta-spacer" />
+                          <div className="monitor-chip">{task.assignedBy?.name || 'Admin'}</div>
+                        </div>
+                        <div className="monitor-stats">
+                          <div>
+                            <span>Due</span>
+                            <strong className={`task-due ${dueTone}`}>{dueLabel}</strong>
+                          </div>
+                          <div>
+                            <span>Assigned</span>
+                            <strong>{formatDateTime(task.createdAt)}</strong>
+                          </div>
+                          <div>
+                            <span>Elapsed</span>
+                            <strong>{task.isOverdue ? 'Overdue' : 'On track'}</strong>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="monitor-side">
+                <div className="insight-card">
+                  <span className="insight-label">System Velocity</span>
+                  {(() => {
+                    const total = taskMonitor.segments.reduce((sum, s) => sum + s.value, 0) || 1;
+                    const stops = taskMonitor.segments
+                      .filter((seg) => seg.value > 0)
+                      .map((seg, idx, arr) => {
+                        const start = arr.slice(0, idx).reduce((sum, s) => sum + s.value, 0);
+                        const end = start + seg.value;
+                        const startPct = (start / total) * 360;
+                        const endPct = (end / total) * 360;
+                        return `${seg.color} ${startPct}deg ${endPct}deg`;
+                      })
+                      .join(', ');
+                    const background = stops
+                      ? `conic-gradient(${stops}, #e5e7eb 0deg)`
+                      : '#e5e7eb';
+                    return (
+                      <div className="donut" style={{ background }}>
+                        <div className="donut-center">
+                          <div className="donut-value">{taskMonitor.total}</div>
+                          <div className="donut-label">Total</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  <div className="donut-legend">
+                    {taskMonitor.segments.map((seg) => (
+                      <div className="legend-row" key={`legend-${seg.key}`}>
+                        <span className="legend-dot" style={{ background: seg.color }} />
+                        <span>{formatStatus(seg.key)}</span>
+                        <strong>{seg.value}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="insight-card">
+                  <span className="insight-label">Alerts</span>
+                  <div className="alert-list">
+                    <div className="alert-row">
+                      <span>Overdue tasks</span>
+                      <strong className="alert-badge danger">{taskMonitor.counts.overdue}</strong>
+                    </div>
+                    <div className="alert-row">
+                      <span>Pending review</span>
+                      <strong className="alert-badge warn">{taskMonitor.counts.pending}</strong>
+                    </div>
+                    <div className="alert-row">
+                      <span>In progress</span>
+                      <strong className="alert-badge info">{taskMonitor.counts.processing}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section
