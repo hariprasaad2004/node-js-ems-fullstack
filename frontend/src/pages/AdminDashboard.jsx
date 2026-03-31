@@ -1183,7 +1183,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                     </div>
                     <div className="alert-row">
                       <span>In progress</span>
-                      <strong className="alert-badge info">{taskMonitor.counts.processing}</strong>
+                      <strong className="alert-badge info">{taskMonitor.counts.planning}</strong>
                     </div>
                   </div>
                 </div>

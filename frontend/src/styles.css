@@ -1012,7 +1012,7 @@ body.theme-dark .stat-card {
 }
 
 body.theme-dark .stat-value {
-  color: #e2e8f0;
+  color: #60a5fa;
 }
 
 body.theme-dark .insight-card {
@@ -1248,6 +1248,12 @@ body.theme-dark .insight-stat-row strong {
   border: 1px solid #f8e0b7;
   color: #92400e;
   font-size: 13px;
+}
+
+.notice.notice-muted {
+  background: #0f172a;
+  border: 1px solid #1f2937;
+  color: #e2e8f0;
 }
 
 .attendance-calendar {
