@@ -404,6 +404,18 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     return { counts, total, last7 };
   }, [attendance]);
 
+  const eodInsights = useMemo(() => {
+    const summary = eodSummary || {};
+    const topPerformer = summary.perEmployee?.[0] || null;
+    return {
+      completionRate: summary.completionRate || 0,
+      inProgress: summary.inProgress || 0,
+      total: summary.total || 0,
+      last7: summary.last7Days || { total: 0, completed: 0, completionRate: 0 },
+      topPerformer
+    };
+  }, [eodSummary]);
+
   const performanceLeaderboard = useMemo(() => {
     const list = (eodSummary?.perEmployee || []).map((item) => ({
       name: item.name || 'Employee',
@@ -434,19 +446,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       { label: 'Speed', value: speed }
     ];
   }, [eodInsights, attendanceInsights, taskInsights]);
-
-  const eodInsights = useMemo(() => {
-    const summary = eodSummary || {};
-    const topPerformer = summary.perEmployee?.[0] || null;
-    return {
-      completionRate: summary.completionRate || 0,
-      inProgress: summary.inProgress || 0,
-      total: summary.total || 0,
-      last7: summary.last7Days || { total: 0, completed: 0, completionRate: 0 },
-      topPerformer
-    };
-  }, [eodSummary]);
-
   const taskMonitor = useMemo(() => {
     const now = Date.now();
     const counts = { pending: 0, planning: 0, completed: 0, overdue: 0 };
