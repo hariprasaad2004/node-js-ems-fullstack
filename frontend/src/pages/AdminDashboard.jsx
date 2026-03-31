@@ -9,6 +9,7 @@ const navItems = [
   { id: 'employees', label: 'Employees' },
   { id: 'leave', label: 'Leave' },
   { id: 'attendance', label: 'Attendance' },
+  { id: 'eods', label: 'EODs' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'policies', label: 'Policies' }
 ];
@@ -84,6 +85,10 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [leaveError, setLeaveError] = useState('');
   const [tasks, setTasks] = useState([]);
   const [taskError, setTaskError] = useState('');
+  const [eods, setEods] = useState([]);
+  const [eodSummary, setEodSummary] = useState(null);
+  const [eodError, setEodError] = useState('');
+  const [eodFilter, setEodFilter] = useState('all');
   const [formData, setFormData] = useState(initialFormState);
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -321,10 +326,72 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     };
   }, [tasks, statNow]);
 
+  const leaveInsights = useMemo(() => {
+    const total = leaves.length;
+    const pending = leaves.filter((leave) => leave.status === 'pending').length;
+    const approved = leaves.filter((leave) => leave.status === 'approved').length;
+    const rejected = leaves.filter((leave) => leave.status === 'rejected').length;
+    const approvalRate = total ? Math.round((approved / total) * 100) : 0;
+    const avgDuration =
+      total === 0
+        ? 0
+        : Math.round(
+            leaves.reduce((sum, leave) => {
+              const start = new Date(leave.fromDate);
+              const end = new Date(leave.toDate);
+              if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return sum;
+              const diffDays = Math.max(1, Math.round((end - start) / 86400000) + 1);
+              return sum + diffDays;
+            }, 0) / total
+          );
+    return { total, pending, approved, rejected, approvalRate, avgDuration };
+  }, [leaves]);
+
+  const taskInsights = useMemo(() => {
+    const total = tasks.length;
+    const completed = tasks.filter((task) => task.status === 'completed').length;
+    const inProgress = tasks.filter(
+      (task) => task.status === 'processing' || task.status === 'in_progress'
+    ).length;
+    const planning = tasks.filter((task) => task.status === 'planning').length;
+    const overdue = tasks.filter((task) => {
+      if (!task.dueAt) return false;
+      const dueDate = new Date(task.dueAt);
+      if (Number.isNaN(dueDate.getTime())) return false;
+      return task.status !== 'completed' && dueDate < new Date();
+    }).length;
+    const completionRate = total ? Math.round((completed / total) * 100) : 0;
+    return { total, completed, inProgress, planning, overdue, completionRate };
+  }, [tasks]);
+
+  const attendanceInsights = useMemo(() => {
+    const total = attendance.length;
+    const checkedIn = attendance.filter(
+      (record) => record.status === 'checked_in' || record.status === 'checked_out'
+    ).length;
+    const checkedOut = attendance.filter((record) => record.status === 'checked_out').length;
+    const missing = attendance.filter((record) => record.status === 'not_checked_in').length;
+    const presenceRate = total ? Math.round((checkedIn / total) * 100) : 0;
+    return { total, checkedIn, checkedOut, missing, presenceRate };
+  }, [attendance]);
+
+  const eodInsights = useMemo(() => {
+    const summary = eodSummary || {};
+    const topPerformer = summary.perEmployee?.[0] || null;
+    return {
+      completionRate: summary.completionRate || 0,
+      inProgress: summary.inProgress || 0,
+      total: summary.total || 0,
+      last7: summary.last7Days || { total: 0, completed: 0, completionRate: 0 },
+      topPerformer
+    };
+  }, [eodSummary]);
+
   useEffect(() => {
     loadEmployees();
     loadLeaves();
     loadTasks();
+    loadEods();
   }, []);
 
   async function loadEmployees() { // Fetch employees and refresh summary data.
@@ -383,6 +450,24 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     }
 
     setTasks(Array.isArray(data) ? data : []);
+  }
+
+  async function loadEods(selectedEmployee) { // Fetch EODs with analytics.
+    setEodError('');
+    const query =
+      selectedEmployee && selectedEmployee !== 'all' ? `?employeeId=${selectedEmployee}` : '';
+    const res = await apiRequest(`/api/admin/eods${query}`);
+    const data = await readJson(res);
+
+    if (!res.ok) {
+      setEodError(data?.message || 'Failed to load EODs.');
+      setEods([]);
+      setEodSummary(null);
+      return;
+    }
+
+    setEods(Array.isArray(data?.reports) ? data.reports : []);
+    setEodSummary(data?.summary || null);
   }
 
   const handleFormChange = (event) => { // Track Add/Edit form input changes.
@@ -513,6 +598,11 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     setShowTaskForm(false);
     setTaskForm(initialTaskState);
     setTaskStatus({ message: '', isError: false });
+  };
+
+  const handleEodFilterChange = (value) => { // Filter EODs by employee.
+    setEodFilter(value);
+    loadEods(value);
   };
 
   const getTaskStatusTone = (status) => {
@@ -1336,6 +1426,24 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
             >
               {leaveStatus.message}
             </p>
+            <div className="insight-row compact">
+              <div className="insight-chip">
+                <span>Approval rate</span>
+                <strong>{leaveInsights.approvalRate}%</strong>
+              </div>
+              <div className="insight-chip">
+                <span>Pending</span>
+                <strong>{leaveInsights.pending}</strong>
+              </div>
+              <div className="insight-chip">
+                <span>Approved</span>
+                <strong>{leaveInsights.approved}</strong>
+              </div>
+              <div className="insight-chip">
+                <span>Avg. length</span>
+                <strong>{leaveInsights.avgDuration} days</strong>
+              </div>
+            </div>
             <table className="table table-responsive">
               <thead>
                 <tr>
@@ -1407,6 +1515,20 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           <div className="content-card">
             <h2 className="content-title">Attendance Snapshot</h2>
             <p className="helper">Monitor daily check-ins and hours.</p>
+            <div className="insight-row compact">
+              <div className="insight-chip">
+                <span>Presence</span>
+                <strong>{attendanceInsights.presenceRate}%</strong>
+              </div>
+              <div className="insight-chip">
+                <span>Checked out</span>
+                <strong>{attendanceInsights.checkedOut}</strong>
+              </div>
+              <div className="insight-chip">
+                <span>Not checked in</span>
+                <strong>{attendanceInsights.missing}</strong>
+              </div>
+            </div>
             <table className="table table-responsive">
               <thead>
                 <tr>
@@ -1445,6 +1567,148 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
         </section>
 
         <section
+          className={`section ${activeSection === 'eods' ? 'active' : ''}`}
+          data-section="eods"
+        >
+          <div className="content-card">
+            <div className="employee-header">
+              <div>
+                <h2 className="content-title">EOD Analytics</h2>
+                <p className="helper">Employee-wise end-of-day outcomes.</p>
+              </div>
+              <select value={eodFilter} onChange={(event) => handleEodFilterChange(event.target.value)}>
+                <option value="all">All employees</option>
+                {employees.map((emp) => (
+                  <option value={emp.id} key={`eod-filter-${emp.id}`}>
+                    {formatEmployeeLabel(emp)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {eodError ? (
+              <div className="notice">{eodError}</div>
+            ) : (
+              <>
+                <div className="insight-row">
+                  <div className="insight-card">
+                    <span className="insight-label">Completion rate</span>
+                    <strong className="insight-value">{eodInsights.completionRate}%</strong>
+                    <div
+                      className="progress-line"
+                      style={{ '--percent': eodInsights.completionRate }}
+                    />
+                  </div>
+                  <div className="insight-card">
+                    <span className="insight-label">Last 7 days</span>
+                    <strong className="insight-value">
+                      {eodInsights.last7?.completed || 0}/{eodInsights.last7?.total || 0}
+                    </strong>
+                    <div className="insight-sub">
+                      {eodInsights.last7?.completionRate || 0}% done
+                    </div>
+                  </div>
+                  <div className="insight-card">
+                    <span className="insight-label">In progress</span>
+                    <strong className="insight-value">{eodInsights.inProgress}</strong>
+                    <div className="insight-sub">Open follow-ups</div>
+                  </div>
+                  <div className="insight-card">
+                    <span className="insight-label">Total logs</span>
+                    <strong className="insight-value">{eodInsights.total}</strong>
+                    <div className="insight-sub">Across selected scope</div>
+                  </div>
+                </div>
+
+                <div className="grid-2">
+                  <div className="overview-card">
+                    <div className="overview-card-header">
+                      <h3>Top performers</h3>
+                      <span className="helper">Completion rate by employee</span>
+                    </div>
+                    <div className="mini-list">
+                      {eodSummary?.perEmployee?.length ? (
+                        eodSummary.perEmployee.slice(0, 5).map((row) => (
+                          <div className="mini-item" key={`eod-perf-${row.employeeId}`}>
+                            <div>
+                              <div className="mini-title">{row.name}</div>
+                              <div className="mini-sub">
+                                {row.department || row.email || 'Employee'}
+                              </div>
+                            </div>
+                            <div className="mini-meta">
+                              {row.completionRate}% • {row.total} logs
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="helper">No EOD data yet.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="overview-card">
+                    <div className="overview-card-header">
+                      <h3>Latest EOD entries</h3>
+                      <span className="helper">Session highlights</span>
+                    </div>
+                    {eods.length === 0 ? (
+                      <div className="notice">No EODs submitted yet.</div>
+                    ) : (
+                      <div className="eod-timeline">
+                        {eods.slice(0, 8).map((entry) => {
+                          const statusTone =
+                            (entry.status || '').toLowerCase() === 'completed'
+                              ? 'status-completed'
+                              : 'status-pending';
+                          const session1 =
+                            entry.session1 && entry.session1.length > 90
+                              ? `${entry.session1.slice(0, 90)}…`
+                              : entry.session1 || 'Session 1 not filled';
+                          const session2 =
+                            entry.session2 && entry.session2.length > 90
+                              ? `${entry.session2.slice(0, 90)}…`
+                              : entry.session2 || 'Session 2 not filled';
+                          return (
+                            <article className="eod-card" key={`admin-eod-${entry.id}`}>
+                              <div className="eod-card-top">
+                                <div>
+                                  <div className="eod-date">{formatDate(entry.date)}</div>
+                                  <div className="mini-sub">
+                                    {entry.employee?.name || 'Employee'} •{' '}
+                                    {entry.employee?.department ||
+                                      entry.employee?.email ||
+                                      'Unknown'}
+                                  </div>
+                                </div>
+                                <span className={`pill ${statusTone}`}>
+                                  {formatStatus(entry.status)}
+                                </span>
+                              </div>
+                              <div className="eod-body">
+                                <div className="eod-session">
+                                  <span>Session 1</span>
+                                  <p>{session1}</p>
+                                </div>
+                                <div className="eod-session">
+                                  <span>Session 2</span>
+                                  <p>{session2}</p>
+                                </div>
+                              </div>
+                              <div className="eod-meta">{formatDateTime(entry.createdAt)}</div>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+
+        <section
           className={`section ${activeSection === 'tasks' ? 'active' : ''}`}
           data-section="tasks"
         >
@@ -1457,6 +1721,24 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               <button className="btn-primary" type="button" onClick={handleToggleTaskForm}>
                 Assign Task
               </button>
+            </div>
+            <div className="insight-row compact">
+              <div className="insight-chip">
+                <span>Completion</span>
+                <strong>{taskInsights.completionRate}%</strong>
+              </div>
+              <div className="insight-chip">
+                <span>In progress</span>
+                <strong>{taskInsights.inProgress}</strong>
+              </div>
+              <div className="insight-chip">
+                <span>Planning</span>
+                <strong>{taskInsights.planning}</strong>
+              </div>
+              <div className="insight-chip">
+                <span>Overdue</span>
+                <strong>{taskInsights.overdue}</strong>
+              </div>
             </div>
             {taskError ? (
               <div className="notice">{taskError}</div>

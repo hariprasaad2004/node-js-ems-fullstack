@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const LeaveRequest = require('../models/LeaveRequest');
 const Task = require('../models/Task');
+const EODReport = require('../models/EODReport');
 const { requireAuth, requireRole, getRoleSession } = require('../middleware/auth');
 
 const router = express.Router();
@@ -91,6 +92,24 @@ const toSafeTask = (task) => ({ // Sanitize task records for API responses.
         id: task.assignedBy._id?.toString?.() || task.assignedBy.toString(),
         name: task.assignedBy.name,
         email: task.assignedBy.email
+      }
+    : null
+});
+
+const toSafeEod = (report) => ({ // Sanitize end-of-day reports.
+  id: report._id.toString(),
+  date: report.date,
+  dateKey: report.dateKey,
+  session1: report.session1 || '',
+  session2: report.session2 || '',
+  status: report.status || 'completed',
+  createdAt: report.createdAt,
+  employee: report.employee
+    ? {
+        id: report.employee._id?.toString?.() || report.employee.toString(),
+        name: report.employee.name,
+        email: report.employee.email,
+        department: report.employee.department || ''
       }
     : null
 });
@@ -438,5 +457,131 @@ router.post('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, r
   }
 });
 
-module.exports = router;
+router.get('/api/admin/eods', requireAuth, requireRole('admin'), async (req, res) => { // List EODs with analytics.
+  try {
+    const { employeeId } = req.query;
+    const match = {};
+    if (employeeId) {
+      match.employee = employeeId;
+    }
 
+    const reports = await EODReport.find(match)
+      .sort({ date: -1 })
+      .limit(80)
+      .populate('employee', 'name email department');
+
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+
+    const [totals] = await EODReport.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          completed: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'completed'] }, 1, 0]
+            }
+          },
+          inProgress: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'in_progress'] }, 1, 0]
+            }
+          },
+          lastDate: { $max: '$date' }
+        }
+      }
+    ]);
+
+    const [recent] = await EODReport.aggregate([
+      {
+        $match: {
+          ...match,
+          date: { $gte: sevenDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          completed: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'completed'] }, 1, 0]
+            }
+          }
+        }
+      }
+    ]);
+
+    const perEmployee = await EODReport.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: '$employee',
+          total: { $sum: 1 },
+          completed: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'completed'] }, 1, 0]
+            }
+          },
+          inProgress: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'in_progress'] }, 1, 0]
+            }
+          },
+          lastDate: { $max: '$date' }
+        }
+      },
+      { $sort: { completed: -1, total: -1 } },
+      { $limit: 25 }
+    ]);
+
+    const employeeIds = perEmployee.map((item) => item._id).filter(Boolean);
+    const users = await User.find({ _id: { $in: employeeIds } }, 'name email department');
+    const userMap = new Map(users.map((user) => [user._id.toString(), user]));
+
+    const totalCount = totals?.total || 0;
+    const completedCount = totals?.completed || 0;
+    const inProgressCount = totals?.inProgress || 0;
+
+    const summary = {
+      total: totalCount,
+      completed: completedCount,
+      inProgress: inProgressCount,
+      completionRate: totalCount ? Math.round((completedCount / totalCount) * 100) : 0,
+      lastSubmittedAt: totals?.lastDate || null,
+      last7Days: {
+        total: recent?.total || 0,
+        completed: recent?.completed || 0,
+        completionRate: recent?.total
+          ? Math.round((recent.completed / recent.total) * 100)
+          : 0
+      },
+      perEmployee: perEmployee.map((item) => {
+        const user = userMap.get(item._id?.toString?.() || '');
+        const completionRate = item.total ? Math.round((item.completed / item.total) * 100) : 0;
+        return {
+          employeeId: item._id?.toString?.() || '',
+          name: user?.name || 'Employee',
+          email: user?.email || '',
+          department: user?.department || '',
+          total: item.total,
+          completed: item.completed,
+          inProgress: item.inProgress,
+          completionRate,
+          lastDate: item.lastDate
+        };
+      })
+    };
+
+    return res.json({
+      reports: reports.map(toSafeEod),
+      summary
+    });
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to fetch EOD reports.' });
+  }
+});
+
+module.exports = router;

@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiRequest, readJson } from '../api/client.js';
 import Sidebar from '../components/Sidebar.jsx';
 import { useBodyClass } from '../hooks/useBodyClass.js';
-import { formatDate, formatDateTime, formatDuration } from '../utils/format.js';
+import { formatDate, formatDateTime, formatDuration, formatStatus } from '../utils/format.js';
 
 const navItems = [
   { id: 'profile', label: 'Profile' },
   { id: 'attendance', label: 'Attendance' },
   { id: 'leave', label: 'Leave' },
+  { id: 'eod', label: 'EOD' },
   { id: 'tasks', label: 'Tasks' }
 ];
 
@@ -16,6 +17,21 @@ const initialLeaveForm = {
   fromDate: '',
   toDate: '',
   reason: ''
+};
+
+const getTodayInput = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const initialEodForm = {
+  date: getTodayInput(),
+  session1: '',
+  session2: '',
+  status: 'completed'
 };
 
 const toTime = (value) => {
@@ -37,6 +53,10 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
   const [leaveError, setLeaveError] = useState('');
   const [leaveStatus, setLeaveStatus] = useState({ message: '', isError: false });
   const [leaveForm, setLeaveForm] = useState(initialLeaveForm);
+  const [eods, setEods] = useState([]);
+  const [eodError, setEodError] = useState('');
+  const [eodStatus, setEodStatus] = useState({ message: '', isError: false });
+  const [eodForm, setEodForm] = useState(initialEodForm);
   const [tasks, setTasks] = useState([]);
   const [taskError, setTaskError] = useState('');
   const [taskStatus, setTaskStatus] = useState({ message: '', isError: false });
@@ -74,6 +94,7 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
     loadAttendance();
     loadLeaves();
     loadTasks();
+    loadEods();
   }, []);
 
   const notifications = useMemo(() => {
@@ -185,6 +206,50 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
+  const eodStats = useMemo(() => {
+    const total = eods.length;
+    const completed = eods.filter(
+      (entry) => (entry.status || '').toLowerCase() === 'completed'
+    ).length;
+    const inProgress = eods.filter(
+      (entry) => (entry.status || '').toLowerCase() === 'in_progress'
+    ).length;
+
+    const cutoff = new Date();
+    cutoff.setHours(0, 0, 0, 0);
+    cutoff.setDate(cutoff.getDate() - 6);
+    const last7 = eods.filter((entry) => {
+      const value = new Date(entry.date);
+      return value >= cutoff;
+    });
+    const last7Completed = last7.filter(
+      (entry) => (entry.status || '').toLowerCase() === 'completed'
+    ).length;
+
+    const dateSet = new Set(
+      eods.map((entry) => entry.dateKey || formatDateKey(new Date(entry.date)))
+    );
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (let cursor = new Date(today); dateSet.has(formatDateKey(cursor)); ) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+
+    const completionRate = total ? Math.round((completed / total) * 100) : 0;
+    const last7Rate = last7.length ? Math.round((last7Completed / last7.length) * 100) : 0;
+    return {
+      total,
+      completed,
+      inProgress,
+      completionRate,
+      last7Total: last7.length,
+      last7Rate,
+      streak
+    };
+  }, [eods]);
 
   const attendanceByDate = useMemo(() => {
     const map = new Map();
@@ -389,6 +454,20 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
     setLeaves(Array.isArray(data) ? data : []);
   }
 
+  async function loadEods() { // Fetch employee end-of-day submissions.
+    setEodError('');
+    const res = await apiRequest('/api/employee/eods');
+    const data = await readJson(res);
+
+    if (!res.ok) {
+      setEodError(data?.message || 'Failed to load EOD reports.');
+      setEods([]);
+      return;
+    }
+
+    setEods(Array.isArray(data) ? data : []);
+  }
+
   async function loadTasks() { // Fetch employee tasks.
     setTaskError('');
     const res = await apiRequest('/api/employee/tasks');
@@ -406,6 +485,43 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
   const handleLeaveChange = (event) => { // Track leave form input changes.
     const { name, value } = event.target;
     setLeaveForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEodChange = (event) => { // Track EOD form input changes.
+    const { name, value } = event.target;
+    setEodForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEodSubmit = async (event) => { // Submit or update EOD.
+    event.preventDefault();
+    setEodStatus({ message: 'Submitting...', isError: false });
+
+    if (!eodForm.date) {
+      setEodStatus({ message: 'Pick a date first.', isError: true });
+      return;
+    }
+
+    const payload = {
+      date: eodForm.date,
+      session1: String(eodForm.session1 || '').trim(),
+      session2: String(eodForm.session2 || '').trim(),
+      status: eodForm.status || 'completed'
+    };
+
+    const res = await apiRequest('/api/employee/eods', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const data = await readJson(res);
+
+    if (!res.ok) {
+      setEodStatus({ message: data?.message || 'Failed to submit EOD.', isError: true });
+      return;
+    }
+
+    setEodStatus({ message: 'EOD saved.', isError: false });
+    setEodForm((prev) => ({ ...initialEodForm, date: prev.date || initialEodForm.date }));
+    await loadEods();
   };
 
   const handleCheckIn = async () => { // Record employee check-in.
@@ -941,6 +1057,144 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
                 )}
               </tbody>
             </table>
+            </div>
+          </section>
+
+          <section
+            className={`section ${activeSection === 'eod' ? 'active' : ''}`}
+            data-section="eod"
+          >
+            <div className="grid-2">
+              <div className="content-card">
+                <div className="employee-header">
+                  <div>
+                    <h2 className="content-title">End of Day Report</h2>
+                    <p className="helper">Capture forenoon, afternoon, and completion status.</p>
+                  </div>
+                </div>
+
+                <div className="insight-row">
+                  <div className="insight-chip">
+                    <span>Completion rate</span>
+                    <strong>{eodStats.completionRate}%</strong>
+                  </div>
+                  <div className="insight-chip">
+                    <span>Last 7 days</span>
+                    <strong>{eodStats.last7Rate}%</strong>
+                  </div>
+                  <div className="insight-chip">
+                    <span>Streak</span>
+                    <strong>{eodStats.streak} days</strong>
+                  </div>
+                  <div className="insight-chip">
+                    <span>Open</span>
+                    <strong>{eodStats.inProgress}</strong>
+                  </div>
+                </div>
+
+                <form className="form-grid" onSubmit={handleEodSubmit}>
+                  <div>
+                    <label htmlFor="eod-date">Date</label>
+                    <input
+                      id="eod-date"
+                      name="date"
+                      type="date"
+                      value={eodForm.date}
+                      onChange={handleEodChange}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="eod-status">Result Status</label>
+                    <select
+                      id="eod-status"
+                      name="status"
+                      value={eodForm.status}
+                      onChange={handleEodChange}
+                    >
+                      <option value="completed">Completed</option>
+                      <option value="in_progress">In Progress</option>
+                    </select>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label htmlFor="eod-session1">Session 1 (Forenoon)</label>
+                    <textarea
+                      id="eod-session1"
+                      name="session1"
+                      placeholder="What did you achieve before lunch?"
+                      value={eodForm.session1}
+                      onChange={handleEodChange}
+                      rows="3"
+                    />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label htmlFor="eod-session2">Session 2 (Afternoon)</label>
+                    <textarea
+                      id="eod-session2"
+                      name="session2"
+                      placeholder="What did you complete after lunch?"
+                      value={eodForm.session2}
+                      onChange={handleEodChange}
+                      rows="3"
+                    />
+                  </div>
+                  <button className="btn-primary" type="submit">
+                    Submit EOD
+                  </button>
+                  <p
+                    className="helper"
+                    style={{ color: eodStatus.isError ? '#c13e2d' : '#0e7c7b' }}
+                  >
+                    {eodStatus.message}
+                  </p>
+                </form>
+              </div>
+
+              <div className="content-card">
+                <div className="employee-header">
+                  <div>
+                    <h2 className="content-title">EOD Timeline</h2>
+                    <p className="helper">Recent submissions with both sessions.</p>
+                  </div>
+                </div>
+                {eodError ? (
+                  <div className="notice">{eodError}</div>
+                ) : eods.length === 0 ? (
+                  <div className="notice">Submit your first EOD to start the log.</div>
+                ) : (
+                  <div className="eod-timeline">
+                    {eods.map((entry) => {
+                      const statusTone =
+                        (entry.status || '').toLowerCase() === 'completed'
+                          ? 'status-completed'
+                          : 'status-pending';
+                      return (
+                        <article className="eod-card" key={entry.id}>
+                          <div className="eod-card-top">
+                            <div>
+                              <div className="eod-date">{formatDate(entry.date)}</div>
+                              <span className={`pill ${statusTone}`}>
+                                {formatStatus(entry.status)}
+                              </span>
+                            </div>
+                            <div className="eod-meta">{formatDateTime(entry.createdAt)}</div>
+                          </div>
+                          <div className="eod-body">
+                            <div className="eod-session">
+                              <span>Session 1</span>
+                              <p>{entry.session1 || 'Not filled'}</p>
+                            </div>
+                            <div className="eod-session">
+                              <span>Session 2</span>
+                              <p>{entry.session2 || 'Not filled'}</p>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </section>
 

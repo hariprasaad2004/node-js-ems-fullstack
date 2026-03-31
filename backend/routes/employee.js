@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const LeaveRequest = require('../models/LeaveRequest');
 const Task = require('../models/Task');
+const EODReport = require('../models/EODReport');
 const { requireAuth, requireRole, getRoleSession } = require('../middleware/auth');
 
 const router = express.Router();
@@ -67,6 +68,16 @@ const toSafeTask = (task) => ({ // Sanitize task records for API responses.
         email: task.assignedBy.email
       }
     : null
+});
+
+const toSafeEod = (report) => ({ // Sanitize end-of-day reports.
+  id: report._id.toString(),
+  date: report.date,
+  dateKey: report.dateKey,
+  session1: report.session1 || '',
+  session2: report.session2 || '',
+  status: report.status || 'completed',
+  createdAt: report.createdAt
 });
 
 router.get('/employee', (req, res) => { // Serve the SPA for the employee route with role checks.
@@ -234,6 +245,65 @@ router.post('/api/employee/leave', requireAuth, requireRole('employee'), async (
     return res.status(201).json(toSafeLeave(leave));
   } catch (err) {
     return res.status(500).json({ message: 'Failed to submit leave request.' });
+  }
+});
+
+router.get('/api/employee/eods', requireAuth, requireRole('employee'), async (req, res) => { // List recent end-of-day reports.
+  try {
+    const reports = await EODReport.find({ employee: req.userId })
+      .sort({ date: -1 })
+      .limit(30);
+    return res.json(reports.map(toSafeEod));
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to load EOD reports.' });
+  }
+});
+
+router.post('/api/employee/eods', requireAuth, requireRole('employee'), async (req, res) => { // Submit or update an EOD.
+  try {
+    const { date, session1, session2, status } = req.body;
+    const parsedDate = date ? new Date(date) : new Date();
+    if (Number.isNaN(parsedDate.getTime())) {
+      return res.status(400).json({ message: 'Invalid date provided.' });
+    }
+
+    const cleanDate = new Date(
+      parsedDate.getFullYear(),
+      parsedDate.getMonth(),
+      parsedDate.getDate(),
+      12,
+      0,
+      0,
+      0
+    );
+    const dateKey = formatDateKey(cleanDate);
+    const statusValue = status === 'in_progress' ? 'in_progress' : 'completed';
+
+    const payload = {
+      employee: req.userId,
+      date: cleanDate,
+      dateKey,
+      session1: session1 ? String(session1).trim() : '',
+      session2: session2 ? String(session2).trim() : '',
+      status: statusValue
+    };
+
+    const report = await EODReport.findOneAndUpdate(
+      { employee: req.userId, dateKey },
+      { $set: payload },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    return res.status(201).json(toSafeEod(report));
+  } catch (err) {
+    if (err && err.code === 11000) {
+      const dateKey = formatDateKey(new Date());
+      const existing = await EODReport.findOne({ employee: req.userId, dateKey });
+      if (existing) {
+        return res.status(200).json(toSafeEod(existing));
+      }
+    }
+    return res.status(500).json({ message: 'Failed to submit EOD report.' });
   }
 });
 
