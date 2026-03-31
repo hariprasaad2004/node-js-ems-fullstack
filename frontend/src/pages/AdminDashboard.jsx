@@ -459,6 +459,63 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       });
   }, [employees, eodSummary]);
 
+  const performanceRadars = useMemo(() => {
+    const attendByEmp = new Map();
+    attendance.forEach((record) => {
+      const id = record.employee?.id || record.employeeId || record.employee?.email;
+      if (!id) return;
+      const bucket =
+        record.status === 'checked_in' || record.status === 'checked_out'
+          ? 'present'
+          : record.status === 'on_leave'
+            ? 'leave'
+            : 'absent';
+      const entry = attendByEmp.get(id) || { present: 0, total: 0 };
+      if (bucket === 'present') entry.present += 1;
+      entry.total += 1;
+      attendByEmp.set(id, entry);
+    });
+
+    const tasksByEmp = new Map();
+    tasks.forEach((task) => {
+      const id = task.employee?.id || task.employeeId || task.employee?.email;
+      if (!id) return;
+      const list = tasksByEmp.get(id) || [];
+      list.push(task);
+      tasksByEmp.set(id, list);
+    });
+
+    return performanceStatuses.map((emp) => {
+      const empTasks = tasksByEmp.get(emp.id) || [];
+      const totalTasks = empTasks.length;
+      const completedTasks = empTasks.filter((t) => t.status === 'completed').length;
+      const planningTasks = empTasks.filter(
+        (t) => (t.status || '').toLowerCase() === 'planning'
+      ).length;
+      const pendingShare = totalTasks === 0 ? 0 : Math.round((planningTasks / totalTasks) * 100);
+      const presenceEntry = attendByEmp.get(emp.id) || { present: 0, total: 0 };
+      const attendanceRate =
+        presenceEntry.total === 0
+          ? 0
+          : Math.round((presenceEntry.present / presenceEntry.total) * 100);
+      const speed = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+      const delivery = emp.score || 0;
+      const reliability = Math.max(0, 100 - pendingShare);
+      const engagement = Math.min(100, totalTasks * 10);
+
+      return {
+        ...emp,
+        radar: [
+          { label: 'Delivery', value: delivery },
+          { label: 'Reliability', value: reliability },
+          { label: 'Engagement', value: engagement },
+          { label: 'Attendance', value: attendanceRate },
+          { label: 'Speed', value: speed }
+        ]
+      };
+    });
+  }, [performanceStatuses, tasks, attendance]);
+
   const radarData = useMemo(() => {
     const completion = eodInsights.completionRate || 0;
     const last7 = eodInsights.last7?.completionRate || 0;
@@ -1302,6 +1359,71 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                         </div>
                         <div className="perf-sub">
                           {emp.completed}/{emp.total} logs
+                        </div>
+                        <div className="radar-mini">
+                          <svg viewBox="0 0 220 220">
+                            <g transform="translate(110 110)">
+                              {[20, 40, 60, 80, 100].map((r) => (
+                                <circle
+                                  key={r}
+                                  r={(r / 100) * 90}
+                                  fill="none"
+                                  stroke="#1f2b46"
+                                  strokeWidth="1"
+                                />
+                              ))}
+                              {emp.radar.map((point, idx) => {
+                                const angle = (Math.PI * 2 * idx) / emp.radar.length - Math.PI / 2;
+                                const x = Math.cos(angle) * 95;
+                                const y = Math.sin(angle) * 95;
+                                return (
+                                  <line key={`axis-${point.label}`} x1="0" y1="0" x2={x} y2={y} stroke="#1f2b46" />
+                                );
+                              })}
+                              {(() => {
+                                const points = emp.radar
+                                  .map((point, idx) => {
+                                    const angle = (Math.PI * 2 * idx) / emp.radar.length - Math.PI / 2;
+                                    const r = (point.value / 100) * 90;
+                                    const x = Math.cos(angle) * r;
+                                    const y = Math.sin(angle) * r;
+                                    return `${x},${y}`;
+                                  })
+                                  .join(' ');
+                                return (
+                                  <g>
+                                    <polygon
+                                      points={points}
+                                      fill="url(#radarFill)"
+                                      stroke="#7dd3fc"
+                                      strokeWidth="2"
+                                    />
+                                    {emp.radar.map((point, idx) => {
+                                      const angle = (Math.PI * 2 * idx) / emp.radar.length - Math.PI / 2;
+                                      const r = (point.value / 100) * 90;
+                                      const x = Math.cos(angle) * r;
+                                      const y = Math.sin(angle) * r;
+                                      return <circle key={`pt-${point.label}`} cx={x} cy={y} r="3" fill="#7dd3fc" />;
+                                    })}
+                                  </g>
+                                );
+                              })()}
+                            </g>
+                            <defs>
+                              <linearGradient id="radarFill" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#7dd3fc" stopOpacity="0.6" />
+                                <stop offset="100%" stopColor="#22c55e" stopOpacity="0.35" />
+                              </linearGradient>
+                            </defs>
+                          </svg>
+                          <div className="radar-mini-legend">
+                            {emp.radar.map((point) => (
+                              <div key={`mini-${emp.id}-${point.label}`} className="radar-legend-row">
+                                <span>{point.label}</span>
+                                <strong>{point.value}%</strong>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     ))}

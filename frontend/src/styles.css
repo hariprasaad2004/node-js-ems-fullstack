@@ -3267,3 +3267,9 @@ body:not(.theme-dark) .monitor-text {
 .perf-card .bar div { height: 100%; background: linear-gradient(90deg, #22c55e, #7dd3fc); }
 .perf-sub { color: #94a3b8; font-size: 11px; }
 
+
+.radar-mini { background: #0f172a; border: 1px solid #1f2a44; border-radius: 12px; padding: 10px; display: grid; gap: 6px; }
+.radar-mini svg { width: 100%; height: auto; }
+.radar-mini-legend { display: grid; gap: 4px; font-size: 11px; color: #cbd5e1; }
+.radar-mini-legend strong { color: #e2e8f0; }
+
