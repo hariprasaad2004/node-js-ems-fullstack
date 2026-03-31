@@ -1112,7 +1112,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
             <div className="monitor-grid">
               <div className="monitor-cards">
                 {taskMonitor.list.length === 0 ? (
-                  <div className="notice">No tasks in this filter.</div>
+                  <div className="notice notice-dark">No tasks in this filter.</div>
                 ) : (
                   taskMonitor.list.map((task) => {
                     const statusTone = getTaskStatusTone(task.status);
@@ -1120,8 +1120,13 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                     const employeeName = task.employee?.name || 'Unknown';
                     const initials = getTaskInitials(employeeName);
                     const dueLabel = getTaskDueText(task);
+                    const cardStatus = task.isOverdue ? 'status-overdue' : `status-${task.status}`;
                     return (
-                      <article className="monitor-card" key={`monitor-${task.id}`} data-status={task.status}>
+                      <article
+                        className={`monitor-card ${cardStatus}`}
+                        key={`monitor-${task.id}`}
+                        data-status={task.status}
+                      >
                         <div className="monitor-card-top">
                           <div className="monitor-title">{task.details || 'Task'}</div>
                           <span className={`pill ${statusTone}`}>{formatStatus(task.status)}</span>

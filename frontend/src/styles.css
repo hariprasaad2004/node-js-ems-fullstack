@@ -2440,6 +2440,32 @@ body.theme-dark .tooltip-list {
   gap: 10px;
 }
 
+.monitor-card.status-overdue {
+  border-color: #ef4444;
+  box-shadow: 0 18px 42px rgba(239, 68, 68, 0.35);
+}
+
+.monitor-card.status-completed {
+  border-color: #16a34a;
+}
+
+.monitor-card.status-processing {
+  border-color: #3b82f6;
+}
+
+.monitor-card.status-planning {
+  border-color: #f59e0b;
+}
+
+.monitor-card.status-pending {
+  border-color: #eab308;
+}
+
+.monitor-card:hover {
+  transform: translateY(-2px);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
 .monitor-card-top {
   display: flex;
   align-items: center;
@@ -2582,6 +2608,13 @@ body.theme-dark .tooltip-list {
 
 .alert-badge.info {
   background: #bfdbfe;
+}
+
+.notice-dark {
+  background: #111827;
+  border-color: #1f2937;
+  color: #cbd5e1;
+  box-shadow: inset 0 0 0 1px #1f2937;
 }
 
 @media (max-width: 720px) {
