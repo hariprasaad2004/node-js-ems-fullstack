@@ -58,6 +58,7 @@ export default function Login() { // Login page and auth redirect logic.
           <p>Enter your credentials to continue.</p>
         </div>
 
+        <div className="auth-form-card">
         <form id="login-form" className="auth-form" onSubmit={handleSubmit}>
           <label className="auth-field">
             <span>Email</span>
@@ -87,6 +88,7 @@ export default function Login() { // Login page and auth redirect logic.
           </button>
           {error ? <p className="helper error-text">{error}</p> : null}
         </form>
+        </div>
       </div>
     </div>
   );
