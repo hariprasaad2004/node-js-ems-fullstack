@@ -6,6 +6,7 @@ import { formatDate, formatDateTime, formatEmployeeLabel, formatStatus } from '.
 
 const navItems = [
   { id: 'overview', label: 'Overview' },
+  { id: 'performance', label: 'Performance' },
   { id: 'task-monitor', label: 'Task Monitor' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'eods', label: 'EOD Reports' },
@@ -1111,10 +1112,16 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
         </div>
 
         <section
-          className={`section ${activeSection === 'overview' ? 'active' : ''}`}
-          data-section="overview"
+        className={`section ${activeSection === 'overview' ? 'active' : ''}`}
+        data-section="overview"
+      >
+        <div className="content-card overview-panel">{renderEmployeeOverview('overview')}</div>
+        </section>
+
+        <section
+          className={`section ${activeSection === 'performance' ? 'active' : ''}`}
+          data-section="performance"
         >
-          <div className="content-card overview-panel">{renderEmployeeOverview('overview')}</div>
           <div className="content-card">
             <div className="section-header">
               <div>
