@@ -1801,7 +1801,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                       <span className="helper">Session highlights</span>
                     </div>
                     {eods.length === 0 ? (
-                      <div className="notice">No EODs submitted yet.</div>
+                      <div className="notice notice-muted">No EODs submitted yet.</div>
                     ) : (
                       <div className="eod-timeline">
                         {eods.slice(0, 8).map((entry) => {
