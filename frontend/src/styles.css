@@ -2407,6 +2407,18 @@ body.theme-dark .tooltip-list {
   color: #e2e8f0;
 }
 
+body:not(.theme-dark) .content-card.task-monitor {
+  background: #f7f9fc;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+}
+
+body:not(.theme-dark) .task-monitor .content-title,
+body:not(.theme-dark) .task-monitor .helper {
+  color: #0f172a;
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -2429,6 +2441,19 @@ body.theme-dark .tooltip-list {
   background: linear-gradient(135deg, #2f6fed, #6a8bff);
   color: #fff;
   box-shadow: 0 10px 24px rgba(47, 111, 237, 0.25);
+}
+
+body:not(.theme-dark) .chip {
+  border: 1px solid #d8dee9;
+  background: #ffffff;
+  color: #1f2937;
+}
+
+body:not(.theme-dark) .chip-active {
+  border-color: #2f6fed;
+  background: #2f6fed;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(47, 111, 237, 0.18);
 }
 
 .monitor-grid {
