@@ -2386,6 +2386,13 @@ body.theme-dark .insight-sub {
   gap: 10px;
 }
 
+body.theme-dark .eod-card {
+  background: #0f172a;
+  border: 1px solid #1f2b46;
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.45);
+  color: #e2e8f0;
+}
+
 .eod-card-top {
   display: flex;
   align-items: flex-start;
@@ -2396,6 +2403,10 @@ body.theme-dark .insight-sub {
 .eod-date {
   font-weight: 700;
   color: #0f172a;
+}
+
+body.theme-dark .eod-date {
+  color: #e2e8f0;
 }
 
 .eod-body {
@@ -2413,10 +2424,18 @@ body.theme-dark .insight-sub {
   margin-bottom: 4px;
 }
 
+body.theme-dark .eod-session span {
+  color: #9fb2d0;
+}
+
 .eod-session p {
   margin: 0;
   color: #334155;
   line-height: 1.45;
+}
+
+body.theme-dark .eod-session p {
+  color: #e5e9f2;
 }
 
 .eod-meta {
@@ -2425,6 +2444,10 @@ body.theme-dark .insight-sub {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+body.theme-dark .eod-meta {
+  color: #9fb2d0;
 }
 
 .task-monitor .section-header {
