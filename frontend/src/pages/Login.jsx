@@ -43,51 +43,53 @@ export default function Login() { // Login page and auth redirect logic.
 
   return (
     <div className="auth-layout page-auth">
-      <div className="auth-visual">
-        <div className="visual-overlay" />
-        <div className="visual-content">
-          <h1>EMS Portal</h1>
-          <p>Log in to manage your team and stay ahead of daily updates.</p>
-        </div>
-      </div>
-
-      <div className="auth-panel">
-        <div className="auth-heading">
-          <span className="brand-kicker">Employee Management Suite</span>
-          <h2>Login</h2>
-          <p>Enter your credentials to continue.</p>
+      <div className="auth-shell">
+        <div className="auth-visual">
+          <div className="visual-overlay" />
+          <div className="visual-content">
+            <h1>EMS Portal</h1>
+            <p>Log in to manage your team and stay ahead of daily updates.</p>
+          </div>
         </div>
 
-        <div className="auth-form-card">
-        <form id="login-form" className="auth-form" onSubmit={handleSubmit}>
-          <label className="auth-field">
-            <span>Email</span>
-            <input
-              id="email"
-              type="email"
-              placeholder="you@company.com"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </label>
+        <div className="auth-panel">
+          <div className="auth-heading">
+            <span className="brand-kicker">Employee Management Suite</span>
+            <h2>Login</h2>
+            <p>Enter your credentials to continue.</p>
+          </div>
 
-          <label className="auth-field">
-            <span>Password</span>
-            <input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </label>
+          <div className="auth-form-card">
+            <form id="login-form" className="auth-form" onSubmit={handleSubmit}>
+              <label className="auth-field">
+                <span>Email</span>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="you@company.com"
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </label>
 
-          <button className="btn-primary auth-submit" type="submit">
-            Sign In
-          </button>
-          {error ? <p className="helper error-text">{error}</p> : null}
-        </form>
+              <label className="auth-field">
+                <span>Password</span>
+                <input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+              </label>
+
+              <button className="btn-primary auth-submit" type="submit">
+                Sign In
+              </button>
+              {error ? <p className="helper error-text">{error}</p> : null}
+            </form>
+          </div>
         </div>
       </div>
     </div>
