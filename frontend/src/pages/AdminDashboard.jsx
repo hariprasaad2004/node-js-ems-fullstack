@@ -1325,22 +1325,13 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                 <div className="insight-card">
                   <span className="insight-label">System Velocity</span>
                   {(() => {
-                    const total = taskMonitor.segments.reduce((sum, s) => sum + s.value, 0) || 1;
-                    const stops = taskMonitor.segments
-                      .filter((seg) => seg.value > 0)
-                      .map((seg, idx, arr) => {
-                        const start = arr.slice(0, idx).reduce((sum, s) => sum + s.value, 0);
-                        const end = start + seg.value;
-                        const startPct = (start / total) * 360;
-                        const endPct = (end / total) * 360;
-                        return `${seg.color} ${startPct}deg ${endPct}deg`;
-                      })
-                      .join(', ');
-                    const background = stops
-                      ? `conic-gradient(${stops}, #e5e7eb 0deg)`
-                      : '#e5e7eb';
+                    const total = taskMonitor.total || 1;
+                    const completed = taskMonitor.counts.completed || 0;
+                    const active = Math.max(0, total - completed);
+                    const completedDeg = Math.min(360, Math.max(0, (completed / total) * 360));
+                    const background = `conic-gradient(#10b981 0deg ${completedDeg}deg, #f59e0b ${completedDeg}deg 360deg)`;
                     return (
-                      <div className="donut" style={{ background }}>
+                      <div className="donut ring-simple" style={{ background }}>
                         <div className="donut-center">
                           <div className="donut-value">{taskMonitor.total}</div>
                           <div className="donut-label">Total</div>
@@ -1348,15 +1339,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                       </div>
                     );
                   })()}
-                  <div className="donut-legend">
-                    {taskMonitor.segments.map((seg) => (
-                      <div className="legend-row" key={`legend-${seg.key}`}>
-                        <span className="legend-dot" style={{ background: seg.color }} />
-                        <span>{formatStatus(seg.key)}</span>
-                        <strong>{seg.value}</strong>
-                      </div>
-                    ))}
-                  </div>
                 </div>
                 <div className="insight-card">
                   <span className="insight-label">Alerts</span>
