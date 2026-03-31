@@ -2484,6 +2484,22 @@ body:not(.theme-dark) .chip-active {
   min-height: 180px;
 }
 
+.monitor-card {
+  color: #e2e8f0;
+}
+
+.monitor-card .monitor-title,
+.monitor-card .monitor-line,
+.monitor-card .monitor-status-label,
+.monitor-card .monitor-elapsed,
+.monitor-card .monitor-text {
+  color: inherit;
+}
+
+.monitor-card .monitor-footer {
+  color: inherit;
+}
+
 .monitor-accent {
   width: 4px;
   background: linear-gradient(180deg, #22d3ee, #3b82f6);
@@ -2617,6 +2633,36 @@ body:not(.theme-dark) .chip-active {
   font-weight: 700;
   color: #cbd5e1;
   font-size: 12px;
+}
+
+/* Light theme overrides for Task Monitor cards */
+body:not(.theme-dark) .monitor-card {
+  background: linear-gradient(180deg, #1c2a3c 0%, #162235 100%);
+  border: 1px solid #dfe3ee;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.25);
+  color: #f1f5f9;
+}
+
+body:not(.theme-dark) .monitor-accent {
+  background: linear-gradient(180deg, #3b82f6, #22c55e);
+}
+
+body:not(.theme-dark) .monitor-footer {
+  background: #0f172a;
+  border-top: 1px solid #1f2937;
+}
+
+body:not(.theme-dark) .monitor-elapsed {
+  background: #111827;
+  border-color: #1f2937;
+  color: #e2e8f0;
+}
+
+body:not(.theme-dark) .monitor-status-label,
+body:not(.theme-dark) .monitor-title,
+body:not(.theme-dark) .monitor-line,
+body:not(.theme-dark) .monitor-text {
+  color: #e5e9f2;
 }
 
 .monitor-side {
