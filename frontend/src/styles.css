@@ -2262,6 +2262,20 @@ body.theme-dark .tooltip-list {
   color: #0f172a;
 }
 
+body.theme-dark .insight-chip {
+  background: #0f172a;
+  border: 1px solid #1f2b46;
+  box-shadow: 0 10px 26px rgba(2, 6, 23, 0.45);
+}
+
+body.theme-dark .insight-chip span {
+  color: #9fb2d0;
+}
+
+body.theme-dark .insight-chip strong {
+  color: #e2e8f0;
+}
+
 .insight-card {
   background: #ffffff;
   border: 1px solid #e4e8f5;
@@ -2290,6 +2304,24 @@ body.theme-dark .tooltip-list {
 .insight-sub {
   color: #667085;
   font-size: 12px;
+}
+
+body.theme-dark .insight-card {
+  background: #0f172a;
+  border: 1px solid #1f2b46;
+  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.45);
+}
+
+body.theme-dark .insight-label {
+  color: #9fb2d0;
+}
+
+body.theme-dark .insight-value {
+  color: #7dd3fc;
+}
+
+body.theme-dark .insight-sub {
+  color: #9fb2d0;
 }
 
 .progress-line {
@@ -2451,7 +2483,8 @@ body.theme-dark .tooltip-list {
   background: linear-gradient(90deg, #22c55e, #2dd4bf);
 }
 
-.section[data-section='eods'] .notice-muted {
+.section[data-section='eods'] .notice-muted,
+.section[data-section='eod'] .notice-muted {
   background: #0f172a;
   border-color: #1f2b46;
   color: #cbd5e1;
