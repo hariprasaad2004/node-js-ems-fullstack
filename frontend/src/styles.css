@@ -1012,7 +1012,7 @@ body.theme-dark .stat-card {
 }
 
 body.theme-dark .stat-value {
-  color: #60a5fa;
+  color: #93c5fd;
 }
 
 body.theme-dark .insight-card {
@@ -1062,6 +1062,10 @@ body.theme-dark .insight-stat-row strong {
   border-radius: 16px;
   border: 1px solid #e5eaf4;
   background: #f8faff;
+}
+
+.stat-card .stat-value {
+  color: #0f172a;
 }
 
 .stat-value {
