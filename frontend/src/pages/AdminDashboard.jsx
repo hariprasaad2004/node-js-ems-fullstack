@@ -103,6 +103,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [infoEmployee, setInfoEmployee] = useState(null);
   const [statNow, setStatNow] = useState(() => new Date());
   const [selectedPerfId, setSelectedPerfId] = useState(null);
+  const [activePerf, setActivePerf] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -527,6 +528,21 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       radar: Array.isArray(emp.radar) && emp.radar.length === 5 ? emp.radar : defaultRadar
     }));
   }, [performanceStatuses, tasks, attendance]);
+
+  useEffect(() => {
+    if (!performanceRadars.length) {
+      setSelectedPerfId(null);
+      setActivePerf(null);
+      return;
+    }
+    if (!selectedPerfId || !performanceRadars.some((emp) => emp.id === selectedPerfId)) {
+      setSelectedPerfId(performanceRadars[0].id);
+      setActivePerf(performanceRadars[0]);
+    } else {
+      const found = performanceRadars.find((emp) => emp.id === selectedPerfId);
+      setActivePerf(found || performanceRadars[0]);
+    }
+  }, [performanceRadars, selectedPerfId]);
 
   const radarData = useMemo(() => {
     const completion = eodInsights.completionRate || 0;
@@ -1228,119 +1244,156 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                 <p className="helper">Compare productivity and consistency at a glance.</p>
               </div>
             </div>
-            <div className="perf-grid">
-              <div className="leaderboard">
-                <div className="leaderboard-header">
-                  <span>Leaderboard</span>
-                  <span className="mini-sub">Top performers</span>
-                </div>
-                {performanceLeaderboard.length === 0 ? (
-                  <p className="helper">Insufficient data yet.</p>
-                ) : (
-                  <ul className="leaderboard-list">
-                    {performanceLeaderboard.map((emp, idx) => (
-                      <li key={`lb-${emp.name}-${idx}`}>
-                        <div className="leader-meta">
-                          <span className="badge-rank">#{idx + 1}</span>
-                          <div>
-                            <div className="leader-name">{emp.name}</div>
-                            <div className="mini-sub">
-                              {emp.department || '—'} • {emp.completed}/{emp.total} logs
+            <div className="perf-layout">
+              <div className="perf-main">
+                <div className="perf-summary">
+                  <div className="leaderboard compact">
+                    <div className="leaderboard-header">
+                      <span>Leaderboard</span>
+                      <span className="mini-sub">Top performers</span>
+                    </div>
+                    {performanceLeaderboard.length === 0 ? (
+                      <p className="helper">Insufficient data yet.</p>
+                    ) : (
+                      <ul className="leaderboard-list">
+                        {performanceLeaderboard.map((emp, idx) => (
+                          <li key={`lb-${emp.name}-${idx}`}>
+                            <div className="leader-meta">
+                              <span className="badge-rank">#{idx + 1}</span>
+                              <div>
+                                <div className="leader-name">{emp.name}</div>
+                                <div className="mini-sub">
+                                  {emp.department || '—'} • {emp.completed}/{emp.total} logs
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                        <div className="leader-score">
-                          <span>{emp.score}%</span>
-                          <div className="bar">
-                            <div style={{ width: `${emp.score}%` }} />
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+                            <div className="leader-score">
+                              <span>{emp.score}%</span>
+                              <div className="bar">
+                                <div style={{ width: `${emp.score}%` }} />
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
 
-              <div className="bar-chart">
-                <div className="leaderboard-header">
-                  <span>Performance scores</span>
-                  <span className="mini-sub">Task + EOD blended</span>
-                </div>
-                {performanceLeaderboard.length === 0 ? (
-                  <p className="helper">No scores yet.</p>
-                ) : (
-                  performanceLeaderboard.map((emp) => (
-                    <div className="bar-row" key={`bar-${emp.name}`}>
-                      <span>{emp.name}</span>
-                      <div className="bar">
-                        <div style={{ width: `${emp.score}%` }} />
+                  <div className="perf-metrics">
+                    <div>
+                      <div className="leaderboard-header">
+                        <span>Performance scores</span>
+                        <span className="mini-sub">Task + EOD blended</span>
                       </div>
-                      <span className="bar-value">{emp.score}%</span>
+                      {activePerf ? (
+                        <div className="bar-row highlight">
+                          <span>{activePerf.name}</span>
+                          <div className="bar">
+                            <div style={{ width: `${activePerf.score}%` }} />
+                          </div>
+                          <span className="bar-value">{activePerf.score}%</span>
+                        </div>
+                      ) : (
+                        <p className="helper">Select an employee.</p>
+                      )}
                     </div>
-                  ))
-                )}
-              </div>
-
-              <div className="radar-card">
-                <div className="leaderboard-header">
-                  <span>Skill comparison</span>
-                  <span className="mini-sub">Team composite radar</span>
+                    <div className="perf-mini-cards">
+                      <div className="mini-stat">
+                        <span>Logs</span>
+                        <strong>
+                          {activePerf ? `${activePerf.completed}/${activePerf.total}` : '0/0'}
+                        </strong>
+                      </div>
+                      <div className="mini-stat">
+                        <span>Status</span>
+                        <strong>{activePerf ? formatStatus(activePerf.status) : '-'}</strong>
+                      </div>
+                      <div className="mini-stat">
+                        <span>Dept</span>
+                        <strong>{activePerf?.department || '—'}</strong>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <svg viewBox="0 0 240 240" className="radar">
-                  <defs>
-                    <linearGradient id="radarFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#7dd3fc" stopOpacity="0.6" />
-                      <stop offset="100%" stopColor="#22c55e" stopOpacity="0.4" />
-                    </linearGradient>
-                  </defs>
-                  <g transform="translate(120 120)">
-                    {[20, 40, 60, 80, 100].map((r) => (
-                      <circle key={r} r={(r / 100) * 90} fill="none" stroke="#1f2b46" strokeWidth="1" />
-                    ))}
-                    {radarData.map((point, idx) => {
-                      const angle = (Math.PI * 2 * idx) / radarData.length - Math.PI / 2;
-                      const x = Math.cos(angle) * 95;
-                      const y = Math.sin(angle) * 95;
-                      return (
-                        <line key={`axis-${point.label}`} x1="0" y1="0" x2={x} y2={y} stroke="#1f2b46" />
-                      );
-                    })}
-                    {(() => {
-                      const points = radarData
-                        .map((point, idx) => {
-                          const angle = (Math.PI * 2 * idx) / radarData.length - Math.PI / 2;
-                          const r = (point.value / 100) * 90;
-                          const x = Math.cos(angle) * r;
-                          const y = Math.sin(angle) * r;
-                          return `${x},${y}`;
-                        })
-                        .join(' ');
-                      return (
-                        <g>
-                          <polygon points={points} fill="url(#radarFill)" stroke="#7dd3fc" strokeWidth="2" />
-                          {radarData.map((point, idx) => {
-                            const angle = (Math.PI * 2 * idx) / radarData.length - Math.PI / 2;
-                            const r = (point.value / 100) * 90;
-                            const x = Math.cos(angle) * r;
-                            const y = Math.sin(angle) * r;
-                            return <circle key={`pt-${point.label}`} cx={x} cy={y} r="3" fill="#7dd3fc" />;
+
+                <div className="radar-card tall">
+                  <div className="leaderboard-header">
+                    <span>Skill comparison</span>
+                    <span className="mini-sub">Selected employee radar</span>
+                  </div>
+                  {activePerf ? (
+                    <>
+                      <svg viewBox="0 0 300 300" className="radar">
+                        <defs>
+                          <linearGradient id="radarFillMain" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#7dd3fc" stopOpacity="0.6" />
+                            <stop offset="100%" stopColor="#22c55e" stopOpacity="0.35" />
+                          </linearGradient>
+                        </defs>
+                        <g transform="translate(150 150)">
+                          {[20, 40, 60, 80, 100].map((r) => (
+                            <circle
+                              key={r}
+                              r={(r / 100) * 110}
+                              fill="none"
+                              stroke="#1f2b46"
+                              strokeWidth="1"
+                            />
+                          ))}
+                          {activePerf.radar.map((point, idx) => {
+                            const angle = (Math.PI * 2 * idx) / activePerf.radar.length - Math.PI / 2;
+                            const x = Math.cos(angle) * 120;
+                            const y = Math.sin(angle) * 120;
+                            return (
+                              <line key={`axis-${point.label}`} x1="0" y1="0" x2={x} y2={y} stroke="#1f2b46" />
+                            );
                           })}
+                          {(() => {
+                            const points = activePerf.radar
+                              .map((point, idx) => {
+                                const angle = (Math.PI * 2 * idx) / activePerf.radar.length - Math.PI / 2;
+                                const r = (point.value / 100) * 120;
+                                const x = Math.cos(angle) * r;
+                                const y = Math.sin(angle) * r;
+                                return `${x},${y}`;
+                              })
+                              .join(' ');
+                            return (
+                              <g>
+                                <polygon
+                                  points={points}
+                                  fill="url(#radarFillMain)"
+                                  stroke="#7dd3fc"
+                                  strokeWidth="2"
+                                />
+                                {activePerf.radar.map((point, idx) => {
+                                  const angle = (Math.PI * 2 * idx) / activePerf.radar.length - Math.PI / 2;
+                                  const r = (point.value / 100) * 120;
+                                  const x = Math.cos(angle) * r;
+                                  const y = Math.sin(angle) * r;
+                                  return <circle key={`pt-${point.label}`} cx={x} cy={y} r="4" fill="#7dd3fc" />;
+                                })}
+                              </g>
+                            );
+                          })()}
                         </g>
-                      );
-                    })()}
-                  </g>
-                </svg>
-                <div className="radar-legend">
-                  {radarData.map((point) => (
-                    <div key={`rg-${point.label}`} className="radar-legend-row">
-                      <span>{point.label}</span>
-                      <strong>{point.value}%</strong>
-                    </div>
-                  ))}
+                      </svg>
+                      <div className="radar-legend two-col">
+                        {activePerf.radar.map((point) => (
+                          <div key={`sel-${point.label}`} className="radar-legend-row">
+                            <span>{point.label}</span>
+                            <strong>{point.value}%</strong>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <p className="helper">Select an employee to view radar.</p>
+                  )}
                 </div>
               </div>
 
-              <div className="perf-cards">
+              <div className="perf-list">
                 <div className="leaderboard-header">
                   <span>All employees</span>
                   <span className="mini-sub">Performance & status</span>
@@ -1348,29 +1401,18 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                 {performanceRadars.length === 0 ? (
                   <p className="helper">No employees yet.</p>
                 ) : (
-                  <div className="perf-card-grid">
-                    {performanceRadars.map((emp) => {
-                      const radarPoints =
-                        Array.isArray(emp.radar) && emp.radar.length ? emp.radar : [
-                          { label: 'Delivery', value: 0 },
-                          { label: 'Reliability', value: 0 },
-                          { label: 'Engagement', value: 0 },
-                          { label: 'Attendance', value: 0 },
-                          { label: 'Speed', value: 0 }
-                        ];
-                      return (
+                  <div className="perf-card-grid vertical">
+                    {performanceRadars.map((emp) => (
                       <div
-                        className={`perf-card ${selectedPerfId === emp.id ? 'is-open' : ''}`}
+                        className={`perf-card mini ${selectedPerfId === emp.id ? 'is-open' : ''}`}
                         key={`status-${emp.id}`}
                         role="button"
                         tabIndex={0}
-                        onClick={() =>
-                          setSelectedPerfId((prev) => (prev === emp.id ? null : emp.id))
-                        }
+                        onClick={() => setSelectedPerfId(emp.id)}
                         onKeyDown={(event) => {
                           if (event.key === 'Enter' || event.key === ' ') {
                             event.preventDefault();
-                            setSelectedPerfId((prev) => (prev === emp.id ? null : emp.id));
+                            setSelectedPerfId(emp.id);
                           }
                         }}
                       >
@@ -1379,9 +1421,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                             <div className="leader-name">{emp.name}</div>
                             <div className="mini-sub">{emp.department}</div>
                           </div>
-                          <span
-                            className={`status-pill ${emp.status === 'active' ? '' : 'inactive'}`}
-                          >
+                          <span className={`status-pill ${emp.status === 'active' ? '' : 'inactive'}`}>
                             {formatStatus(emp.status)}
                           </span>
                         </div>
@@ -1395,76 +1435,8 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                         <div className="perf-sub">
                           {emp.completed}/{emp.total} logs
                         </div>
-                        {selectedPerfId === emp.id ? (
-                        <div className="radar-mini">
-                          <svg viewBox="0 0 220 220">
-                            <g transform="translate(110 110)">
-                              {[20, 40, 60, 80, 100].map((r) => (
-                                <circle
-                                  key={r}
-                                  r={(r / 100) * 90}
-                                  fill="none"
-                                  stroke="#1f2b46"
-                                  strokeWidth="1"
-                                />
-                              ))}
-                              {radarPoints.map((point, idx) => {
-                                const angle = (Math.PI * 2 * idx) / radarPoints.length - Math.PI / 2;
-                                const x = Math.cos(angle) * 95;
-                                const y = Math.sin(angle) * 95;
-                                return (
-                                  <line key={`axis-${point.label}`} x1="0" y1="0" x2={x} y2={y} stroke="#1f2b46" />
-                                );
-                              })}
-                              {(() => {
-                                const points = radarPoints
-                                  .map((point, idx) => {
-                                    const angle = (Math.PI * 2 * idx) / radarPoints.length - Math.PI / 2;
-                                    const r = (point.value / 100) * 90;
-                                    const x = Math.cos(angle) * r;
-                                    const y = Math.sin(angle) * r;
-                                    return `${x},${y}`;
-                                  })
-                                  .join(' ');
-                                return (
-                                  <g>
-                                    <polygon
-                                      points={points}
-                                      fill="url(#radarFill)"
-                                      stroke="#7dd3fc"
-                                      strokeWidth="2"
-                                    />
-                                    {radarPoints.map((point, idx) => {
-                                      const angle = (Math.PI * 2 * idx) / radarPoints.length - Math.PI / 2;
-                                      const r = (point.value / 100) * 90;
-                                      const x = Math.cos(angle) * r;
-                                      const y = Math.sin(angle) * r;
-                                      return <circle key={`pt-${point.label}`} cx={x} cy={y} r="3" fill="#7dd3fc" />;
-                                    })}
-                                  </g>
-                                );
-                              })()}
-                            </g>
-                            <defs>
-                              <linearGradient id="radarFill" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#7dd3fc" stopOpacity="0.6" />
-                                <stop offset="100%" stopColor="#22c55e" stopOpacity="0.35" />
-                              </linearGradient>
-                            </defs>
-                          </svg>
-                          <div className="radar-mini-legend">
-                            {radarPoints.map((point) => (
-                              <div key={`mini-${emp.id}-${point.label}`} className="radar-legend-row">
-                                <span>{point.label}</span>
-                                <strong>{point.value}%</strong>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        ) : null}
                       </div>
-                    );
-                    })}
+                    ))}
                   </div>
                 )}
               </div>

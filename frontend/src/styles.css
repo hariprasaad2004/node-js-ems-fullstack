@@ -3273,3 +3273,22 @@ body:not(.theme-dark) .monitor-text {
 .radar-mini-legend { display: grid; gap: 4px; font-size: 11px; color: #cbd5e1; }
 .radar-mini-legend strong { color: #e2e8f0; }
 
+
+.perf-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; align-items: start; }
+.perf-main { display: grid; gap: 16px; }
+.perf-summary { display: grid; gap: 12px; grid-template-columns: 1.4fr 1fr; align-items: stretch; }
+.leaderboard.compact { min-height: 0; }
+.perf-metrics { background: #0f172a; border: 1px solid #1f2a44; border-radius: 16px; padding: 14px; box-shadow: 0 12px 26px rgba(2,6,23,0.32); display: grid; gap: 12px; }
+.perf-mini-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 10px; }
+.mini-stat { background: #0b1326; border: 1px solid #1f2a44; border-radius: 12px; padding: 10px; display: grid; gap: 6px; }
+.mini-stat span { color: #94a3b8; font-size: 12px; }
+.mini-stat strong { color: #e2e8f0; }
+.radar-card.tall { min-height: 360px; }
+.radar-card.tall .radar { max-width: 360px; }
+.radar-legend.two-col { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.perf-list { background: #0f172a; border: 1px solid #1f2a44; border-radius: 16px; padding: 14px; box-shadow: 0 12px 26px rgba(2,6,23,0.32); display: grid; gap: 12px; max-height: 560px; overflow: auto; }
+.perf-card-grid.vertical { display: grid; gap: 12px; }
+.perf-card.mini { padding: 12px; }
+.perf-card.is-open { border-color: #2f6fed; box-shadow: 0 14px 32px rgba(47,111,237,0.22); }
+@media (max-width: 1100px) { .perf-layout { grid-template-columns: 1fr; } .perf-summary { grid-template-columns: 1fr; } .perf-list { max-height: none; } }
+
