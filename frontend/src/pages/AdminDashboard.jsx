@@ -430,17 +430,34 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   }, [eodSummary]);
 
   const performanceStatuses = useMemo(() => {
+    const byId = new Map();
+    (eodSummary?.perEmployee || []).forEach((item) => {
+      const key = item.employeeId || item.email || item.name;
+      byId.set(key, {
+        score: item.completionRate || 0,
+        completed: item.completed || 0,
+        total: item.total || 0
+      });
+    });
+
     return employees
       .slice()
       .sort((a, b) => (a.status === b.status ? 0 : a.status === 'active' ? -1 : 1))
-      .map((emp) => ({
-        id: emp.id || emp.email || emp.name,
-        name: emp.name || 'Employee',
-        department: emp.department || emp.title || '—',
-        status: emp.status || 'unknown',
-        email: emp.email || ''
-      }));
-  }, [employees]);
+      .map((emp) => {
+        const key = emp.id || emp.email || emp.name;
+        const perf = byId.get(key) || { score: 0, completed: 0, total: 0 };
+        return {
+          id: key,
+          name: emp.name || 'Employee',
+          department: emp.department || emp.title || '—',
+          status: emp.status || 'unknown',
+          email: emp.email || '',
+          score: perf.score,
+          completed: perf.completed,
+          total: perf.total
+        };
+      });
+  }, [employees, eodSummary]);
 
   const radarData = useMemo(() => {
     const completion = eodInsights.completionRate || 0;
@@ -1254,29 +1271,41 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                 </div>
               </div>
 
-              <div className="leaderboard">
+              <div className="perf-cards">
                 <div className="leaderboard-header">
                   <span>All employees</span>
-                  <span className="mini-sub">Current status</span>
+                  <span className="mini-sub">Performance & status</span>
                 </div>
                 {performanceStatuses.length === 0 ? (
                   <p className="helper">No employees yet.</p>
                 ) : (
-                  <ul className="leaderboard-list">
+                  <div className="perf-card-grid">
                     {performanceStatuses.map((emp) => (
-                      <li key={`status-${emp.id}`}>
-                        <div className="leader-meta">
+                      <div className="perf-card" key={`status-${emp.id}`}>
+                        <div className="perf-card-head">
                           <div>
                             <div className="leader-name">{emp.name}</div>
                             <div className="mini-sub">{emp.department}</div>
                           </div>
+                          <span
+                            className={`status-pill ${emp.status === 'active' ? '' : 'inactive'}`}
+                          >
+                            {formatStatus(emp.status)}
+                          </span>
                         </div>
-                        <span className={`status-pill ${emp.status === 'active' ? '' : 'inactive'}`}>
-                          {formatStatus(emp.status)}
-                        </span>
-                      </li>
+                        <div className="perf-metric-row">
+                          <span>Completion</span>
+                          <strong>{emp.score}%</strong>
+                        </div>
+                        <div className="bar">
+                          <div style={{ width: `${Math.min(100, emp.score)}%` }} />
+                        </div>
+                        <div className="perf-sub">
+                          {emp.completed}/{emp.total} logs
+                        </div>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 )}
               </div>
             </div>
