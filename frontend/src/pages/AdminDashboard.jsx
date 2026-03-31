@@ -429,6 +429,19 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     return sorted.slice(0, 5);
   }, [eodSummary]);
 
+  const performanceStatuses = useMemo(() => {
+    return employees
+      .slice()
+      .sort((a, b) => (a.status === b.status ? 0 : a.status === 'active' ? -1 : 1))
+      .map((emp) => ({
+        id: emp.id || emp.email || emp.name,
+        name: emp.name || 'Employee',
+        department: emp.department || emp.title || '—',
+        status: emp.status || 'unknown',
+        email: emp.email || ''
+      }));
+  }, [employees]);
+
   const radarData = useMemo(() => {
     const completion = eodInsights.completionRate || 0;
     const last7 = eodInsights.last7?.completionRate || 0;
@@ -1239,6 +1252,32 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className="leaderboard">
+                <div className="leaderboard-header">
+                  <span>All employees</span>
+                  <span className="mini-sub">Current status</span>
+                </div>
+                {performanceStatuses.length === 0 ? (
+                  <p className="helper">No employees yet.</p>
+                ) : (
+                  <ul className="leaderboard-list">
+                    {performanceStatuses.map((emp) => (
+                      <li key={`status-${emp.id}`}>
+                        <div className="leader-meta">
+                          <div>
+                            <div className="leader-name">{emp.name}</div>
+                            <div className="mini-sub">{emp.department}</div>
+                          </div>
+                        </div>
+                        <span className={`status-pill ${emp.status === 'active' ? '' : 'inactive'}`}>
+                          {formatStatus(emp.status)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           </div>
