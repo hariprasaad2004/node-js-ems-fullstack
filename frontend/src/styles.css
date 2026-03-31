@@ -3292,3 +3292,8 @@ body:not(.theme-dark) .monitor-text {
 .perf-card.is-open { border-color: #2f6fed; box-shadow: 0 14px 32px rgba(47,111,237,0.22); }
 @media (max-width: 1100px) { .perf-layout { grid-template-columns: 1fr; } .perf-summary { grid-template-columns: 1fr; } .perf-list { max-height: none; } }
 
+
+/* Center the auth layout */
+.auth-layout.page-auth { align-items: center; justify-items: center; padding: 48px; }
+.auth-panel { max-width: 520px; width: 100%; }
+

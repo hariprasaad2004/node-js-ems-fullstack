@@ -82,15 +82,6 @@ export default function Login() { // Login page and auth redirect logic.
             />
           </label>
 
-          <div className="auth-actions">
-            <label className="checkbox">
-              <input type="checkbox" /> <span>Remember me</span>
-            </label>
-            <button className="link-button" type="button">
-              Forgot password?
-            </button>
-          </div>
-
           <button className="btn-primary auth-submit" type="submit">
             Sign In
           </button>
