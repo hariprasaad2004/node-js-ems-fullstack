@@ -62,7 +62,7 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
   const [taskStatus, setTaskStatus] = useState({ message: '', isError: false });
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
-  const [isDark, setIsDark] = useState(true);
+  const [isDark] = useState(true); // locked dark theme
   const [showNotifications, setShowNotifications] = useState(false);
   const [lastSeenAt, setLastSeenAt] = useState(0);
   const notificationRef = useRef(null);
@@ -70,15 +70,11 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
 
   useEffect(() => {
     const { classList } = document.body;
-    if (isDark) {
-      classList.add('theme-dark');
-    } else {
-      classList.remove('theme-dark');
-    }
+    classList.add('theme-dark');
     return () => {
       classList.remove('theme-dark');
     };
-  }, [isDark]);
+  }, []);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(storageKey);
@@ -663,30 +659,7 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
                 <p className="helper">View your profile and update personal contact info.</p>
               </div>
               <div className="toolbar-actions">
-                <button
-                  className="icon-button"
-                  type="button"
-                  aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
-                  onClick={() => setIsDark((prev) => !prev)}
-                  title={isDark ? 'Light theme' : 'Dark theme'}
-                >
-                  {isDark ? (
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path
-                        d="M12 4.5a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 12 4.5Zm6.36 1.64a.75.75 0 0 1 1.06 0l.35.35a.75.75 0 0 1-1.06 1.06l-.35-.35a.75.75 0 0 1 0-1.06ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm7.5 3.5a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 19.5 12Zm-1.14 6.36a.75.75 0 0 1 1.06 0l.35.35a.75.75 0 0 1-1.06 1.06l-.35-.35a.75.75 0 0 1 0-1.06ZM12 18.75a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75ZM4.5 12a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 4.5 12Zm1.14-5.86a.75.75 0 0 1 1.06 0l.35.35a.75.75 0 0 1-1.06 1.06l-.35-.35a.75.75 0 0 1 0-1.06Zm.35 12.27a.75.75 0 0 1 1.06 0l.35.35a.75.75 0 0 1-1.06 1.06l-.35-.35a.75.75 0 0 1 0-1.06Z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path
-                        d="M21 14.5A8.5 8.5 0 0 1 9.5 3a.75.75 0 0 0-.83.93 6.5 6.5 0 1 0 9.4 9.4.75.75 0 0 0 .93-.83Z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  )}
-                </button>
-                <div className="notification-wrapper" ref={notificationRef}>
+              <div className="notification-wrapper" ref={notificationRef}>
                   <button
                     className={`icon-button ${showNotifications ? 'is-open' : ''}`}
                     type="button"
