@@ -460,6 +460,14 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   }, [employees, eodSummary]);
 
   const performanceRadars = useMemo(() => {
+    const defaultRadar = [
+      { label: 'Delivery', value: 0 },
+      { label: 'Reliability', value: 0 },
+      { label: 'Engagement', value: 0 },
+      { label: 'Attendance', value: 0 },
+      { label: 'Speed', value: 0 }
+    ];
+
     const attendByEmp = new Map();
     attendance.forEach((record) => {
       const id = record.employee?.id || record.employeeId || record.employee?.email;
@@ -511,9 +519,12 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           { label: 'Engagement', value: engagement },
           { label: 'Attendance', value: attendanceRate },
           { label: 'Speed', value: speed }
-        ]
+        ] || defaultRadar
       };
-    });
+    }).map((emp) => ({
+      ...emp,
+      radar: Array.isArray(emp.radar) && emp.radar.length === 5 ? emp.radar : defaultRadar
+    }));
   }, [performanceStatuses, tasks, attendance]);
 
   const radarData = useMemo(() => {
@@ -1333,11 +1344,20 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                   <span>All employees</span>
                   <span className="mini-sub">Performance & status</span>
                 </div>
-                {performanceStatuses.length === 0 ? (
+                {performanceRadars.length === 0 ? (
                   <p className="helper">No employees yet.</p>
                 ) : (
                   <div className="perf-card-grid">
-                    {performanceStatuses.map((emp) => (
+                    {performanceRadars.map((emp) => {
+                      const radarPoints =
+                        Array.isArray(emp.radar) && emp.radar.length ? emp.radar : [
+                          { label: 'Delivery', value: 0 },
+                          { label: 'Reliability', value: 0 },
+                          { label: 'Engagement', value: 0 },
+                          { label: 'Attendance', value: 0 },
+                          { label: 'Speed', value: 0 }
+                        ];
+                      return (
                       <div className="perf-card" key={`status-${emp.id}`}>
                         <div className="perf-card-head">
                           <div>
@@ -1372,8 +1392,8 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                                   strokeWidth="1"
                                 />
                               ))}
-                              {emp.radar.map((point, idx) => {
-                                const angle = (Math.PI * 2 * idx) / emp.radar.length - Math.PI / 2;
+                              {radarPoints.map((point, idx) => {
+                                const angle = (Math.PI * 2 * idx) / radarPoints.length - Math.PI / 2;
                                 const x = Math.cos(angle) * 95;
                                 const y = Math.sin(angle) * 95;
                                 return (
@@ -1381,9 +1401,9 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                                 );
                               })}
                               {(() => {
-                                const points = emp.radar
+                                const points = radarPoints
                                   .map((point, idx) => {
-                                    const angle = (Math.PI * 2 * idx) / emp.radar.length - Math.PI / 2;
+                                    const angle = (Math.PI * 2 * idx) / radarPoints.length - Math.PI / 2;
                                     const r = (point.value / 100) * 90;
                                     const x = Math.cos(angle) * r;
                                     const y = Math.sin(angle) * r;
@@ -1398,8 +1418,8 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                                       stroke="#7dd3fc"
                                       strokeWidth="2"
                                     />
-                                    {emp.radar.map((point, idx) => {
-                                      const angle = (Math.PI * 2 * idx) / emp.radar.length - Math.PI / 2;
+                                    {radarPoints.map((point, idx) => {
+                                      const angle = (Math.PI * 2 * idx) / radarPoints.length - Math.PI / 2;
                                       const r = (point.value / 100) * 90;
                                       const x = Math.cos(angle) * r;
                                       const y = Math.sin(angle) * r;
@@ -1417,7 +1437,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                             </defs>
                           </svg>
                           <div className="radar-mini-legend">
-                            {emp.radar.map((point) => (
+                            {radarPoints.map((point) => (
                               <div key={`mini-${emp.id}-${point.label}`} className="radar-legend-row">
                                 <span>{point.label}</span>
                                 <strong>{point.value}%</strong>
@@ -1426,7 +1446,8 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                           </div>
                         </div>
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 )}
               </div>
