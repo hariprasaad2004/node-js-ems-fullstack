@@ -102,6 +102,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [taskForm, setTaskForm] = useState(initialTaskState);
   const [infoEmployee, setInfoEmployee] = useState(null);
   const [statNow, setStatNow] = useState(() => new Date());
+  const [selectedPerfId, setSelectedPerfId] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -1358,7 +1359,21 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                           { label: 'Speed', value: 0 }
                         ];
                       return (
-                      <div className="perf-card" key={`status-${emp.id}`}>
+                      <div
+                        className={`perf-card ${selectedPerfId === emp.id ? 'is-open' : ''}`}
+                        key={`status-${emp.id}`}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() =>
+                          setSelectedPerfId((prev) => (prev === emp.id ? null : emp.id))
+                        }
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            setSelectedPerfId((prev) => (prev === emp.id ? null : emp.id));
+                          }
+                        }}
+                      >
                         <div className="perf-card-head">
                           <div>
                             <div className="leader-name">{emp.name}</div>
@@ -1380,6 +1395,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                         <div className="perf-sub">
                           {emp.completed}/{emp.total} logs
                         </div>
+                        {selectedPerfId === emp.id ? (
                         <div className="radar-mini">
                           <svg viewBox="0 0 220 220">
                             <g transform="translate(110 110)">
@@ -1445,6 +1461,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                             ))}
                           </div>
                         </div>
+                        ) : null}
                       </div>
                     );
                     })}
