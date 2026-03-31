@@ -391,14 +391,13 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
 
   const taskMonitor = useMemo(() => {
     const now = Date.now();
-    const counts = { pending: 0, planning: 0, processing: 0, completed: 0, overdue: 0 };
+    const counts = { pending: 0, planning: 0, completed: 0, overdue: 0 };
     const list = tasks.map((task) => {
       const status = (task.status || 'planning').toLowerCase();
       const due = toTime(task.dueAt);
       const isCompleted = status === 'completed';
       const isOverdue = !isCompleted && due && due < now;
       if (status === 'pending') counts.pending += 1;
-      else if (status === 'processing') counts.processing += 1;
       else if (status === 'completed') counts.completed += 1;
       else counts.planning += 1;
       if (isOverdue) counts.overdue += 1;
@@ -415,7 +414,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     const total = list.length || 1;
     const segments = [
       { key: 'completed', color: '#10b981', value: counts.completed },
-      { key: 'processing', color: '#3b82f6', value: counts.processing },
       { key: 'planning', color: '#f59e0b', value: counts.planning },
       { key: 'pending', color: '#eab308', value: counts.pending },
       { key: 'overdue', color: '#ef4444', value: counts.overdue }
@@ -1096,7 +1094,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                 <p className="helper">Analytics-first view of task velocity and risk.</p>
               </div>
               <div className="chip-row">
-                {['all', 'planning', 'processing', 'completed', 'pending', 'overdue'].map((key) => (
+                {['all', 'planning', 'completed', 'pending', 'overdue'].map((key) => (
                   <button
                     key={`tm-${key}`}
                     type="button"
