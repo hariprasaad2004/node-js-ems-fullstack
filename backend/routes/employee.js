@@ -237,13 +237,21 @@ router.post('/api/employee/leave', requireAuth, requireRole(selfServiceRoles), a
         .json({ message: 'Casual leave must be requested at least 2 days in advance.' });
     }
 
+    const baseStatus = req.userRole === 'manager' ? 'approved' : 'pending';
+    const autoReviewed =
+      req.userRole === 'manager'
+        ? { reviewedBy: req.userId, reviewedAt: new Date() }
+        : {};
+
     const leave = await LeaveRequest.create({
       employee: req.userId,
       fromDate: from,
       toDate: to,
       category: leaveCategory,
       reason: reason ? String(reason).trim() : '',
-      roleAtRequest: req.userRole || 'employee'
+      roleAtRequest: req.userRole || 'employee',
+      status: baseStatus,
+      ...autoReviewed
     });
 
     return res.status(201).json(toSafeLeave(leave));
