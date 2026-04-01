@@ -140,9 +140,11 @@ router.get('/teamlead', (req, res) => { // Serve the SPA for the team lead route
   return res.sendFile(frontendIndex);
 });
 
+const staffRoles = ['employee', 'teamlead', 'manager'];
+
 router.get('/api/admin/employees', requireAuth, requireRole(leadRoles), async (req, res) => { // List employees for admin/manager/lead view.
   try {
-    const employees = await User.find({ role: 'employee' }).sort({ createdAt: -1 });
+    const employees = await User.find({ role: { $in: staffRoles } }).sort({ createdAt: -1 });
     return res.json(employees.map(toSafeEmployee));
   } catch (err) {
     return res.status(500).json({ message: 'Failed to fetch employees.' });
@@ -155,6 +157,7 @@ router.post('/api/admin/employees', requireAuth, requireRole(adminRoles), async 
       name,
       email,
       password,
+      role,
       department,
       title,
       phone,
@@ -173,10 +176,12 @@ router.post('/api/admin/employees', requireAuth, requireRole(adminRoles), async 
       return res.status(409).json({ message: 'Email already exists.' });
     }
 
+    const cleanRole = staffRoles.includes(role) ? role : 'employee';
+
     const passwordHash = await bcrypt.hash(password, 10);
 
     const employee = await User.create({
-      role: 'employee',
+      role: cleanRole,
       name,
       email: email.toLowerCase(),
       passwordHash,
@@ -211,7 +216,7 @@ router.put('/api/admin/employees/:id', requireAuth, requireRole(adminRoles), asy
       profileImage
     } = req.body;
 
-    const employee = await User.findOne({ _id: id, role: 'employee' });
+    const employee = await User.findOne({ _id: id, role: { $in: staffRoles } });
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found.' });
     }
@@ -231,6 +236,7 @@ router.put('/api/admin/employees/:id', requireAuth, requireRole(adminRoles), asy
     if (address !== undefined) employee.address = address;
     if (salary !== undefined) employee.salary = Number.isFinite(Number(salary)) ? Number(salary) : employee.salary;
     if (status) employee.status = status;
+    if (role && staffRoles.includes(role)) employee.role = role;
     if (password) employee.passwordHash = await bcrypt.hash(password, 10);
     if (profileImage !== undefined) employee.profileImage = profileImage;
 
@@ -244,7 +250,7 @@ router.put('/api/admin/employees/:id', requireAuth, requireRole(adminRoles), asy
 router.delete('/api/admin/employees/:id', requireAuth, requireRole(adminRoles), async (req, res) => { // Delete an employee.
   try {
     const { id } = req.params;
-    const employee = await User.findOne({ _id: id, role: 'employee' });
+    const employee = await User.findOne({ _id: id, role: { $in: staffRoles } });
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found.' });
     }
@@ -272,7 +278,7 @@ router.get('/api/admin/attendance/summary', requireAuth, requireRole(leadRoles),
   try {
     const dateKey = typeof req.query.date === 'string' && req.query.date ? req.query.date : formatDateKey();
     const [employees, records] = await Promise.all([
-      User.find({ role: 'employee' }).sort({ createdAt: -1 }),
+      User.find({ role: { $in: staffRoles } }).sort({ createdAt: -1 }),
       Attendance.find({ dateKey })
     ]);
 
@@ -318,7 +324,7 @@ router.post('/api/admin/attendance/check-in', requireAuth, requireRole(adminRole
       return res.status(400).json({ message: 'Employee is required.' });
     }
 
-    const employee = await User.findOne({ _id: employeeId, role: 'employee' });
+    const employee = await User.findOne({ _id: employeeId, role: { $in: staffRoles } });
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found.' });
     }
@@ -362,7 +368,7 @@ router.post('/api/admin/attendance/check-out', requireAuth, requireRole(adminRol
       return res.status(400).json({ message: 'Employee is required.' });
     }
 
-    const employee = await User.findOne({ _id: employeeId, role: 'employee' });
+    const employee = await User.findOne({ _id: employeeId, role: { $in: staffRoles } });
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found.' });
     }
@@ -453,7 +459,7 @@ router.post('/api/admin/tasks', requireAuth, requireRole(leadRoles), async (req,
       return res.status(400).json({ message: 'Invalid due time.' });
     }
 
-    const employee = await User.findOne({ _id: employeeId, role: 'employee' });
+    const employee = await User.findOne({ _id: employeeId, role: { $in: staffRoles } });
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found.' });
     }

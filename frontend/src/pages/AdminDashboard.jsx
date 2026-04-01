@@ -20,6 +20,7 @@ const initialFormState = {
   name: '',
   email: '',
   password: '',
+  role: 'employee',
   department: '',
   title: '',
   phone: '',
@@ -229,7 +230,8 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
         emp.name?.toLowerCase().includes(term) ||
         emp.email?.toLowerCase().includes(term) ||
         emp.title?.toLowerCase().includes(term) ||
-        emp.department?.toLowerCase().includes(term)
+        emp.department?.toLowerCase().includes(term) ||
+        emp.role?.toLowerCase().includes(term)
       );
     });
   }, [employees, searchTerm, statusFilter, departmentFilter]);
@@ -713,6 +715,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       name: formData.name.trim(),
       email: formData.email.trim(),
       password: formData.password.trim(),
+      role: formData.role,
       department: formData.department.trim(),
       title: formData.title.trim(),
       phone: formData.phone.trim(),
@@ -756,6 +759,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       name: employee.name || '',
       email: employee.email || '',
       password: '',
+      role: employee.role || 'employee',
       department: employee.department || '',
       title: employee.title || '',
       phone: employee.phone || '',
@@ -1585,21 +1589,22 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               ) : (
                 <div className="employee-grid">
                   {filteredEmployees.map((employee) => {
-                    const initials = employee.name
-                      ? employee.name
-                          .split(' ')
-                          .filter(Boolean)
-                          .slice(0, 2)
-                          .map((part) => part[0])
-                          .join('')
-                          .toUpperCase()
-                      : 'EM';
-                    const idSuffix = employee.id ? employee.id.slice(-6).toUpperCase() : 'N/A';
-                    return (
-                      <div className="employee-card" key={employee.id}>
-                        <div className="employee-card-top">
-                          <button
-                            className="card-menu"
+                  const initials = employee.name
+                    ? employee.name
+                        .split(' ')
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((part) => part[0])
+                        .join('')
+                        .toUpperCase()
+                    : 'EM';
+                  const idSuffix = employee.id ? employee.id.slice(-6).toUpperCase() : 'N/A';
+                  const roleLabel = formatStatus(employee.role || 'employee');
+                  return (
+                    <div className="employee-card" key={employee.id}>
+                      <div className="employee-card-top">
+                        <button
+                          className="card-menu"
                             type="button"
                             aria-label="Employee info"
                             onClick={() => handleOpenInfo(employee)}
@@ -1615,7 +1620,10 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                           )}
                         </div>
                         <h3 className="employee-name">{employee.name}</h3>
-                        <p className="employee-role">{employee.title || 'Employee'}</p>
+                        <p className="employee-role">
+                          {employee.title || roleLabel}
+                          <span className="pill" style={{ marginLeft: '8px' }}>{roleLabel}</span>
+                        </p>
                         <div className="employee-id">ID: {idSuffix}</div>
                       </div>
                     );
@@ -1721,6 +1729,14 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                     value={formData.title}
                     onChange={handleFormChange}
                   />
+                </div>
+                <div>
+                  <label htmlFor="role">Role / Designation</label>
+                  <select id="role" value={formData.role} onChange={handleFormChange}>
+                    <option value="employee">Employee</option>
+                    <option value="teamlead">Team Lead</option>
+                    <option value="manager">Manager</option>
+                  </select>
                 </div>
                 <div>
                   <label htmlFor="phone">Phone</label>
@@ -1876,6 +1892,10 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                 <div>
                   <span>Status</span>
                   <strong>{infoEmployee.status}</strong>
+                </div>
+                <div>
+                  <span>Role</span>
+                  <strong>{formatStatus(infoEmployee.role || 'employee')}</strong>
                 </div>
                 <div>
                   <span>Title</span>

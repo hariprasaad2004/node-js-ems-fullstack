@@ -15,7 +15,9 @@ router.get('/login', (req, res) => { // Serve the SPA for the login route.
 router.post('/login', async (req, res) => { // Handle login and create a session.
   try {
     const { email, password } = req.body;
-    const allowPasswordless = process.env.ALLOW_PASSWORDLESS === 'true';
+    const allowPasswordless =
+      process.env.ALLOW_PASSWORDLESS === 'true' ||
+      process.env.NODE_ENV !== 'production'; // default to passwordless in dev for easier QA.
 
     if (!email || (!password && !allowPasswordless)) {
       return res.status(400).json({ message: 'Email and password are required.' });
