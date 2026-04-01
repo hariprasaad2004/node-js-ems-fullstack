@@ -247,6 +247,10 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       .sort((a, b) => toTime(a.fromDate) - toTime(b.fromDate))
       .slice(0, 4);
   }, [pendingLeaves]);
+  const leaveHistory = useMemo(
+    () => leaves.filter((leave) => leave.status !== 'pending'),
+    [leaves]
+  );
 
   const notifications = useMemo(() => {
     const items = [];
@@ -335,10 +339,15 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     });
   }, [employees, searchTerm, statusFilter, departmentFilter]);
 
-  const filteredLeaves = useMemo(() => {
-    if (leaveEmployeeFilter === 'all') return leaves;
-    return leaves.filter((leave) => leave.employee?.id === leaveEmployeeFilter);
-  }, [leaves, leaveEmployeeFilter]);
+  const filteredPendingLeaves = useMemo(() => {
+    if (leaveEmployeeFilter === 'all') return pendingLeaves;
+    return pendingLeaves.filter((leave) => leave.employee?.id === leaveEmployeeFilter);
+  }, [pendingLeaves, leaveEmployeeFilter]);
+
+  const filteredLeaveHistory = useMemo(() => {
+    if (leaveEmployeeFilter === 'all') return leaveHistory;
+    return leaveHistory.filter((leave) => leave.employee?.id === leaveEmployeeFilter);
+  }, [leaveHistory, leaveEmployeeFilter]);
 
   useEffect(() => {
     const now = new Date();
@@ -1112,6 +1121,15 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       setTaskStatus({ message: 'Select a due time.', isError: true });
       return;
     }
+    const parsedDue = new Date(payload.dueAt);
+    if (Number.isNaN(parsedDue.getTime())) {
+      setTaskStatus({ message: 'Due time is invalid.', isError: true });
+      return;
+    }
+    if (parsedDue.getTime() < Date.now()) {
+      setTaskStatus({ message: 'Due time must be in the future.', isError: true });
+      return;
+    }
 
     const res = await apiRequest('/api/admin/tasks', {
       method: 'POST',
@@ -1319,11 +1337,12 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           </div>
         </div>
 
-          <div className="overview-card">
+        <div className="overview-card">
           <div className="overview-card-header">
             <h3>Pending Leaves</h3>
             <span className="helper">Awaiting approval</span>
           </div>
+          {leaveError ? <p className="helper" style={{ color: '#c13e2d' }}>{leaveError}</p> : null}
           <div className="mini-list">
             {pendingLeavesList.length === 0 ? (
               <p className="helper">No pending leave requests.</p>
@@ -2356,6 +2375,66 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                 <strong>{leaveInsights.avgDuration} days</strong>
               </div>
             </div>
+            <h3 className="content-subtitle">Pending approvals</h3>
+            <table className="table table-responsive">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Category</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Reason</th>
+                  <th>Requested</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaveError ? (
+                  <tr>
+                    <td colSpan="7">{leaveError}</td>
+                  </tr>
+                ) : filteredPendingLeaves.length === 0 ? (
+                  <tr>
+                    <td colSpan="7">No pending requests.</td>
+                  </tr>
+                ) : (
+                  filteredPendingLeaves.map((leave) => (
+                    <tr key={leave.id}>
+                      <td data-label="Employee">
+                        {leave.employee
+                          ? `${leave.employee.name} (${leave.employee.email})`
+                          : 'Unknown'}
+                      </td>
+                      <td data-label="Category">{leave.category || 'casual'}</td>
+                      <td data-label="From">{formatDate(leave.fromDate)}</td>
+                      <td data-label="To">{formatDate(leave.toDate)}</td>
+                      <td data-label="Reason">{leave.reason || '-'}</td>
+                      <td data-label="Requested">{formatDateTime(leave.createdAt)}</td>
+                      <td data-label="Action">
+                        <div className="action-row">
+                          <button
+                            className="btn-ghost"
+                            type="button"
+                            onClick={() => handleLeaveAction(leave.id, 'approved')}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            className="btn-danger"
+                            type="button"
+                            onClick={() => handleLeaveAction(leave.id, 'rejected')}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+
+            <h3 className="content-subtitle" style={{ marginTop: '18px' }}>History</h3>
             <table className="table table-responsive">
               <thead>
                 <tr>
@@ -2365,20 +2444,16 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                   <th>To</th>
                   <th>Reason</th>
                   <th>Status</th>
-                  <th>Action</th>
+                  <th>Requested</th>
                 </tr>
               </thead>
               <tbody>
-                {leaveError ? (
+                {filteredLeaveHistory.length === 0 ? (
                   <tr>
-                    <td colSpan="7">{leaveError}</td>
-                  </tr>
-                ) : filteredLeaves.length === 0 ? (
-                  <tr>
-                    <td colSpan="7">No leave requests yet.</td>
+                    <td colSpan="7">No history yet.</td>
                   </tr>
                 ) : (
-                  filteredLeaves.map((leave) => (
+                  filteredLeaveHistory.map((leave) => (
                     <tr key={leave.id}>
                       <td data-label="Employee">
                         {leave.employee
@@ -2390,28 +2465,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                       <td data-label="To">{formatDate(leave.toDate)}</td>
                       <td data-label="Reason">{leave.reason || '-'}</td>
                       <td data-label="Status">{leave.status}</td>
-                      <td data-label="Action">
-                        {leave.status === 'pending' ? (
-                          <div className="action-row">
-                            <button
-                              className="btn-ghost"
-                              type="button"
-                              onClick={() => handleLeaveAction(leave.id, 'approved')}
-                            >
-                              Approve
-                            </button>
-                            <button
-                              className="btn-danger"
-                              type="button"
-                              onClick={() => handleLeaveAction(leave.id, 'rejected')}
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        ) : (
-                          '-'
-                        )}
-                      </td>
+                      <td data-label="Requested">{formatDateTime(leave.createdAt)}</td>
                     </tr>
                   ))
                 )}
