@@ -2179,11 +2179,13 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                     <option value="">
                       {employees.length === 0 ? 'No employees available' : 'Select employee'}
                     </option>
-                    {employees.map((employee) => (
-                      <option key={employee.id} value={employee.id}>
-                        {formatEmployeeLabel(employee)}
-                      </option>
-                    ))}
+                    {employees
+                      .filter((employee) => (employee.role || '').toLowerCase() === 'employee')
+                      .map((employee) => (
+                        <option key={employee.id} value={employee.id}>
+                          {formatEmployeeLabel(employee)}
+                        </option>
+                      ))}
                   </select>
                 </div>
                 <div>

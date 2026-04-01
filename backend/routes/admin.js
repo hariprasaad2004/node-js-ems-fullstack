@@ -519,7 +519,8 @@ router.post('/api/admin/tasks', requireAuth, requireRole(taskAssignRoles), async
       return res.status(400).json({ message: 'Invalid due time.' });
     }
 
-    const allowedRoles = req.userRole === 'admin' ? staffRoles : managerScopedRoles;
+    // Admins may only assign tasks to employees (not managers or team leads).
+    const allowedRoles = req.userRole === 'admin' ? ['employee'] : managerScopedRoles;
     const employee = await User.findOne({ _id: employeeId, role: { $in: allowedRoles } });
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found.' });
