@@ -18,8 +18,6 @@ const navItems = [
   { id: 'eods', label: 'EOD Reports' },
   { id: 'leave', label: 'Leave' },
   { id: 'attendance', label: 'Attendance' },
-  { id: 'my-attendance', label: 'My Attendance' },
-  { id: 'my-leave', label: 'My Leave' },
   { id: 'employees', label: 'Employees' },
   { id: 'policies', label: 'Policies' }
 ];
