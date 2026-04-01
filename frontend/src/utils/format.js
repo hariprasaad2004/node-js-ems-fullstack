@@ -34,6 +34,9 @@ export function formatStatus(status) { // Humanize a status value.
 export function formatEmployeeLabel(employee) { // Build a concise employee label.
   if (!employee) return '';
   const dept = employee.department ? ` (${employee.department})` : '';
-  return `${employee.name}${dept} - ${employee.email}`;
+  const role =
+    employee.role && typeof employee.role === 'string'
+      ? ` [${formatStatus(employee.role)}]`
+      : '';
+  return `${employee.name}${dept}${role} - ${employee.email}`;
 }
-

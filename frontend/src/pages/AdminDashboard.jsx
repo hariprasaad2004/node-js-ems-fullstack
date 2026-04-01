@@ -2401,9 +2401,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                   filteredPendingLeaves.map((leave) => (
                     <tr key={leave.id}>
                       <td data-label="Employee">
-                        {leave.employee
-                          ? `${leave.employee.name} (${leave.employee.email})`
-                          : 'Unknown'}
+                        {leave.employee ? formatEmployeeLabel(leave.employee) : 'Unknown'}
                       </td>
                       <td data-label="Category">{leave.category || 'casual'}</td>
                       <td data-label="From">{formatDate(leave.fromDate)}</td>
@@ -2456,9 +2454,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                   filteredLeaveHistory.map((leave) => (
                     <tr key={leave.id}>
                       <td data-label="Employee">
-                        {leave.employee
-                          ? `${leave.employee.name} (${leave.employee.email})`
-                          : 'Unknown'}
+                        {leave.employee ? formatEmployeeLabel(leave.employee) : 'Unknown'}
                       </td>
                       <td data-label="Category">{leave.category || 'casual'}</td>
                       <td data-label="From">{formatDate(leave.fromDate)}</td>
