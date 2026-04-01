@@ -106,7 +106,8 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [employeeError, setEmployeeError] = useState('');
   const [attendance, setAttendance] = useState([]);
   const [attendanceError, setAttendanceError] = useState('');
-  const [leaves, setLeaves] = useState([]);
+  const [leaves, setLeaves] = useState([]); // all statuses
+  const [pendingLeaves, setPendingLeaves] = useState([]); // pending only for approvals
   const [leaveError, setLeaveError] = useState('');
   const [tasks, setTasks] = useState([]);
   const [taskError, setTaskError] = useState('');
@@ -240,13 +241,12 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       .slice(0, 4);
   }, [tasks]);
 
-  const pendingLeaves = useMemo(() => {
-    return leaves
-      .filter((leave) => leave.status === 'pending')
+  const pendingLeavesList = useMemo(() => {
+    return pendingLeaves
       .slice()
       .sort((a, b) => toTime(a.fromDate) - toTime(b.fromDate))
       .slice(0, 4);
-  }, [leaves]);
+  }, [pendingLeaves]);
 
   const notifications = useMemo(() => {
     const items = [];
@@ -742,16 +742,29 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
 
   async function loadLeaves() { // Fetch leave request data.
     setLeaveError('');
-    const res = await apiRequest('/api/admin/leave');
-    const data = await readJson(res);
 
-    if (!res.ok) {
-      setLeaveError(data?.message || 'Failed to load leave requests.');
+    const [pendingRes, allRes] = await Promise.all([
+      apiRequest('/api/admin/leave?status=pending'),
+      apiRequest('/api/admin/leave')
+    ]);
+
+    const pendingData = await readJson(pendingRes);
+    const allData = await readJson(allRes);
+
+    if (!pendingRes.ok) {
+      setLeaveError(pendingData?.message || 'Failed to load pending leave requests.');
+      setPendingLeaves([]);
+    } else {
+      setPendingLeaves(Array.isArray(pendingData) ? pendingData : []);
+    }
+
+    if (!allRes.ok) {
+      setLeaveError((prev) => prev || allData?.message || 'Failed to load leave requests.');
       setLeaves([]);
       return;
     }
 
-    setLeaves(Array.isArray(data) ? data : []);
+    setLeaves(Array.isArray(allData) ? allData : []);
   }
 
   async function loadMyAttendance() { // Fetch admin's own attendance.
@@ -1306,16 +1319,16 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           </div>
         </div>
 
-        <div className="overview-card">
+          <div className="overview-card">
           <div className="overview-card-header">
             <h3>Pending Leaves</h3>
             <span className="helper">Awaiting approval</span>
           </div>
           <div className="mini-list">
-            {pendingLeaves.length === 0 ? (
+            {pendingLeavesList.length === 0 ? (
               <p className="helper">No pending leave requests.</p>
             ) : (
-              pendingLeaves.map((leave) => (
+              pendingLeavesList.map((leave) => (
                 <div className="mini-item" key={`${idPrefix}-leave-${leave.id}`}>
                   <div>
                     <div className="mini-title">{leave.employee?.name || 'Employee'}</div>

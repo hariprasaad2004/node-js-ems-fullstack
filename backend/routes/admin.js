@@ -417,9 +417,16 @@ router.post('/api/admin/attendance/check-out', requireAuth, requireRole(adminRol
   }
 });
 
-router.get('/api/admin/leave', requireAuth, requireRole(leadRoles), async (req, res) => { // List leave requests with role-based visibility.
+router.get('/api/admin/leave', requireAuth, requireRole(leadRoles), async (req, res) => { // List leave requests with role-based visibility and optional status filter.
   try {
-    const leaves = await LeaveRequest.find()
+    const { status } = req.query;
+    const allowedStatuses = ['pending', 'approved', 'rejected'];
+    const match = {};
+    if (status && allowedStatuses.includes(status)) {
+      match.status = status;
+    }
+
+    const leaves = await LeaveRequest.find(match)
       .sort({ createdAt: -1 })
       .limit(30)
       .populate('employee', 'name email role department');

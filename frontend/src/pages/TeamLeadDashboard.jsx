@@ -40,7 +40,8 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
   const [profile, setProfile] = useState(null);
   const [team, setTeam] = useState([]);
   const [attendance, setAttendance] = useState([]);
-  const [leaves, setLeaves] = useState([]);
+  const [pendingLeaves, setPendingLeaves] = useState([]);
+  const [allLeaves, setAllLeaves] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [taskForm, setTaskForm] = useState(initialTaskForm);
   const [statusMessage, setStatusMessage] = useState('');
@@ -63,15 +64,10 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
     loadMyLeaves();
   }, []);
 
-  const pendingLeaves = useMemo(
-    () => leaves.filter((leave) => leave.status === 'pending'),
-    [leaves]
-  );
-
   const filteredLeaves = useMemo(() => {
-    if (leaveEmployeeFilter === 'all') return leaves;
-    return leaves.filter((leave) => leave.employee?.id === leaveEmployeeFilter);
-  }, [leaves, leaveEmployeeFilter]);
+    if (leaveEmployeeFilter === 'all') return allLeaves;
+    return allLeaves.filter((leave) => leave.employee?.id === leaveEmployeeFilter);
+  }, [allLeaves, leaveEmployeeFilter]);
 
   const myAttendanceMap = useMemo(() => {
     const map = new Map();
@@ -194,12 +190,27 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
   }
 
   async function loadLeaves() { // Pending and recent leave requests.
-    const res = await apiRequest('/api/admin/leave');
-    const data = await readJson(res);
-    if (res.ok) {
-      setLeaves(Array.isArray(data) ? data : []);
+    setLeaveStatus('');
+    const [pendingRes, allRes] = await Promise.all([
+      apiRequest('/api/admin/leave?status=pending'),
+      apiRequest('/api/admin/leave')
+    ]);
+
+    const pendingData = await readJson(pendingRes);
+    const allData = await readJson(allRes);
+
+    if (!pendingRes.ok) {
+      setLeaveStatus(pendingData?.message || 'Failed to load pending leave requests.');
+      setPendingLeaves([]);
     } else {
-      setStatusMessage(data?.message || 'Failed to load leave requests.');
+      setPendingLeaves(Array.isArray(pendingData) ? pendingData : []);
+    }
+
+    if (!allRes.ok) {
+      setLeaveStatus((prev) => prev || allData?.message || 'Failed to load leave requests.');
+      setAllLeaves([]);
+    } else {
+      setAllLeaves(Array.isArray(allData) ? allData : []);
     }
   }
 
@@ -340,7 +351,7 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
   };
 
   const recentTasks = tasks.slice(0, 6);
-  const recentLeaves = leaves.slice(0, 6);
+  const recentLeaves = allLeaves.slice(0, 6);
 
   return (
     <div className="dashboard">
@@ -522,12 +533,12 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
                   </tr>
                 </thead>
                 <tbody>
-                  {leaves.length === 0 ? (
+                  {pendingLeaves.length === 0 ? (
                     <tr>
-                      <td colSpan="6">No leave requests.</td>
+                      <td colSpan="6">No pending leave requests.</td>
                     </tr>
                   ) : (
-                    leaves.map((leave) => (
+                    pendingLeaves.map((leave) => (
                       <tr key={leave.id}>
                         <td data-label="Employee">{formatEmployeeLabel(leave.employee)}</td>
                         <td data-label="Dates">

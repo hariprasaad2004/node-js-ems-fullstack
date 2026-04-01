@@ -23,7 +23,8 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
   const [profile, setProfile] = useState(null);
   const [team, setTeam] = useState([]);
   const [attendance, setAttendance] = useState([]);
-  const [leaves, setLeaves] = useState([]);
+  const [pendingLeaves, setPendingLeaves] = useState([]);
+  const [allLeaves, setAllLeaves] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [statusMessage, setStatusMessage] = useState('');
   const [leaveStatus, setLeaveStatus] = useState('');
@@ -36,10 +37,7 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
     loadTasks();
   }, []);
 
-  const pendingLeaves = useMemo(
-    () => leaves.filter((leave) => leave.status === 'pending'),
-    [leaves]
-  );
+  const pendingLeavesLimited = useMemo(() => pendingLeaves.slice(0, 5), [pendingLeaves]);
 
   const taskStats = useMemo(() => {
     const total = tasks.length;
@@ -92,13 +90,29 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
     }
   }
 
-  async function loadLeaves() { // Pending approvals.
-    const res = await apiRequest('/api/admin/leave');
-    const data = await readJson(res);
-    if (res.ok) {
-      setLeaves(Array.isArray(data) ? data : []);
+  async function loadLeaves() { // Pending approvals + history separated.
+    setLeaveStatus('');
+
+    const [pendingRes, allRes] = await Promise.all([
+      apiRequest('/api/admin/leave?status=pending'),
+      apiRequest('/api/admin/leave')
+    ]);
+
+    const pendingData = await readJson(pendingRes);
+    const allData = await readJson(allRes);
+
+    if (!pendingRes.ok) {
+      setLeaveStatus(pendingData?.message || 'Failed to load pending leave requests.');
+      setPendingLeaves([]);
     } else {
-      setLeaveStatus(data?.message || 'Failed to load leave requests.');
+      setPendingLeaves(Array.isArray(pendingData) ? pendingData : []);
+    }
+
+    if (!allRes.ok) {
+      setLeaveStatus((prev) => prev || allData?.message || 'Failed to load leave requests.');
+      setAllLeaves([]);
+    } else {
+      setAllLeaves(Array.isArray(allData) ? allData : []);
     }
   }
 
@@ -135,7 +149,6 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
     window.location.assign('/login');
   };
 
-  const topPendingLeaves = pendingLeaves.slice(0, 5);
   const topTasks = tasks.slice(0, 6);
 
   return (
@@ -221,11 +234,11 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
                 <h2 className="content-title">Approvals at a Glance</h2>
                 <p className="helper">Recent pending leave requests</p>
               </div>
-              {topPendingLeaves.length === 0 ? (
+              {pendingLeavesLimited.length === 0 ? (
                 <div className="notice">No pending leaves.</div>
               ) : (
                 <ul className="list">
-                  {topPendingLeaves.map((leave) => (
+                  {pendingLeavesLimited.map((leave) => (
                     <li key={leave.id} className="list-item">
                       <div>
                         <div className="list-title">{formatEmployeeLabel(leave.employee)}</div>
@@ -314,8 +327,8 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
         >
           <div className="content-card">
             <div className="section-header">
-              <h2 className="content-title">All Leave Requests</h2>
-              <p className="helper">Approve quickly, keep folks informed.</p>
+              <h2 className="content-title">Pending Leave Approvals</h2>
+              <p className="helper">Only requests that need your action.</p>
             </div>
             {leaveStatus ? <p className="helper">{leaveStatus}</p> : null}
             <div className="table-scroll">
@@ -325,50 +338,83 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
                     <th>Employee</th>
                     <th>Dates</th>
                     <th>Category</th>
-                    <th>Status</th>
                     <th>Requested</th>
                     <th />
                   </tr>
                 </thead>
                 <tbody>
-                  {leaves.length === 0 ? (
+                  {pendingLeaves.length === 0 ? (
                     <tr>
-                      <td colSpan="6">No leave requests.</td>
+                      <td colSpan="5">No pending leave requests.</td>
                     </tr>
                   ) : (
-                    leaves.map((leave) => (
+                    pendingLeaves.map((leave) => (
                       <tr key={leave.id}>
                         <td data-label="Employee">{formatEmployeeLabel(leave.employee)}</td>
                         <td data-label="Dates">
                           {formatDate(leave.fromDate)} - {formatDate(leave.toDate)}
                         </td>
                         <td data-label="Category">{formatStatus(leave.category)}</td>
-                        <td data-label="Status">{formatStatus(leave.status)}</td>
                         <td data-label="Requested">{formatDateTime(leave.createdAt)}</td>
                         <td>
-                          {leave.status === 'pending' ? (
-                            <div className="action-row">
-                              <button
-                                className="btn-ghost"
-                                type="button"
-                                onClick={() => handleLeaveDecision(leave.id, 'rejected')}
-                              >
-                                Reject
-                              </button>
-                              <button
-                                className="btn-primary"
-                                type="button"
-                                onClick={() => handleLeaveDecision(leave.id, 'approved')}
-                              >
-                                Approve
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="pill">{formatStatus(leave.status)}</span>
-                          )}
+                          <div className="action-row">
+                            <button
+                              className="btn-ghost"
+                              type="button"
+                              onClick={() => handleLeaveDecision(leave.id, 'rejected')}
+                            >
+                              Reject
+                            </button>
+                            <button
+                              className="btn-primary"
+                              type="button"
+                              onClick={() => handleLeaveDecision(leave.id, 'approved')}
+                            >
+                              Approve
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="section-header" style={{ marginTop: '24px' }}>
+              <h3 className="content-title">Leave History</h3>
+              <p className="helper">Includes approved and rejected requests.</p>
+            </div>
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Dates</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Requested</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allLeaves.filter((l) => l.status !== 'pending').length === 0 ? (
+                    <tr>
+                      <td colSpan="5">No history yet.</td>
+                    </tr>
+                  ) : (
+                    allLeaves
+                      .filter((l) => l.status !== 'pending')
+                      .map((leave) => (
+                        <tr key={leave.id}>
+                          <td data-label="Employee">{formatEmployeeLabel(leave.employee)}</td>
+                          <td data-label="Dates">
+                            {formatDate(leave.fromDate)} - {formatDate(leave.toDate)}
+                          </td>
+                          <td data-label="Category">{formatStatus(leave.category)}</td>
+                          <td data-label="Status">{formatStatus(leave.status)}</td>
+                          <td data-label="Requested">{formatDateTime(leave.createdAt)}</td>
+                        </tr>
+                      ))
                   )}
                 </tbody>
               </table>
