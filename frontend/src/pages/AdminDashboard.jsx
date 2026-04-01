@@ -1335,7 +1335,9 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                 Check Out
               </button>
             </div>
-            <p className="helper" style={{ color: '#9fb3c8' }}>{myAttendanceMsg}</p>
+            <p className="helper" style={{ color: '#9fb3c8', marginTop: '6px', marginBottom: '12px' }}>
+              {myAttendanceMsg}
+            </p>
             <table className="table table-responsive">
               <thead>
                 <tr>

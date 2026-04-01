@@ -664,7 +664,9 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
                 Check Out
               </button>
             </div>
-            <p className="helper" style={{ color: '#9fb3c8' }}>{myAttendanceMsg}</p>
+            <p className="helper" style={{ color: '#9fb3c8', marginTop: '6px', marginBottom: '12px' }}>
+              {myAttendanceMsg}
+            </p>
             <div className="attendance-calendar">
               <div className="calendar-header">
                 <div>
