@@ -12,6 +12,7 @@ const navItems = [
 ];
 
 const initialTaskForm = { employeeId: '', details: '', dueAt: '' };
+const initialMyLeaveForm = { category: 'casual', fromDate: '', toDate: '', reason: '' };
 
 export default function TeamLeadDashboard() { // Team lead dashboard with light-weight leadership tools.
   useBodyClass('page-dashboard');
@@ -31,6 +32,11 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
   const [statusMessage, setStatusMessage] = useState('');
   const [taskStatus, setTaskStatus] = useState('');
   const [leaveStatus, setLeaveStatus] = useState('');
+  const [myAttendance, setMyAttendance] = useState([]);
+  const [myAttendanceMsg, setMyAttendanceMsg] = useState('');
+  const [myLeaves, setMyLeaves] = useState([]);
+  const [myLeaveForm, setMyLeaveForm] = useState(initialMyLeaveForm);
+  const [myLeaveStatus, setMyLeaveStatus] = useState({ message: '', isError: false });
 
   useEffect(() => {
     loadProfile();
@@ -38,6 +44,8 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
     loadAttendance();
     loadLeaves();
     loadTasks();
+    loadMyAttendance();
+    loadMyLeaves();
   }, []);
 
   const pendingLeaves = useMemo(
@@ -110,6 +118,78 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
     } else {
       setTaskStatus(data?.message || 'Failed to load tasks.');
     }
+  }
+
+  async function loadMyAttendance() { // Fetch own attendance.
+    const res = await apiRequest('/api/employee/attendance');
+    const data = await readJson(res);
+    if (res.ok) {
+      setMyAttendance(Array.isArray(data) ? data : []);
+    }
+  }
+
+  async function handleMyCheckIn() {
+    setMyAttendanceMsg('Checking in...');
+    const res = await apiRequest('/api/employee/attendance/check-in', { method: 'POST' });
+    const data = await readJson(res);
+    if (!res.ok) {
+      setMyAttendanceMsg(data?.message || 'Failed to check in.');
+      return;
+    }
+    setMyAttendanceMsg(data?.message || 'Checked in.');
+    await loadMyAttendance();
+  }
+
+  async function handleMyCheckOut() {
+    setMyAttendanceMsg('Checking out...');
+    const res = await apiRequest('/api/employee/attendance/check-out', { method: 'POST' });
+    const data = await readJson(res);
+    if (!res.ok) {
+      setMyAttendanceMsg(data?.message || 'Failed to check out.');
+      return;
+    }
+    setMyAttendanceMsg(data?.message || 'Checked out.');
+    await loadMyAttendance();
+  }
+
+  async function loadMyLeaves() { // Fetch own leave requests.
+    const res = await apiRequest('/api/employee/leave');
+    const data = await readJson(res);
+    if (res.ok) {
+      setMyLeaves(Array.isArray(data) ? data : []);
+    }
+  }
+
+  const handleMyLeaveChange = (event) => {
+    const { name, value } = event.target;
+    setMyLeaveForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  async function handleMyLeaveSubmit(event) {
+    event.preventDefault();
+    setMyLeaveStatus({ message: 'Submitting leave...', isError: false });
+    if (!myLeaveForm.fromDate || !myLeaveForm.toDate) {
+      setMyLeaveStatus({ message: 'Select From and To dates.', isError: true });
+      return;
+    }
+    const payload = {
+      category: myLeaveForm.category,
+      fromDate: myLeaveForm.fromDate,
+      toDate: myLeaveForm.toDate,
+      reason: myLeaveForm.reason
+    };
+    const res = await apiRequest('/api/employee/leave', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const data = await readJson(res);
+    if (!res.ok) {
+      setMyLeaveStatus({ message: data?.message || 'Failed to submit leave.', isError: true });
+      return;
+    }
+    setMyLeaveStatus({ message: 'Leave request submitted.', isError: false });
+    setMyLeaveForm(initialMyLeaveForm);
+    await loadMyLeaves();
   }
 
   async function handleLeaveDecision(id, status) { // Approve or reject a leave.
@@ -219,6 +299,136 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
           className={`section ${activeSection === 'overview' ? 'active' : ''}`}
           data-section="overview"
         >
+          <div className="grid-2">
+            <div className="content-card">
+              <div className="section-header">
+                <h2 className="content-title">My Attendance</h2>
+                <p className="helper">Check in/out for yourself.</p>
+              </div>
+              <div className="action-row">
+                <button className="btn-primary" type="button" onClick={handleMyCheckIn}>
+                  Check In
+                </button>
+                <button className="btn-ghost" type="button" onClick={handleMyCheckOut}>
+                  Check Out
+                </button>
+              </div>
+              <p className="helper" style={{ color: '#9fb3c8' }}>{myAttendanceMsg}</p>
+              <table className="table table-responsive">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Check In</th>
+                    <th>Check Out</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {myAttendance.length === 0 ? (
+                    <tr>
+                      <td colSpan="3">No records yet.</td>
+                    </tr>
+                  ) : (
+                    myAttendance.map((row) => (
+                      <tr key={row.id}>
+                        <td data-label="Date">{row.date}</td>
+                        <td data-label="Check In">{formatDateTime(row.checkInAt)}</td>
+                        <td data-label="Check Out">{formatDateTime(row.checkOutAt)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="content-card">
+              <div className="section-header">
+                <h2 className="content-title">My Leave Requests</h2>
+                <p className="helper">Submit your own leave.</p>
+              </div>
+              <form className="form-grid" onSubmit={handleMyLeaveSubmit}>
+                <div>
+                  <label htmlFor="tl-leave-category">Category</label>
+                  <select
+                    id="tl-leave-category"
+                    name="category"
+                    value={myLeaveForm.category}
+                    onChange={handleMyLeaveChange}
+                  >
+                    <option value="sick">Sick</option>
+                    <option value="casual">Casual</option>
+                    <option value="emergency">Emergency</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="tl-leave-from">From</label>
+                  <input
+                    id="tl-leave-from"
+                    name="fromDate"
+                    type="date"
+                    value={myLeaveForm.fromDate}
+                    onChange={handleMyLeaveChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="tl-leave-to">To</label>
+                  <input
+                    id="tl-leave-to"
+                    name="toDate"
+                    type="date"
+                    value={myLeaveForm.toDate}
+                    onChange={handleMyLeaveChange}
+                  />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label htmlFor="tl-leave-reason">Reason</label>
+                  <textarea
+                    id="tl-leave-reason"
+                    name="reason"
+                    rows="2"
+                    value={myLeaveForm.reason}
+                    onChange={handleMyLeaveChange}
+                    placeholder="Optional"
+                  />
+                </div>
+                <button className="btn-primary" type="submit">
+                  Submit Leave
+                </button>
+                <p
+                  className="helper"
+                  style={{ color: myLeaveStatus.isError ? '#c13e2d' : '#9fb3c8' }}
+                >
+                  {myLeaveStatus.message}
+                </p>
+              </form>
+              <table className="table table-responsive">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {myLeaves.length === 0 ? (
+                    <tr>
+                      <td colSpan="4">No leave requests.</td>
+                    </tr>
+                  ) : (
+                    myLeaves.map((leave) => (
+                      <tr key={leave.id}>
+                        <td data-label="Category">{leave.category}</td>
+                        <td data-label="From">{formatDate(leave.fromDate)}</td>
+                        <td data-label="To">{formatDate(leave.toDate)}</td>
+                        <td data-label="Status">{leave.status}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <div className="grid-3">
             <div className="content-card">
               <div className="insight-row">
