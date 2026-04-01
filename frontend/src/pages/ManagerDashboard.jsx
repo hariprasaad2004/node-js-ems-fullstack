@@ -473,7 +473,17 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
               <h2 className="content-title">Performance</h2>
               <p className="helper">High-level delivery and attendance snapshots.</p>
             </div>
-            <div className="grid-2">
+            <div className="insight-row">
+              <div className="insight-card">
+                <span className="metric-label">Headcount</span>
+                <strong className="metric-value">{team.length}</strong>
+                <p className="helper">{activeHeadcount} active</p>
+              </div>
+              <div className="insight-card">
+                <span className="metric-label">Pending Leaves</span>
+                <strong className="metric-value">{pendingLeaves.length}</strong>
+                <p className="helper">Awaiting decision</p>
+              </div>
               <div className="insight-card">
                 <span className="metric-label">Tasks Completed</span>
                 <strong className="metric-value">{taskStats.completed}</strong>
@@ -502,16 +512,25 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
             {tasks.length === 0 ? (
               <div className="notice">No tasks yet.</div>
             ) : (
-              <ul className="list">
+              <div className="task-card-grid">
                 {tasks.slice(0, 8).map((task) => (
-                  <li key={task.id} className="list-item">
-                    <div className="list-title">{task.details}</div>
-                    <div className="list-meta">
-                      {formatStatus(task.status)} · {formatDateTime(task.dueAt)}
+                  <div className="task-card" key={task.id}>
+                    <div className="task-card-header">
+                      <span className="pill">{formatStatus(task.status)}</span>
+                      <span className="task-meta">{formatDateTime(task.dueAt)}</span>
                     </div>
-                  </li>
+                    <div className="task-title">{task.details}</div>
+                    <div className="task-card-row">
+                      <span>Assignee</span>
+                      <strong>{task.employee?.name || 'Unknown'}</strong>
+                    </div>
+                    <div className="task-card-row">
+                      <span>Assigned</span>
+                      <strong>{formatDateTime(task.createdAt)}</strong>
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
         </section>
