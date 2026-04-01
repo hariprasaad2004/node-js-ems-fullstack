@@ -1402,8 +1402,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
         >
           <div className="content-card">
             <div className="section-header">
-              <h2 className="content-title">My Attendance</h2>
-              <p className="helper">Present (9am - 7pm) - Absent/Leave</p>
+              <h2 className="content-title">Attendance</h2>
             </div>
             <div className="action-row">
               <button className="btn-primary" type="button" onClick={handleMyCheckIn}>
@@ -1413,7 +1412,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                 Check Out
               </button>
             </div>
-            <p className="helper" style={{ color: '#9fb3c8', marginTop: '6px', marginBottom: '12px' }}>
+            <p className="helper" style={{ color: '#9fb3c8', marginTop: '10px', marginBottom: '8px' }}>
               {myAttendanceMsg}
             </p>
             <div className="attendance-calendar">
