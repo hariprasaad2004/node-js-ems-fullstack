@@ -181,23 +181,20 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
       />
 
       <main className="main">
-        <header className="page-header">
-          <div>
-            <p className="kicker">Leadership View</p>
-            <h1>{profile ? `Hi, ${profile.name}` : 'Team Lead Dashboard'}</h1>
-            <p className="helper">
-              Monitor your team, approve leaves, and assign tasks in one place.
-            </p>
-          </div>
-          <div className="pill">{profile?.department || 'Team'}</div>
-        </header>
-
         {statusMessage ? <div className="notice">{statusMessage}</div> : null}
 
         <section
           className={`section ${activeSection === 'overview' ? 'active' : ''}`}
           data-section="overview"
         >
+          <div className="section-header">
+            <h2 className="content-title">Team Lead Dashboard</h2>
+            <p className="helper">
+              Monitor your team, approve leaves, and assign tasks in one place.
+            </p>
+            <div className="pill">{profile?.department || 'Team'}</div>
+          </div>
+
           <div className="grid-3">
             <div className="content-card">
               <div className="insight-row">

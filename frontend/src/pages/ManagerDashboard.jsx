@@ -150,25 +150,22 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
       />
 
       <main className="main">
-        <header className="page-header">
-          <div>
-            <p className="kicker">Operations View</p>
-            <h1>{profile ? `Welcome, ${profile.name}` : 'Manager Dashboard'}</h1>
-            <p className="helper">
-              Track people health, unblock approvals, and align tasks.
-            </p>
-          </div>
-          <div className="pill">
-            {activeHeadcount} active / {team.length} total
-          </div>
-        </header>
-
         {statusMessage ? <div className="notice">{statusMessage}</div> : null}
 
         <section
           className={`section ${activeSection === 'overview' ? 'active' : ''}`}
           data-section="overview"
         >
+          <div className="section-header">
+            <h2 className="content-title">Manager Dashboard</h2>
+            <p className="helper">
+              Track people health, unblock approvals, and align tasks.
+            </p>
+            <div className="pill">
+              {activeHeadcount} active / {team.length} total
+            </div>
+          </div>
+
           <div className="grid-3">
             <div className="content-card">
               <div className="insight-row">
