@@ -1519,7 +1519,10 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           <div className="content-card">
             <div className="section-header">
               <h2 className="content-title">My Leave Requests</h2>
-              <p className="helper">Submit and track your own leave.</p>
+              <p className="helper">
+                Submit and track your own leave. Admin requests are routed to a manager for approval
+                (you cannot self-approve).
+              </p>
             </div>
             <form className="form-grid" onSubmit={handleMyLeaveSubmit}>
               <div>
@@ -1596,7 +1599,10 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                       <td data-label="Category">{leave.category}</td>
                       <td data-label="From">{formatDate(leave.fromDate)}</td>
                       <td data-label="To">{formatDate(leave.toDate)}</td>
-                      <td data-label="Status">{leave.status}</td>
+                      <td data-label="Status">
+                        {leave.status}{' '}
+                        <span className="pill pill-ghost">Manager approval path</span>
+                      </td>
                     </tr>
                   ))
                 )}
