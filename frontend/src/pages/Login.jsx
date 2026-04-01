@@ -33,8 +33,11 @@ export default function Login() { // Login page and auth redirect logic.
 
       if (data?.role === 'admin') {
         navigate('/admin');
+      } else if (data?.role === 'manager') {
+        navigate('/manager');
+      } else if (data?.role === 'teamlead') {
+        navigate('/teamlead');
       } else {
-        // Managers and team leads reuse the employee dashboard for now.
         navigate('/employee');
       }
     } catch (err) {

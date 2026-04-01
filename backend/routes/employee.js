@@ -11,7 +11,8 @@ const router = express.Router();
 
 const rootDir = path.join(__dirname, '..', '..');
 const frontendIndex = path.join(rootDir, 'frontend', 'dist', 'index.html');
-const selfServiceRoles = ['employee', 'teamlead', 'manager'];
+const profileRoles = ['employee', 'teamlead', 'manager'];
+const selfServiceRoles = ['employee', 'teamlead'];
 
 const toSafeEmployee = (user) => ({ // Sanitize employee data for API responses.
   id: user._id.toString(),
@@ -89,7 +90,7 @@ router.get('/employee', (req, res) => { // Serve the SPA for the employee route 
   return res.sendFile(frontendIndex);
 });
 
-router.get('/api/employee/me', requireAuth, requireRole(selfServiceRoles), async (req, res) => { // Fetch employee profile.
+router.get('/api/employee/me', requireAuth, requireRole(profileRoles), async (req, res) => { // Fetch employee profile.
   try {
     const user = await User.findById(req.userId);
     if (!user) {
@@ -101,7 +102,7 @@ router.get('/api/employee/me', requireAuth, requireRole(selfServiceRoles), async
   }
 });
 
-router.put('/api/employee/me', requireAuth, requireRole(selfServiceRoles), async (req, res) => { // Update employee profile.
+router.put('/api/employee/me', requireAuth, requireRole(profileRoles), async (req, res) => { // Update employee profile.
   try {
     const { phone, address } = req.body;
     const user = await User.findById(req.userId);

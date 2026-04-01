@@ -16,6 +16,7 @@ const adminRoles = ['admin', 'manager'];
 const leadRoles = ['admin', 'manager', 'teamlead'];
 const staffRoles = ['employee', 'teamlead', 'manager'];
 const managerScopedRoles = ['employee', 'teamlead'];
+const taskAssignRoles = ['admin', 'teamlead'];
 
 const toSafeEmployee = (user) => ({ // Sanitize employee data for API responses.
   id: user._id.toString(),
@@ -121,6 +122,22 @@ const toSafeEod = (report) => ({ // Sanitize end-of-day reports.
 router.get('/admin', (req, res) => { // Serve the SPA for the admin route with role checks.
   const adminSession = getRoleSession(req, 'admin');
   if (!adminSession?.userId) {
+    return res.redirect('/login');
+  }
+  return res.sendFile(frontendIndex);
+});
+
+router.get('/manager', (req, res) => { // Serve the SPA for the manager route with role checks.
+  const managerSession = getRoleSession(req, 'manager');
+  if (!managerSession?.userId) {
+    return res.redirect('/login');
+  }
+  return res.sendFile(frontendIndex);
+});
+
+router.get('/teamlead', (req, res) => { // Serve the SPA for the team lead route with role checks.
+  const leadSession = getRoleSession(req, 'teamlead');
+  if (!leadSession?.userId) {
     return res.redirect('/login');
   }
   return res.sendFile(frontendIndex);
@@ -440,7 +457,7 @@ router.get('/api/admin/tasks', requireAuth, requireRole(leadRoles), async (req, 
   }
 });
 
-router.post('/api/admin/tasks', requireAuth, requireRole(leadRoles), async (req, res) => { // Assign a task to an employee.
+router.post('/api/admin/tasks', requireAuth, requireRole(taskAssignRoles), async (req, res) => { // Assign a task to an employee.
   try {
     const { employeeId, details, dueAt } = req.body;
     if (!employeeId || !details || !String(details).trim()) {

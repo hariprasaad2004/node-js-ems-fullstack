@@ -1,0 +1,401 @@
+import { useEffect, useMemo, useState } from 'react';
+import Sidebar from '../components/Sidebar.jsx';
+import { apiRequest, readJson } from '../api/client.js';
+import { useBodyClass } from '../hooks/useBodyClass.js';
+import { formatDate, formatDateTime, formatEmployeeLabel, formatStatus } from '../utils/format.js';
+
+const navItems = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'people', label: 'People' },
+  { id: 'approvals', label: 'Approvals' },
+  { id: 'tasks', label: 'Task Board' }
+];
+
+export default function ManagerDashboard() { // Manager dashboard with broader org insights.
+  useBodyClass('page-dashboard');
+  useEffect(() => {
+    const { classList } = document.body;
+    classList.add('theme-dark');
+    return () => classList.remove('theme-dark');
+  }, []);
+
+  const [activeSection, setActiveSection] = useState('overview');
+  const [profile, setProfile] = useState(null);
+  const [team, setTeam] = useState([]);
+  const [attendance, setAttendance] = useState([]);
+  const [leaves, setLeaves] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [leaveStatus, setLeaveStatus] = useState('');
+
+  useEffect(() => {
+    loadProfile();
+    loadTeam();
+    loadAttendance();
+    loadLeaves();
+    loadTasks();
+  }, []);
+
+  const pendingLeaves = useMemo(
+    () => leaves.filter((leave) => leave.status === 'pending'),
+    [leaves]
+  );
+
+  const taskStats = useMemo(() => {
+    const total = tasks.length;
+    const completed = tasks.filter((task) => task.status === 'completed').length;
+    const processing = tasks.filter((task) => task.status === 'processing').length;
+    const planning = tasks.filter((task) => task.status === 'planning').length;
+    return { total, completed, processing, planning };
+  }, [tasks]);
+
+  const attendanceStats = useMemo(() => {
+    const present = attendance.filter((entry) =>
+      ['checked_in', 'checked_out'].includes(entry.status)
+    ).length;
+    const coverage = attendance.length ? Math.round((present / attendance.length) * 100) : 0;
+    return { present, coverage, total: attendance.length };
+  }, [attendance]);
+
+  const activeHeadcount = useMemo(
+    () => team.filter((member) => member.status === 'active').length,
+    [team]
+  );
+
+  async function loadProfile() { // Fetch the manager profile.
+    const res = await apiRequest('/api/employee/me');
+    const data = await readJson(res);
+    if (res.ok) {
+      setProfile(data);
+    } else {
+      setStatusMessage(data?.message || 'Unable to load profile.');
+    }
+  }
+
+  async function loadTeam() { // Fetch employees across the org.
+    const res = await apiRequest('/api/admin/employees');
+    const data = await readJson(res);
+    if (res.ok) {
+      setTeam(Array.isArray(data) ? data : []);
+    } else {
+      setStatusMessage(data?.message || 'Failed to load people.');
+    }
+  }
+
+  async function loadAttendance() { // Pull today coverage.
+    const res = await apiRequest('/api/admin/attendance/summary');
+    const data = await readJson(res);
+    if (res.ok) {
+      setAttendance(Array.isArray(data) ? data : []);
+    } else {
+      setStatusMessage(data?.message || 'Failed to load attendance.');
+    }
+  }
+
+  async function loadLeaves() { // Pending approvals.
+    const res = await apiRequest('/api/admin/leave');
+    const data = await readJson(res);
+    if (res.ok) {
+      setLeaves(Array.isArray(data) ? data : []);
+    } else {
+      setLeaveStatus(data?.message || 'Failed to load leave requests.');
+    }
+  }
+
+  async function loadTasks() { // Org-wide tasks.
+    const res = await apiRequest('/api/admin/tasks');
+    const data = await readJson(res);
+    if (res.ok) {
+      setTasks(Array.isArray(data) ? data : []);
+    } else {
+      setTaskStatus(data?.message || 'Failed to load tasks.');
+    }
+  }
+
+  async function handleLeaveDecision(id, status) { // Approve or reject leave.
+    setLeaveStatus('Updating...');
+    const res = await apiRequest(`/api/admin/leave/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    });
+    const data = await readJson(res);
+    if (!res.ok) {
+      setLeaveStatus(data?.message || 'Unable to update leave.');
+      return;
+    }
+    setLeaveStatus('Leave updated.');
+    await loadLeaves();
+  }
+
+  const handleLogout = async () => { // Logout and redirect.
+    await apiRequest('/logout', {
+      method: 'POST',
+      body: JSON.stringify({ role: 'manager' })
+    });
+    window.location.assign('/login');
+  };
+
+  const topPendingLeaves = pendingLeaves.slice(0, 5);
+  const topTasks = tasks.slice(0, 6);
+
+  return (
+    <div className="dashboard">
+      <Sidebar
+        title="Manager Console"
+        items={navItems}
+        activeSection={activeSection}
+        onSelect={setActiveSection}
+        onLogout={handleLogout}
+        logoutLabel="Logout"
+      />
+
+      <main className="main">
+        <header className="page-header">
+          <div>
+            <p className="kicker">Operations View</p>
+            <h1>{profile ? `Welcome, ${profile.name}` : 'Manager Dashboard'}</h1>
+            <p className="helper">
+              Track people health, unblock approvals, and align tasks.
+            </p>
+          </div>
+          <div className="pill">
+            {activeHeadcount} active / {team.length} total
+          </div>
+        </header>
+
+        {statusMessage ? <div className="notice">{statusMessage}</div> : null}
+
+        <section
+          className={`section ${activeSection === 'overview' ? 'active' : ''}`}
+          data-section="overview"
+        >
+          <div className="grid-3">
+            <div className="content-card">
+              <div className="insight-row">
+                <div className="insight-card">
+                  <span className="metric-label">Headcount</span>
+                  <strong className="metric-value">{team.length}</strong>
+                  <p className="helper">{activeHeadcount} active</p>
+                </div>
+                <div className="insight-card">
+                  <span className="metric-label">Attendance</span>
+                  <strong className="metric-value">{attendanceStats.coverage}%</strong>
+                  <p className="helper">
+                    {attendanceStats.present}/{attendanceStats.total} checked in
+                  </p>
+                </div>
+                <div className="insight-card">
+                  <span className="metric-label">Pending Leaves</span>
+                  <strong className="metric-value">{pendingLeaves.length}</strong>
+                  <p className="helper">Awaiting decision</p>
+                </div>
+                <div className="insight-card">
+                  <span className="metric-label">Open Tasks</span>
+                  <strong className="metric-value">
+                    {taskStats.processing + taskStats.planning}
+                  </strong>
+                  <p className="helper">{taskStats.total} total</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="content-card">
+              <div className="section-header">
+                <h2 className="content-title">Approvals at a Glance</h2>
+                <p className="helper">Recent pending leave requests</p>
+              </div>
+              {topPendingLeaves.length === 0 ? (
+                <div className="notice">No pending leaves.</div>
+              ) : (
+                <ul className="list">
+                  {topPendingLeaves.map((leave) => (
+                    <li key={leave.id} className="list-item">
+                      <div>
+                        <div className="list-title">{formatEmployeeLabel(leave.employee)}</div>
+                        <div className="list-meta">
+                          {formatDate(leave.fromDate)} - {formatDate(leave.toDate)} ·{' '}
+                          {formatStatus(leave.category)}
+                        </div>
+                      </div>
+                      <div className="action-row">
+                        <button
+                          className="btn-ghost"
+                          type="button"
+                          onClick={() => handleLeaveDecision(leave.id, 'rejected')}
+                        >
+                          Reject
+                        </button>
+                        <button
+                          className="btn-primary"
+                          type="button"
+                          onClick={() => handleLeaveDecision(leave.id, 'approved')}
+                        >
+                          Approve
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {leaveStatus ? <p className="helper">{leaveStatus}</p> : null}
+            </div>
+          </div>
+        </section>
+
+        <section
+          className={`section ${activeSection === 'people' ? 'active' : ''}`}
+          data-section="people"
+        >
+          <div className="content-card">
+            <div className="section-header">
+              <h2 className="content-title">People & Coverage</h2>
+              <p className="helper">Combine roster with today&apos;s attendance.</p>
+            </div>
+            <div className="table-scroll">
+              <table className="table table-responsive">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Department</th>
+                    <th>Attendance</th>
+                    <th>Check In</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {team.length === 0 ? (
+                    <tr>
+                      <td colSpan="5">No employees.</td>
+                    </tr>
+                  ) : (
+                    team.map((member) => {
+                      const today = attendance.find((row) => row.employee.id === member.id);
+                      return (
+                        <tr key={member.id}>
+                          <td data-label="Name">{member.name}</td>
+                          <td data-label="Email">{member.email}</td>
+                          <td data-label="Department">{member.department || '-'}</td>
+                          <td data-label="Attendance">
+                            {today ? formatStatus(today.status) : 'Not checked in'}
+                          </td>
+                          <td data-label="Check In">
+                            {today ? formatDateTime(today.checkInAt) : '-'}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section
+          className={`section ${activeSection === 'approvals' ? 'active' : ''}`}
+          data-section="approvals"
+        >
+          <div className="content-card">
+            <div className="section-header">
+              <h2 className="content-title">All Leave Requests</h2>
+              <p className="helper">Approve quickly, keep folks informed.</p>
+            </div>
+            {leaveStatus ? <p className="helper">{leaveStatus}</p> : null}
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Dates</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Requested</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaves.length === 0 ? (
+                    <tr>
+                      <td colSpan="6">No leave requests.</td>
+                    </tr>
+                  ) : (
+                    leaves.map((leave) => (
+                      <tr key={leave.id}>
+                        <td data-label="Employee">{formatEmployeeLabel(leave.employee)}</td>
+                        <td data-label="Dates">
+                          {formatDate(leave.fromDate)} - {formatDate(leave.toDate)}
+                        </td>
+                        <td data-label="Category">{formatStatus(leave.category)}</td>
+                        <td data-label="Status">{formatStatus(leave.status)}</td>
+                        <td data-label="Requested">{formatDateTime(leave.createdAt)}</td>
+                        <td>
+                          {leave.status === 'pending' ? (
+                            <div className="action-row">
+                              <button
+                                className="btn-ghost"
+                                type="button"
+                                onClick={() => handleLeaveDecision(leave.id, 'rejected')}
+                              >
+                                Reject
+                              </button>
+                              <button
+                                className="btn-primary"
+                                type="button"
+                                onClick={() => handleLeaveDecision(leave.id, 'approved')}
+                              >
+                                Approve
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="pill">{formatStatus(leave.status)}</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section
+          className={`section ${activeSection === 'tasks' ? 'active' : ''}`}
+          data-section="tasks"
+        >
+          <div className="content-card">
+            <div className="section-header">
+              <h2 className="content-title">Task Distribution</h2>
+              <p className="helper">
+                View tasks to monitor progress; task assignment is handled by Team Leads.
+              </p>
+            </div>
+            {topTasks.length === 0 ? (
+              <div className="notice">No tasks assigned yet.</div>
+            ) : (
+              <div className="task-card-grid">
+                {topTasks.map((task) => (
+                  <div className="task-card" key={task.id}>
+                    <div className="task-card-header">
+                      <span className="pill">{formatStatus(task.status)}</span>
+                      <span className="task-meta">{formatDateTime(task.dueAt)}</span>
+                    </div>
+                    <div className="task-title">{task.details}</div>
+                    <div className="task-card-row">
+                      <span>Assignee</span>
+                      <strong>{task.employee?.name || 'Unknown'}</strong>
+                    </div>
+                    <div className="task-card-row">
+                      <span>Assigned</span>
+                      <strong>{formatDateTime(task.createdAt)}</strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
