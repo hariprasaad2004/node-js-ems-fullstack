@@ -51,6 +51,7 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
   const [myLeaves, setMyLeaves] = useState([]);
   const [myLeaveForm, setMyLeaveForm] = useState(initialMyLeaveForm);
   const [myLeaveStatus, setMyLeaveStatus] = useState({ message: '', isError: false });
+  const [leaveEmployeeFilter, setLeaveEmployeeFilter] = useState('all');
 
   useEffect(() => {
     loadProfile();
@@ -66,6 +67,11 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
     () => leaves.filter((leave) => leave.status === 'pending'),
     [leaves]
   );
+
+  const filteredLeaves = useMemo(() => {
+    if (leaveEmployeeFilter === 'all') return leaves;
+    return leaves.filter((leave) => leave.employee?.id === leaveEmployeeFilter);
+  }, [leaves, leaveEmployeeFilter]);
 
   const myAttendanceMap = useMemo(() => {
     const map = new Map();
@@ -92,6 +98,7 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
       const date = new Date(today.getFullYear(), today.getMonth(), day);
       const key = formatDateKey(date);
       const record = myAttendanceMap.get(key);
+      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
       let status = 'pending';
       let mark = '';
       let tooltip = '';
@@ -112,6 +119,10 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
           checkOutLabel: record.checkOutAt ? formatDateTime(record.checkOutAt) : 'In progress',
           workedLabel
         };
+      } else if (isWeekend) {
+        status = 'leave';
+        mark = '✕';
+        tooltip = 'Weekend';
       } else if (date < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
         status = 'absent';
         mark = '✕';
@@ -127,6 +138,7 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
         tooltip,
         details,
         isToday: key === formatDateKey(today),
+        isWeekend,
         empty: false
       });
     }

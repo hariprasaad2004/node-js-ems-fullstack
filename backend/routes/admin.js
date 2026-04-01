@@ -16,6 +16,7 @@ const adminRoles = ['admin', 'manager'];
 const leadRoles = ['admin', 'manager', 'teamlead'];
 const staffRoles = ['employee', 'teamlead', 'manager'];
 const managerScopedRoles = ['employee', 'teamlead'];
+const creatableRoles = ['employee', 'teamlead']; // admins cannot create managers
 const taskAssignRoles = ['admin', 'teamlead'];
 
 const toSafeEmployee = (user) => ({ // Sanitize employee data for API responses.
@@ -178,7 +179,7 @@ router.post('/api/admin/employees', requireAuth, requireRole(adminRoles), async 
       return res.status(409).json({ message: 'Email already exists.' });
     }
 
-    const allowedRoles = req.userRole === 'admin' ? staffRoles : managerScopedRoles;
+    const allowedRoles = req.userRole === 'admin' ? creatableRoles : managerScopedRoles;
     const cleanRole = allowedRoles.includes(role) ? role : 'employee';
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -225,6 +226,10 @@ router.put('/api/admin/employees/:id', requireAuth, requireRole(adminRoles), asy
       return res.status(404).json({ message: 'Employee not found.' });
     }
 
+    if (employee.role === 'manager') {
+      return res.status(403).json({ message: 'Managers cannot be edited by admin.' });
+    }
+
     if (email && email.toLowerCase() !== employee.email) {
       const existing = await User.findOne({ email: email.toLowerCase() });
       if (existing && existing._id.toString() !== employee._id.toString()) {
@@ -241,7 +246,7 @@ router.put('/api/admin/employees/:id', requireAuth, requireRole(adminRoles), asy
     if (salary !== undefined) employee.salary = Number.isFinite(Number(salary)) ? Number(salary) : employee.salary;
     if (status) employee.status = status;
     if (role) {
-      if (!allowedRoles.includes(role)) {
+      if (!allowedRoles.includes(role) || role === 'manager') {
         return res.status(403).json({ message: 'Role change not permitted.' });
       }
       employee.role = role;
@@ -263,6 +268,9 @@ router.delete('/api/admin/employees/:id', requireAuth, requireRole(adminRoles), 
     const employee = await User.findOne({ _id: id, role: { $in: allowedRoles } });
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found.' });
+    }
+    if (employee.role === 'manager') {
+      return res.status(403).json({ message: 'Managers cannot be deleted by admin.' });
     }
 
     await employee.deleteOne();

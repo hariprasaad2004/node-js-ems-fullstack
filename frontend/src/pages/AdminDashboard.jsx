@@ -153,6 +153,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       const date = new Date(today.getFullYear(), today.getMonth(), day);
       const key = formatDateKey(date);
       const record = myAttendanceMap.get(key);
+      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
       let status = 'pending';
       let mark = '';
       let tooltip = '';
@@ -173,6 +174,10 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           checkOutLabel: record.checkOutAt ? formatDateTime(record.checkOutAt) : 'In progress',
           workedLabel
         };
+      } else if (isWeekend) {
+        status = 'leave';
+        mark = '✕';
+        tooltip = 'Weekend';
       } else if (date < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
         status = 'absent';
         mark = '✕';
@@ -188,6 +193,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
         tooltip,
         details,
         isToday: key === formatDateKey(today),
+        isWeekend,
         empty: false
       });
     }
@@ -197,6 +203,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [statNow, setStatNow] = useState(() => new Date());
   const [selectedPerfId, setSelectedPerfId] = useState(null);
   const [activePerf, setActivePerf] = useState(null);
+  const [leaveEmployeeFilter, setLeaveEmployeeFilter] = useState('all');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -327,6 +334,11 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       );
     });
   }, [employees, searchTerm, statusFilter, departmentFilter]);
+
+  const filteredLeaves = useMemo(() => {
+    if (leaveEmployeeFilter === 'all') return leaves;
+    return leaves.filter((leave) => leave.employee?.id === leaveEmployeeFilter);
+  }, [leaves, leaveEmployeeFilter]);
 
   useEffect(() => {
     const now = new Date();
@@ -2066,7 +2078,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                   <select id="role" value={formData.role} onChange={handleFormChange}>
                     <option value="employee">Employee</option>
                     <option value="teamlead">Team Lead</option>
-                    <option value="manager">Manager</option>
                   </select>
                 </div>
                 <div>
@@ -2295,6 +2306,23 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
             >
               {leaveStatus.message}
             </p>
+            <div className="action-row" style={{ marginBottom: '12px' }}>
+              <label htmlFor="leave-filter">
+                <span className="helper">Filter by employee</span>
+                <select
+                  id="leave-filter"
+                  value={leaveEmployeeFilter}
+                  onChange={(e) => setLeaveEmployeeFilter(e.target.value)}
+                >
+                  <option value="all">All employees</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.email})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
             <div className="insight-row compact">
               <div className="insight-chip">
                 <span>Approval rate</span>
@@ -2330,12 +2358,12 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                   <tr>
                     <td colSpan="7">{leaveError}</td>
                   </tr>
-                ) : leaves.length === 0 ? (
+                ) : filteredLeaves.length === 0 ? (
                   <tr>
                     <td colSpan="7">No leave requests yet.</td>
                   </tr>
                 ) : (
-                  leaves.map((leave) => (
+                  filteredLeaves.map((leave) => (
                     <tr key={leave.id}>
                       <td data-label="Employee">
                         {leave.employee
