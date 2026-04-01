@@ -14,7 +14,9 @@ const navItems = [
   { id: 'overview', label: 'Overview' },
   { id: 'team', label: 'Team' },
   { id: 'leaves', label: 'Leave Approvals' },
-  { id: 'tasks', label: 'Task Board' }
+  { id: 'tasks', label: 'Task Board' },
+  { id: 'my-attendance', label: 'My Attendance' },
+  { id: 'my-leave', label: 'My Leave' }
 ];
 
 const initialTaskForm = { employeeId: '', details: '', dueAt: '' };
@@ -378,162 +380,6 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
           className={`section ${activeSection === 'overview' ? 'active' : ''}`}
           data-section="overview"
         >
-          <div className="grid-2">
-            <div className="content-card">
-              <div className="section-header">
-                <h2 className="content-title">My Attendance</h2>
-                <p className="helper">Present (9am - 7pm) - Absent/Leave</p>
-              </div>
-              <div className="action-row">
-                <button className="btn-primary" type="button" onClick={handleMyCheckIn}>
-                  Check In
-                </button>
-                <button className="btn-ghost" type="button" onClick={handleMyCheckOut}>
-                  Check Out
-                </button>
-              </div>
-              <p className="helper" style={{ color: '#9fb3c8' }}>{myAttendanceMsg}</p>
-              <div className="attendance-calendar">
-                <div className="calendar-header">
-                  <div>
-                    <h3>{myCalendar.monthLabel}</h3>
-                    <p className="helper">Present (9am - 7pm) - Absent/Leave</p>
-                  </div>
-                </div>
-                <div className="calendar-weekdays">
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                    <span key={day}>{day}</span>
-                  ))}
-                </div>
-                <div className="calendar-grid">
-                  {myCalendar.cells.map((cell) => (
-                    <div
-                      key={cell.key}
-                      className={`calendar-cell ${cell.empty ? 'is-empty' : ''} ${
-                        cell.status ? `is-${cell.status}` : ''
-                      } ${cell.isToday ? 'is-today' : ''}`}
-                      title={cell.details ? '' : cell.tooltip || ''}
-                    >
-                      {cell.empty ? null : (
-                        <>
-                          <span className="calendar-date">{cell.day}</span>
-                          <span className="calendar-mark">{cell.mark}</span>
-                          {cell.details ? (
-                            <div className="calendar-tooltip" role="tooltip">
-                              <div className="tooltip-title">
-                                {formatDate(cell.date)}
-                              </div>
-                              <div className="tooltip-row">
-                                <span>Check in</span>
-                                <strong>{cell.details.checkInLabel}</strong>
-                              </div>
-                              <div className="tooltip-row">
-                                <span>Check out</span>
-                                <strong>{cell.details.checkOutLabel}</strong>
-                              </div>
-                              <div className="tooltip-row">
-                                <span>Working hours</span>
-                                <strong>{cell.details.workedLabel}</strong>
-                              </div>
-                            </div>
-                          ) : null}
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="content-card">
-              <div className="section-header">
-                <h2 className="content-title">My Leave Requests</h2>
-                <p className="helper">Submit your own leave.</p>
-              </div>
-              <form className="form-grid" onSubmit={handleMyLeaveSubmit}>
-                <div>
-                  <label htmlFor="tl-leave-category">Category</label>
-                  <select
-                    id="tl-leave-category"
-                    name="category"
-                    value={myLeaveForm.category}
-                    onChange={handleMyLeaveChange}
-                  >
-                    <option value="sick">Sick</option>
-                    <option value="casual">Casual</option>
-                    <option value="emergency">Emergency</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="tl-leave-from">From</label>
-                  <input
-                    id="tl-leave-from"
-                    name="fromDate"
-                    type="date"
-                    value={myLeaveForm.fromDate}
-                    onChange={handleMyLeaveChange}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="tl-leave-to">To</label>
-                  <input
-                    id="tl-leave-to"
-                    name="toDate"
-                    type="date"
-                    value={myLeaveForm.toDate}
-                    onChange={handleMyLeaveChange}
-                  />
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label htmlFor="tl-leave-reason">Reason</label>
-                  <textarea
-                    id="tl-leave-reason"
-                    name="reason"
-                    rows="2"
-                    value={myLeaveForm.reason}
-                    onChange={handleMyLeaveChange}
-                    placeholder="Optional"
-                  />
-                </div>
-                <button className="btn-primary" type="submit">
-                  Submit Leave
-                </button>
-                <p
-                  className="helper"
-                  style={{ color: myLeaveStatus.isError ? '#c13e2d' : '#9fb3c8' }}
-                >
-                  {myLeaveStatus.message}
-                </p>
-              </form>
-              <table className="table table-responsive">
-                <thead>
-                  <tr>
-                    <th>Category</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {myLeaves.length === 0 ? (
-                    <tr>
-                      <td colSpan="4">No leave requests.</td>
-                    </tr>
-                  ) : (
-                    myLeaves.map((leave) => (
-                      <tr key={leave.id}>
-                        <td data-label="Category">{leave.category}</td>
-                        <td data-label="From">{formatDate(leave.fromDate)}</td>
-                        <td data-label="To">{formatDate(leave.toDate)}</td>
-                        <td data-label="Status">{leave.status}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
           <div className="grid-3">
             <div className="content-card">
               <div className="insight-row">
@@ -798,6 +644,170 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
                 </div>
               )}
             </div>
+          </div>
+        </section>
+
+        <section
+          className={`section ${activeSection === 'my-attendance' ? 'active' : ''}`}
+          data-section="my-attendance"
+        >
+          <div className="content-card">
+            <div className="section-header">
+              <h2 className="content-title">My Attendance</h2>
+              <p className="helper">Present (9am - 7pm) - Absent/Leave</p>
+            </div>
+            <div className="action-row">
+              <button className="btn-primary" type="button" onClick={handleMyCheckIn}>
+                Check In
+              </button>
+              <button className="btn-ghost" type="button" onClick={handleMyCheckOut}>
+                Check Out
+              </button>
+            </div>
+            <p className="helper" style={{ color: '#9fb3c8' }}>{myAttendanceMsg}</p>
+            <div className="attendance-calendar">
+              <div className="calendar-header">
+                <div>
+                  <h3>{myCalendar.monthLabel}</h3>
+                  <p className="helper">Present (9am - 7pm) - Absent/Leave</p>
+                </div>
+              </div>
+              <div className="calendar-weekdays">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                  <span key={day}>{day}</span>
+                ))}
+              </div>
+              <div className="calendar-grid">
+                {myCalendar.cells.map((cell) => (
+                  <div
+                    key={cell.key}
+                    className={`calendar-cell ${cell.empty ? 'is-empty' : ''} ${
+                      cell.status ? `is-${cell.status}` : ''
+                    } ${cell.isToday ? 'is-today' : ''}`}
+                    title={cell.details ? '' : cell.tooltip || ''}
+                  >
+                    {cell.empty ? null : (
+                      <>
+                        <span className="calendar-date">{cell.day}</span>
+                        <span className="calendar-mark">{cell.mark}</span>
+                        {cell.details ? (
+                          <div className="calendar-tooltip" role="tooltip">
+                            <div className="tooltip-title">
+                              {formatDate(cell.date)}
+                            </div>
+                            <div className="tooltip-row">
+                              <span>Check in</span>
+                              <strong>{cell.details.checkInLabel}</strong>
+                            </div>
+                            <div className="tooltip-row">
+                              <span>Check out</span>
+                              <strong>{cell.details.checkOutLabel}</strong>
+                            </div>
+                            <div className="tooltip-row">
+                              <span>Working hours</span>
+                              <strong>{cell.details.workedLabel}</strong>
+                            </div>
+                          </div>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section
+          className={`section ${activeSection === 'my-leave' ? 'active' : ''}`}
+          data-section="my-leave"
+        >
+          <div className="content-card">
+            <div className="section-header">
+              <h2 className="content-title">My Leave Requests</h2>
+              <p className="helper">Submit your own leave.</p>
+            </div>
+            <form className="form-grid" onSubmit={handleMyLeaveSubmit}>
+              <div>
+                <label htmlFor="tl-leave-category">Category</label>
+                <select
+                  id="tl-leave-category"
+                  name="category"
+                  value={myLeaveForm.category}
+                  onChange={handleMyLeaveChange}
+                >
+                  <option value="sick">Sick</option>
+                  <option value="casual">Casual</option>
+                  <option value="emergency">Emergency</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="tl-leave-from">From</label>
+                <input
+                  id="tl-leave-from"
+                  name="fromDate"
+                  type="date"
+                  value={myLeaveForm.fromDate}
+                  onChange={handleMyLeaveChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="tl-leave-to">To</label>
+                <input
+                  id="tl-leave-to"
+                  name="toDate"
+                  type="date"
+                  value={myLeaveForm.toDate}
+                  onChange={handleMyLeaveChange}
+                />
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label htmlFor="tl-leave-reason">Reason</label>
+                <textarea
+                  id="tl-leave-reason"
+                  name="reason"
+                  rows="2"
+                  value={myLeaveForm.reason}
+                  onChange={handleMyLeaveChange}
+                  placeholder="Optional"
+                />
+              </div>
+              <button className="btn-primary" type="submit">
+                Submit Leave
+              </button>
+              <p
+                className="helper"
+                style={{ color: myLeaveStatus.isError ? '#c13e2d' : '#9fb3c8' }}
+              >
+                {myLeaveStatus.message}
+              </p>
+            </form>
+            <table className="table table-responsive">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myLeaves.length === 0 ? (
+                  <tr>
+                    <td colSpan="4">No leave requests.</td>
+                  </tr>
+                ) : (
+                  myLeaves.map((leave) => (
+                    <tr key={leave.id}>
+                      <td data-label="Category">{leave.category}</td>
+                      <td data-label="From">{formatDate(leave.fromDate)}</td>
+                      <td data-label="To">{formatDate(leave.toDate)}</td>
+                      <td data-label="Status">{leave.status}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </section>
       </main>

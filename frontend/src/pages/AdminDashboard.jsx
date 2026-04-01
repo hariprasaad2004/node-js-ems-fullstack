@@ -12,6 +12,8 @@ const navItems = [
   { id: 'eods', label: 'EOD Reports' },
   { id: 'leave', label: 'Leave' },
   { id: 'attendance', label: 'Attendance' },
+  { id: 'my-attendance', label: 'My Attendance' },
+  { id: 'my-leave', label: 'My Leave' },
   { id: 'employees', label: 'Employees' },
   { id: 'policies', label: 'Policies' }
 ];
@@ -1316,135 +1318,141 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           </div>
         </div>
 
-        <section className="section">
-          <div className="grid-2">
-            <div className="content-card">
-              <div className="section-header">
-                <h2 className="content-title">My Attendance</h2>
-                <p className="helper">Quick check-in/out for yourself.</p>
-              </div>
-              <div className="action-row">
-                <button className="btn-primary" type="button" onClick={handleMyCheckIn}>
-                  Check In
-                </button>
-                <button className="btn-ghost" type="button" onClick={handleMyCheckOut}>
-                  Check Out
-                </button>
-              </div>
-              <p className="helper" style={{ color: '#9fb3c8' }}>{myAttendanceMsg}</p>
-              <table className="table table-responsive">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Check In</th>
-                    <th>Check Out</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {myAttendance.length === 0 ? (
-                    <tr>
-                      <td colSpan="3">No records yet.</td>
-                    </tr>
-                  ) : (
-                    myAttendance.map((row) => (
-                      <tr key={row.id}>
-                        <td data-label="Date">{row.date}</td>
-                        <td data-label="Check In">{formatDateTime(row.checkInAt)}</td>
-                        <td data-label="Check Out">{formatDateTime(row.checkOutAt)}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+        <section
+          className={`section ${activeSection === 'my-attendance' ? 'active' : ''}`}
+          data-section="my-attendance"
+        >
+          <div className="content-card">
+            <div className="section-header">
+              <h2 className="content-title">My Attendance</h2>
+              <p className="helper">Quick check-in/out for yourself.</p>
             </div>
+            <div className="action-row">
+              <button className="btn-primary" type="button" onClick={handleMyCheckIn}>
+                Check In
+              </button>
+              <button className="btn-ghost" type="button" onClick={handleMyCheckOut}>
+                Check Out
+              </button>
+            </div>
+            <p className="helper" style={{ color: '#9fb3c8' }}>{myAttendanceMsg}</p>
+            <table className="table table-responsive">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Check In</th>
+                  <th>Check Out</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myAttendance.length === 0 ? (
+                  <tr>
+                    <td colSpan="3">No records yet.</td>
+                  </tr>
+                ) : (
+                  myAttendance.map((row) => (
+                    <tr key={row.id}>
+                      <td data-label="Date">{row.date}</td>
+                      <td data-label="Check In">{formatDateTime(row.checkInAt)}</td>
+                      <td data-label="Check Out">{formatDateTime(row.checkOutAt)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-            <div className="content-card">
-              <div className="section-header">
-                <h2 className="content-title">My Leave Requests</h2>
-                <p className="helper">Submit and track your own leave.</p>
-              </div>
-              <form className="form-grid" onSubmit={handleMyLeaveSubmit}>
-                <div>
-                  <label htmlFor="my-leave-category">Category</label>
-                  <select
-                    id="my-leave-category"
-                    name="category"
-                    value={myLeaveForm.category}
-                    onChange={handleMyLeaveChange}
-                  >
-                    <option value="sick">Sick</option>
-                    <option value="casual">Casual</option>
-                    <option value="emergency">Emergency</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="my-leave-from">From</label>
-                  <input
-                    id="my-leave-from"
-                    name="fromDate"
-                    type="date"
-                    value={myLeaveForm.fromDate}
-                    onChange={handleMyLeaveChange}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="my-leave-to">To</label>
-                  <input
-                    id="my-leave-to"
-                    name="toDate"
-                    type="date"
-                    value={myLeaveForm.toDate}
-                    onChange={handleMyLeaveChange}
-                  />
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label htmlFor="my-leave-reason">Reason</label>
-                  <textarea
-                    id="my-leave-reason"
-                    name="reason"
-                    rows="2"
-                    value={myLeaveForm.reason}
-                    onChange={handleMyLeaveChange}
-                    placeholder="Optional"
-                  />
-                </div>
-                <button className="btn-primary" type="submit">
-                  Submit Leave
-                </button>
-                <p
-                  className="helper"
-                  style={{ color: myLeaveStatus.isError ? '#c13e2d' : '#9fb3c8' }}
-                >
-                  {myLeaveStatus.message}
-                </p>
-              </form>
-              <table className="table table-responsive">
-                <thead>
-                  <tr>
-                    <th>Category</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {myLeaves.length === 0 ? (
-                    <tr>
-                      <td colSpan="4">No leave requests.</td>
-                    </tr>
-                  ) : (
-                    myLeaves.map((leave) => (
-                      <tr key={leave.id}>
-                        <td data-label="Category">{leave.category}</td>
-                        <td data-label="From">{formatDate(leave.fromDate)}</td>
-                        <td data-label="To">{formatDate(leave.toDate)}</td>
-                        <td data-label="Status">{leave.status}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+        <section
+          className={`section ${activeSection === 'my-leave' ? 'active' : ''}`}
+          data-section="my-leave"
+        >
+          <div className="content-card">
+            <div className="section-header">
+              <h2 className="content-title">My Leave Requests</h2>
+              <p className="helper">Submit and track your own leave.</p>
             </div>
+            <form className="form-grid" onSubmit={handleMyLeaveSubmit}>
+              <div>
+                <label htmlFor="my-leave-category">Category</label>
+                <select
+                  id="my-leave-category"
+                  name="category"
+                  value={myLeaveForm.category}
+                  onChange={handleMyLeaveChange}
+                >
+                  <option value="sick">Sick</option>
+                  <option value="casual">Casual</option>
+                  <option value="emergency">Emergency</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="my-leave-from">From</label>
+                <input
+                  id="my-leave-from"
+                  name="fromDate"
+                  type="date"
+                  value={myLeaveForm.fromDate}
+                  onChange={handleMyLeaveChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="my-leave-to">To</label>
+                <input
+                  id="my-leave-to"
+                  name="toDate"
+                  type="date"
+                  value={myLeaveForm.toDate}
+                  onChange={handleMyLeaveChange}
+                />
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label htmlFor="my-leave-reason">Reason</label>
+                <textarea
+                  id="my-leave-reason"
+                  name="reason"
+                  rows="2"
+                  value={myLeaveForm.reason}
+                  onChange={handleMyLeaveChange}
+                  placeholder="Optional"
+                />
+              </div>
+              <button className="btn-primary" type="submit">
+                Submit Leave
+              </button>
+              <p
+                className="helper"
+                style={{ color: myLeaveStatus.isError ? '#c13e2d' : '#9fb3c8' }}
+              >
+                {myLeaveStatus.message}
+              </p>
+            </form>
+            <table className="table table-responsive">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myLeaves.length === 0 ? (
+                  <tr>
+                    <td colSpan="4">No leave requests.</td>
+                  </tr>
+                ) : (
+                  myLeaves.map((leave) => (
+                    <tr key={leave.id}>
+                      <td data-label="Category">{leave.category}</td>
+                      <td data-label="From">{formatDate(leave.fromDate)}</td>
+                      <td data-label="To">{formatDate(leave.toDate)}</td>
+                      <td data-label="Status">{leave.status}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </section>
 
