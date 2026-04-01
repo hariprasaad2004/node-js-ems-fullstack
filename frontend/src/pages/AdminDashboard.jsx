@@ -2269,7 +2269,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           data-section="attendance"
         >
           <div className="content-card">
-            <h2 className="content-title">Attendance Snapshot</h2>
+            <h2 className="content-title">Attendance Overview</h2>
             <p className="helper">Monitor daily check-ins and hours.</p>
             <div className="attendance-visuals">
               <div className="mini-chart">

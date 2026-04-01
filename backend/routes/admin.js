@@ -287,7 +287,7 @@ router.get('/api/admin/attendance', requireAuth, requireRole(leadRoles), async (
 router.get('/api/admin/attendance/summary', requireAuth, requireRole(leadRoles), async (req, res) => { // Summarize today's attendance across employees.
   try {
     const dateKey = typeof req.query.date === 'string' && req.query.date ? req.query.date : formatDateKey();
-    const attendanceScope = req.userRole === 'admin' ? staffRoles : managerScopedRoles;
+    const attendanceScope = ['employee', 'teamlead']; // exclude managers from attendance summary
     const [employees, records] = await Promise.all([
       User.find({ role: { $in: attendanceScope } }).sort({ createdAt: -1 }),
       Attendance.find({ dateKey })

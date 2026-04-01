@@ -2,7 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
 import { apiRequest, readJson } from '../api/client.js';
 import { useBodyClass } from '../hooks/useBodyClass.js';
-import { formatDate, formatDateTime, formatEmployeeLabel, formatStatus } from '../utils/format.js';
+import {
+  formatDate,
+  formatDateTime,
+  formatEmployeeLabel,
+  formatStatus,
+  formatDuration
+} from '../utils/format.js';
 
 const navItems = [
   { id: 'overview', label: 'Overview' },
@@ -13,6 +19,12 @@ const navItems = [
 
 const initialTaskForm = { employeeId: '', details: '', dueAt: '' };
 const initialMyLeaveForm = { category: 'casual', fromDate: '', toDate: '', reason: '' };
+const formatDateKey = (date = new Date()) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
 
 export default function TeamLeadDashboard() { // Team lead dashboard with light-weight leadership tools.
   useBodyClass('page-dashboard');
@@ -52,6 +64,73 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
     () => leaves.filter((leave) => leave.status === 'pending'),
     [leaves]
   );
+
+  const myAttendanceMap = useMemo(() => {
+    const map = new Map();
+    myAttendance.forEach((row) => {
+      if (row.date) map.set(row.date, row);
+    });
+    return map;
+  }, [myAttendance]);
+
+  const myCalendar = useMemo(() => {
+    const today = new Date();
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const startWeekday = monthStart.getDay();
+    const daysInMonth = monthEnd.getDate();
+    const monthLabel = today.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+    const cells = [];
+
+    for (let i = 0; i < startWeekday; i += 1) {
+      cells.push({ key: `empty-${i}`, empty: true });
+    }
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      const date = new Date(today.getFullYear(), today.getMonth(), day);
+      const key = formatDateKey(date);
+      const record = myAttendanceMap.get(key);
+      let status = 'pending';
+      let mark = '';
+      let tooltip = '';
+      let details = null;
+
+      if (record?.checkInAt) {
+        const checkInDate = new Date(record.checkInAt);
+        const hour = checkInDate.getHours() + checkInDate.getMinutes() / 60;
+        const within = hour >= 9 && hour <= 19;
+        status = within ? 'present' : 'absent';
+        mark = within ? '✓' : '✕';
+        tooltip = within ? 'Present' : 'Absent';
+        const workedLabel = record.checkOutAt
+          ? formatDuration(record.checkInAt, record.checkOutAt)
+          : 'In progress';
+        details = {
+          checkInLabel: formatDateTime(record.checkInAt),
+          checkOutLabel: record.checkOutAt ? formatDateTime(record.checkOutAt) : 'In progress',
+          workedLabel
+        };
+      } else if (date < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
+        status = 'absent';
+        mark = '✕';
+        tooltip = 'Absent';
+      }
+
+      cells.push({
+        key,
+        date,
+        day,
+        status,
+        mark,
+        tooltip,
+        details,
+        isToday: key === formatDateKey(today),
+        empty: false
+      });
+    }
+
+    return { monthLabel, cells };
+  }, [myAttendanceMap]);
 
   const taskTotals = useMemo(() => {
     const total = tasks.length;
@@ -303,7 +382,7 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
             <div className="content-card">
               <div className="section-header">
                 <h2 className="content-title">My Attendance</h2>
-                <p className="helper">Check in/out for yourself.</p>
+                <p className="helper">Present (9am - 7pm) - Absent/Leave</p>
               </div>
               <div className="action-row">
                 <button className="btn-primary" type="button" onClick={handleMyCheckIn}>
@@ -314,30 +393,56 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
                 </button>
               </div>
               <p className="helper" style={{ color: '#9fb3c8' }}>{myAttendanceMsg}</p>
-              <table className="table table-responsive">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Check In</th>
-                    <th>Check Out</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {myAttendance.length === 0 ? (
-                    <tr>
-                      <td colSpan="3">No records yet.</td>
-                    </tr>
-                  ) : (
-                    myAttendance.map((row) => (
-                      <tr key={row.id}>
-                        <td data-label="Date">{row.date}</td>
-                        <td data-label="Check In">{formatDateTime(row.checkInAt)}</td>
-                        <td data-label="Check Out">{formatDateTime(row.checkOutAt)}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+              <div className="attendance-calendar">
+                <div className="calendar-header">
+                  <div>
+                    <h3>{myCalendar.monthLabel}</h3>
+                    <p className="helper">Present (9am - 7pm) - Absent/Leave</p>
+                  </div>
+                </div>
+                <div className="calendar-weekdays">
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                    <span key={day}>{day}</span>
+                  ))}
+                </div>
+                <div className="calendar-grid">
+                  {myCalendar.cells.map((cell) => (
+                    <div
+                      key={cell.key}
+                      className={`calendar-cell ${cell.empty ? 'is-empty' : ''} ${
+                        cell.status ? `is-${cell.status}` : ''
+                      } ${cell.isToday ? 'is-today' : ''}`}
+                      title={cell.details ? '' : cell.tooltip || ''}
+                    >
+                      {cell.empty ? null : (
+                        <>
+                          <span className="calendar-date">{cell.day}</span>
+                          <span className="calendar-mark">{cell.mark}</span>
+                          {cell.details ? (
+                            <div className="calendar-tooltip" role="tooltip">
+                              <div className="tooltip-title">
+                                {formatDate(cell.date)}
+                              </div>
+                              <div className="tooltip-row">
+                                <span>Check in</span>
+                                <strong>{cell.details.checkInLabel}</strong>
+                              </div>
+                              <div className="tooltip-row">
+                                <span>Check out</span>
+                                <strong>{cell.details.checkOutLabel}</strong>
+                              </div>
+                              <div className="tooltip-row">
+                                <span>Working hours</span>
+                                <strong>{cell.details.workedLabel}</strong>
+                              </div>
+                            </div>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="content-card">
