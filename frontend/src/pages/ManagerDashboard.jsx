@@ -149,20 +149,22 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
         logoutLabel="Logout"
       />
 
-      <main className="main">
+      <main className="content">
+        <div className="content-card page-hero">
+          <div className="toolbar">
+            <div>
+              <h1 className="page-title">Manager Dashboard</h1>
+              <p className="helper">Track people health, unblock approvals, and align tasks.</p>
+            </div>
+          </div>
+        </div>
+
         {statusMessage ? <div className="notice">{statusMessage}</div> : null}
 
         <section
           className={`section ${activeSection === 'overview' ? 'active' : ''}`}
           data-section="overview"
         >
-          <div className="section-header">
-            <h2 className="content-title">Manager Dashboard</h2>
-            <p className="helper">
-              Track people health, unblock approvals, and align tasks.
-            </p>
-          </div>
-
           <div className="grid-3">
             <div className="content-card">
               <div className="insight-row">

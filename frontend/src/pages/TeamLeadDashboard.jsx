@@ -180,20 +180,24 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
         logoutLabel="Logout"
       />
 
-      <main className="main">
+      <main className="content">
+        <div className="content-card page-hero">
+          <div className="toolbar">
+            <div>
+              <h1 className="page-title">Team Lead Dashboard</h1>
+              <p className="helper">
+                Monitor your team, approve leaves, and assign tasks in one place.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {statusMessage ? <div className="notice">{statusMessage}</div> : null}
 
         <section
           className={`section ${activeSection === 'overview' ? 'active' : ''}`}
           data-section="overview"
         >
-          <div className="section-header">
-            <h2 className="content-title">Team Lead Dashboard</h2>
-            <p className="helper">
-              Monitor your team, approve leaves, and assign tasks in one place.
-            </p>
-          </div>
-
           <div className="grid-3">
             <div className="content-card">
               <div className="insight-row">
