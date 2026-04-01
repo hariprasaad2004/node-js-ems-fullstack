@@ -4,6 +4,21 @@ import { apiRequest, readJson } from '../api/client.js';
 import { useBodyClass } from '../hooks/useBodyClass.js';
 import { formatDate, formatDateTime, formatEmployeeLabel, formatStatus } from '../utils/format.js';
 
+const getDayStart = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+const getNextDayStart = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+const getWeekStart = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
+const getNextWeekStart = (date) => {
+  const start = getWeekStart(date);
+  return new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
+};
+const getMonthStart = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
+const getNextMonthStart = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 1);
+const getTaskDate = (task) => {
+  if (task?.dueAt) return new Date(task.dueAt);
+  if (task?.createdAt) return new Date(task.createdAt);
+  return null;
+};
+
 const navItems = [
   { id: 'overview', label: 'Overview' },
   { id: 'performance', label: 'Performance' },
@@ -64,6 +79,66 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
     () => team.filter((member) => member.status === 'active').length,
     [team]
   );
+
+  const stats = useMemo(() => {
+    const total = team.length;
+    const active = activeHeadcount;
+    const inactive = total - active;
+    const recentCutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const recent = team.filter((emp) => emp.createdAt && new Date(emp.createdAt).getTime() >= recentCutoff).length;
+    return { total, active, inactive, recent };
+  }, [team, activeHeadcount]);
+
+  const rangeStats = useMemo(() => {
+    const now = new Date();
+    const dayStart = getDayStart(now);
+    const dayEnd = getNextDayStart(now);
+    const weekStart = getWeekStart(now);
+    const weekEnd = getNextWeekStart(now);
+    const monthStart = getMonthStart(now);
+    const monthEnd = getNextMonthStart(now);
+
+    const calc = (start, end) => {
+      const items = tasks.filter((task) => {
+        const date = getTaskDate(task);
+        return date && date >= start && date < end;
+      });
+      const completed = items.filter((task) => task.status === 'completed').length;
+      const pending = items.length - completed;
+      const performance = items.length ? Math.round((completed / items.length) * 100) : 0;
+      return { total: items.length, pending, completed, performance };
+    };
+
+    return {
+      day: calc(dayStart, dayEnd),
+      week: calc(weekStart, weekEnd),
+      month: calc(monthStart, monthEnd),
+      nextDay: dayEnd,
+      nextWeek: weekEnd,
+      nextMonth: monthEnd
+    };
+  }, [tasks]);
+
+  const recentHires = useMemo(() => {
+    if (team.length === 0) return [];
+    const withDates = team.filter((emp) => emp.createdAt);
+    const base = withDates.length ? withDates : team;
+    return base
+      .slice()
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 4);
+  }, [team]);
+
+  const upcomingTasks = useMemo(() => {
+    const now = Date.now();
+    return tasks
+      .filter((task) => {
+        const due = getTaskDate(task)?.getTime?.() || 0;
+        return due && due >= now;
+      })
+      .sort((a, b) => getTaskDate(a) - getTaskDate(b))
+      .slice(0, 4);
+  }, [tasks]);
 
   async function loadProfile() { // Fetch the manager profile.
     const res = await apiRequest('/api/employee/me');
@@ -204,75 +279,183 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
           className={`section ${activeSection === 'overview' ? 'active' : ''}`}
           data-section="overview"
         >
-          <div className="grid-3">
-            <div className="content-card">
-              <div className="insight-row">
-                <div className="insight-card">
-                  <span className="metric-label">Headcount</span>
-                  <strong className="metric-value">{team.length}</strong>
-                  <p className="helper">{activeHeadcount} active</p>
-                </div>
-                <div className="insight-card">
-                  <span className="metric-label">Attendance</span>
-                  <strong className="metric-value">{attendanceStats.coverage}%</strong>
-                  <p className="helper">
-                    {attendanceStats.present}/{attendanceStats.total} checked in
-                  </p>
-                </div>
-                <div className="insight-card">
-                  <span className="metric-label">Pending Leaves</span>
-                  <strong className="metric-value">{pendingLeaves.length}</strong>
-                  <p className="helper">Awaiting decision</p>
-                </div>
-                <div className="insight-card">
-                  <span className="metric-label">Open Tasks</span>
-                  <strong className="metric-value">
-                    {taskStats.processing + taskStats.planning}
-                  </strong>
-                  <p className="helper">{taskStats.total} total</p>
-                </div>
+          <div className="content-card overview-panel">
+            <div className="employee-metrics">
+              <div className="metric-card metric-total">
+                <div className="metric-label">Total Employees</div>
+                <div className="metric-value">{stats.total}</div>
+              </div>
+              <div className="metric-card metric-new">
+                <div className="metric-label">New (30 Days)</div>
+                <div className="metric-value">{stats.recent}</div>
+              </div>
+              <div className="metric-card metric-active">
+                <div className="metric-label">Active</div>
+                <div className="metric-value">{stats.active}</div>
+              </div>
+              <div className="metric-card metric-inactive">
+                <div className="metric-label">Inactive</div>
+                <div className="metric-value">{stats.inactive}</div>
               </div>
             </div>
 
-            <div className="content-card">
-              <div className="section-header">
-                <h2 className="content-title">Approvals at a Glance</h2>
-                <p className="helper">Recent pending leave requests</p>
+            <div className="overview-stats">
+              <div className="stat-block" data-kind="day">
+                <div className="stat-header">
+                  <h3>Day Stats</h3>
+                  <span className="stat-refresh">Refreshes Daily</span>
+                </div>
+                <div className="stat-body">
+                  <div className="stat-row">
+                    <div>
+                      <span>Tasks Today</span>
+                      <strong>{rangeStats.day.total}</strong>
+                    </div>
+                    <div>
+                      <span>Pending</span>
+                      <strong>{rangeStats.day.pending}</strong>
+                    </div>
+                  </div>
+                  <div className="stat-performance">
+                    <div className="stat-performance-header">
+                      <span>Performance</span>
+                      <strong>{rangeStats.day.performance}%</strong>
+                    </div>
+                    <div className="stat-bar" style={{ '--percent': rangeStats.day.performance }}>
+                      <span className="stat-bar-fill" />
+                    </div>
+                  </div>
+                </div>
+                <div className="stat-next">Next refresh: {formatDateTime(rangeStats.nextDay)}</div>
               </div>
-              {pendingLeavesLimited.length === 0 ? (
-                <div className="notice">No pending leaves.</div>
-              ) : (
-                <ul className="list">
-                  {pendingLeavesLimited.map((leave) => (
-                    <li key={leave.id} className="list-item">
-                      <div>
-                        <div className="list-title">{formatEmployeeLabel(leave.employee)}</div>
-                        <div className="list-meta">
-                          {formatDate(leave.fromDate)} - {formatDate(leave.toDate)} ·{' '}
-                          {formatStatus(leave.category)}
+
+              <div className="stat-block" data-kind="week">
+                <div className="stat-header">
+                  <h3>Week Stats</h3>
+                  <span className="stat-refresh">Refreshes Sunday</span>
+                </div>
+                <div className="stat-body">
+                  <div className="stat-row">
+                    <div>
+                      <span>Tasks This Week</span>
+                      <strong>{rangeStats.week.total}</strong>
+                    </div>
+                    <div>
+                      <span>Pending</span>
+                      <strong>{rangeStats.week.pending}</strong>
+                    </div>
+                  </div>
+                  <div className="stat-performance">
+                    <div className="stat-performance-header">
+                      <span>Performance</span>
+                      <strong>{rangeStats.week.performance}%</strong>
+                    </div>
+                    <div className="stat-bar" style={{ '--percent': rangeStats.week.performance }}>
+                      <span className="stat-bar-fill" />
+                    </div>
+                  </div>
+                </div>
+                <div className="stat-next">Next refresh: {formatDateTime(rangeStats.nextWeek)}</div>
+              </div>
+
+              <div className="stat-block" data-kind="month">
+                <div className="stat-header">
+                  <h3>Month Stats</h3>
+                  <span className="stat-refresh">Refreshes Month End</span>
+                </div>
+                <div className="stat-body">
+                  <div className="stat-row">
+                    <div>
+                      <span>Finished</span>
+                      <strong>{rangeStats.month.completed}</strong>
+                    </div>
+                    <div>
+                      <span>Pending</span>
+                      <strong>{rangeStats.month.pending}</strong>
+                    </div>
+                  </div>
+                  <div className="stat-performance">
+                    <div className="stat-performance-header">
+                      <span>Performance</span>
+                      <strong>{rangeStats.month.performance}%</strong>
+                    </div>
+                    <div className="stat-bar" style={{ '--percent': rangeStats.month.performance }}>
+                      <span className="stat-bar-fill" />
+                    </div>
+                  </div>
+                </div>
+                <div className="stat-next">Next refresh: {formatDateTime(rangeStats.nextMonth)}</div>
+              </div>
+            </div>
+
+            <div className="overview-lists">
+              <div className="overview-card">
+                <div className="overview-card-header">
+                  <h3>Recent Hires</h3>
+                  <span className="helper">Latest additions</span>
+                </div>
+                {recentHires.length === 0 ? (
+                  <p className="helper">No recent hires.</p>
+                ) : (
+                  <ul className="mini-list">
+                    {recentHires.map((emp) => (
+                      <li className="mini-item" key={emp.id}>
+                        <div>
+                          <div className="mini-title">{emp.name || 'Employee'}</div>
+                          <div className="mini-sub">{emp.title || 'New hire'}</div>
                         </div>
-                      </div>
-                      <div className="action-row">
-                        <button
-                          className="btn-ghost"
-                          type="button"
-                          onClick={() => handleLeaveDecision(leave.id, 'rejected')}
-                        >
-                          Reject
-                        </button>
-                        <button
-                          className="btn-primary"
-                          type="button"
-                          onClick={() => handleLeaveDecision(leave.id, 'approved')}
-                        >
-                          Approve
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {leaveStatus ? <p className="helper">{leaveStatus}</p> : null}
+                        <div className="mini-meta">{formatDate(emp.createdAt)}</div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="overview-card">
+                <div className="overview-card-header">
+                  <h3>Upcoming Tasks</h3>
+                  <span className="helper">Due soon</span>
+                </div>
+                {upcomingTasks.length === 0 ? (
+                  <p className="helper">No upcoming tasks scheduled.</p>
+                ) : (
+                  <ul className="mini-list">
+                    {upcomingTasks.map((task) => (
+                      <li className="mini-item" key={task.id}>
+                        <div>
+                          <div className="mini-title">{task.details}</div>
+                          <div className="mini-sub">Assignee: {task.employee?.name || '—'}</div>
+                        </div>
+                        <div className="mini-meta">{formatDateTime(task.dueAt)}</div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="overview-card">
+                <div className="overview-card-header">
+                  <h3>Pending Leaves</h3>
+                  <span className="helper">Awaiting approval</span>
+                </div>
+                {pendingLeaves.length === 0 ? (
+                  <p className="helper">No pending leave requests.</p>
+                ) : (
+                  <ul className="mini-list">
+                    {pendingLeaves.slice(0, 4).map((leave) => (
+                      <li className="mini-item" key={leave.id}>
+                        <div>
+                          <div className="mini-title">{formatEmployeeLabel(leave.employee)}</div>
+                          <div className="mini-sub">{formatStatus(leave.category)}</div>
+                        </div>
+                        <div className="mini-meta">
+                          {formatDate(leave.fromDate)} - {formatDate(leave.toDate)}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
         </section>
