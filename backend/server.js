@@ -51,6 +51,9 @@ app.use(
 
 app.use(express.static(frontendDist));
 
+// Lightweight health check for Render/uptime monitors.
+app.get('/health', (req, res) => res.send('ok'));
+
 app.get('/', (req, res) => { // Root route redirects by session role.
   const roles = req.session?.roles || {};
   const lastRole = req.session?.lastRole;
