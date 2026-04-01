@@ -6,9 +6,14 @@ import { formatDate, formatDateTime, formatEmployeeLabel, formatStatus } from '.
 
 const navItems = [
   { id: 'overview', label: 'Overview' },
-  { id: 'people', label: 'People' },
+  { id: 'performance', label: 'Performance' },
+  { id: 'task-monitor', label: 'Task Monitor' },
   { id: 'approvals', label: 'Approvals' },
-  { id: 'tasks', label: 'Task Board' }
+  { id: 'tasks', label: 'Tasks' },
+  { id: 'eods', label: 'EOD Reports' },
+  { id: 'attendance', label: 'Attendance' },
+  { id: 'people', label: 'Employees' },
+  { id: 'policies', label: 'Policies' }
 ];
 
 export default function ManagerDashboard() { // Manager dashboard with broader org insights.
@@ -456,6 +461,120 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
                 ))}
               </div>
             )}
+          </div>
+        </section>
+
+        <section
+          className={`section ${activeSection === 'performance' ? 'active' : ''}`}
+          data-section="performance"
+        >
+          <div className="content-card">
+            <div className="section-header">
+              <h2 className="content-title">Performance</h2>
+              <p className="helper">High-level delivery and attendance snapshots.</p>
+            </div>
+            <div className="grid-2">
+              <div className="insight-card">
+                <span className="metric-label">Tasks Completed</span>
+                <strong className="metric-value">{taskStats.completed}</strong>
+                <p className="helper">{taskStats.total} total tasks</p>
+              </div>
+              <div className="insight-card">
+                <span className="metric-label">Attendance Coverage</span>
+                <strong className="metric-value">{attendanceStats.coverage}%</strong>
+                <p className="helper">
+                  {attendanceStats.present}/{attendanceStats.total} checked in/out today
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section
+          className={`section ${activeSection === 'task-monitor' ? 'active' : ''}`}
+          data-section="task-monitor"
+        >
+          <div className="content-card">
+            <div className="section-header">
+              <h2 className="content-title">Task Monitor</h2>
+              <p className="helper">Quick view of open tasks.</p>
+            </div>
+            {tasks.length === 0 ? (
+              <div className="notice">No tasks yet.</div>
+            ) : (
+              <ul className="list">
+                {tasks.slice(0, 8).map((task) => (
+                  <li key={task.id} className="list-item">
+                    <div className="list-title">{task.details}</div>
+                    <div className="list-meta">
+                      {formatStatus(task.status)} · {formatDateTime(task.dueAt)}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        <section
+          className={`section ${activeSection === 'attendance' ? 'active' : ''}`}
+          data-section="attendance"
+        >
+          <div className="content-card">
+            <div className="section-header">
+              <h2 className="content-title">Attendance</h2>
+              <p className="helper">Today&apos;s check-ins at a glance.</p>
+            </div>
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Status</th>
+                    <th>Check In</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {attendance.length === 0 ? (
+                    <tr>
+                      <td colSpan="3">No attendance records.</td>
+                    </tr>
+                  ) : (
+                    attendance.map((row) => (
+                      <tr key={row.employee.id}>
+                        <td data-label="Employee">{formatEmployeeLabel(row.employee)}</td>
+                        <td data-label="Status">{formatStatus(row.status)}</td>
+                        <td data-label="Check In">{formatDateTime(row.checkInAt)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section
+          className={`section ${activeSection === 'eods' ? 'active' : ''}`}
+          data-section="eods"
+        >
+          <div className="content-card">
+            <div className="section-header">
+              <h2 className="content-title">EOD Reports</h2>
+              <p className="helper">Coming soon: end-of-day rollups.</p>
+            </div>
+          </div>
+        </section>
+
+        <section
+          className={`section ${activeSection === 'policies' ? 'active' : ''}`}
+          data-section="policies"
+        >
+          <div className="content-card">
+            <div className="section-header">
+              <h2 className="content-title">Policies</h2>
+              <p className="helper">Coming soon: company and HR policies.</p>
+            </div>
           </div>
         </section>
       </main>
