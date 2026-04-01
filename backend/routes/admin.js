@@ -64,6 +64,7 @@ const toSafeLeave = (leave) => ({ // Sanitize leave request for API responses.
   category: leave.category || 'casual',
   reason: leave.reason || '',
   status: leave.status,
+  role: leave.roleAtRequest || leave.employee?.role || 'employee',
   createdAt: leave.createdAt,
   updatedAt: leave.updatedAt,
   employee: leave.employee
@@ -71,7 +72,7 @@ const toSafeLeave = (leave) => ({ // Sanitize leave request for API responses.
         id: leave.employee._id?.toString?.() || leave.employee.toString(),
         name: leave.employee.name,
         email: leave.employee.email,
-        role: leave.employee.role,
+        role: leave.roleAtRequest || leave.employee.role,
         department: leave.employee.department || ''
       }
     : null

@@ -50,6 +50,7 @@ const toSafeLeave = (leave) => ({ // Sanitize leave request for API responses.
   category: leave.category || 'casual',
   reason: leave.reason || '',
   status: leave.status,
+  role: leave.roleAtRequest || leave.employee?.role || 'employee',
   createdAt: leave.createdAt,
   updatedAt: leave.updatedAt
 });
@@ -241,7 +242,8 @@ router.post('/api/employee/leave', requireAuth, requireRole(selfServiceRoles), a
       fromDate: from,
       toDate: to,
       category: leaveCategory,
-      reason: reason ? String(reason).trim() : ''
+      reason: reason ? String(reason).trim() : '',
+      roleAtRequest: req.userRole || 'employee'
     });
 
     return res.status(201).json(toSafeLeave(leave));

@@ -10,6 +10,11 @@ const leaveRequestSchema = new mongoose.Schema(
       enum: ['sick', 'casual', 'emergency'],
       default: 'casual'
     },
+    roleAtRequest: {
+      type: String,
+      enum: ['employee', 'teamlead', 'manager', 'admin'],
+      default: 'employee'
+    },
     reason: { type: String, trim: true },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
