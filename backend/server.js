@@ -16,6 +16,7 @@ const frontendIndex = path.join(frontendDist, 'index.html');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0'; // Bind to all interfaces for cloud providers (e.g., Render).
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
@@ -93,7 +94,7 @@ app.use((req, res) => { // 404 handler for unmatched API routes.
   res.status(404).json({ message: 'Not found' });
 });
 
-app.listen(PORT, () => { // Start the HTTP server.
-  console.log(`Server running on http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => { // Start the HTTP server.
+  console.log(`Server running on http://${HOST}:${PORT}`);
 });
 
