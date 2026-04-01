@@ -192,7 +192,6 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
             <p className="helper">
               Monitor your team, approve leaves, and assign tasks in one place.
             </p>
-            <div className="pill">{profile?.department || 'Team'}</div>
           </div>
 
           <div className="grid-3">

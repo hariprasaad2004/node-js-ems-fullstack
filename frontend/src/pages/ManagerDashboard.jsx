@@ -161,9 +161,6 @@ export default function ManagerDashboard() { // Manager dashboard with broader o
             <p className="helper">
               Track people health, unblock approvals, and align tasks.
             </p>
-            <div className="pill">
-              {activeHeadcount} active / {team.length} total
-            </div>
           </div>
 
           <div className="grid-3">
