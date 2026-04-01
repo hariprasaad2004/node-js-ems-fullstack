@@ -189,6 +189,27 @@ export default function TeamLeadDashboard() { // Team lead dashboard with light-
                 Monitor your team, approve leaves, and assign tasks in one place.
               </p>
             </div>
+            <div className="toolbar-actions">
+              <button className="icon-button" type="button" aria-label="Notifications">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 3a6 6 0 0 0-6 6v2.2c0 .7-.28 1.37-.78 1.86L4 14.3V16h16v-1.7l-1.22-1.24a2.64 2.64 0 0 1-.78-1.86V9a6 6 0 0 0-6-6Zm0 18a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 21Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </button>
+              <div className="admin-profile" aria-label="Team lead profile">
+                <div className="admin-avatar">
+                  {(profile?.name || 'T').charAt(0).toUpperCase()}
+                </div>
+                <div className="admin-meta">
+                  <span className="admin-name">{profile?.name || 'Team Lead'}</span>
+                  <span className="admin-role">
+                    {profile?.id ? `ID ${profile.id.slice(-6).toUpperCase()}` : 'TEAM LEAD'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
