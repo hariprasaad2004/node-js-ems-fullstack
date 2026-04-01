@@ -55,8 +55,8 @@ app.get('/', (req, res) => { // Root route redirects by session role.
   const lastRole = req.session?.lastRole;
   const rolePath = {
     admin: '/admin',
-    manager: '/manager',
-    teamlead: '/teamlead',
+    manager: '/employee',
+    teamlead: '/employee',
     employee: '/employee'
   };
 

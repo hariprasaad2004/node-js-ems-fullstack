@@ -2,8 +2,6 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import Login from './pages/Login.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import EmployeeDashboard from './pages/EmployeeDashboard.jsx';
-import TeamLeadDashboard from './pages/TeamLeadDashboard.jsx';
-import ManagerDashboard from './pages/ManagerDashboard.jsx';
 
 export default function App() { // SPA routes for login/admin/employee.
   return (
@@ -11,8 +9,6 @@ export default function App() { // SPA routes for login/admin/employee.
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/admin" element={<AdminDashboard />} />
-      <Route path="/manager" element={<ManagerDashboard />} />
-      <Route path="/teamlead" element={<TeamLeadDashboard />} />
       <Route path="/employee" element={<EmployeeDashboard />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
