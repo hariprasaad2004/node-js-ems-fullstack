@@ -2,7 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiRequest, readJson } from '../api/client.js';
 import Sidebar from '../components/Sidebar.jsx';
 import { useBodyClass } from '../hooks/useBodyClass.js';
-import { formatDate, formatDateTime, formatEmployeeLabel, formatStatus } from '../utils/format.js';
+import {
+  formatDate,
+  formatDateTime,
+  formatEmployeeLabel,
+  formatStatus,
+  formatDuration
+} from '../utils/format.js';
 
 const navItems = [
   { id: 'overview', label: 'Overview' },
@@ -46,6 +52,13 @@ const initialMyLeaveForm = {
 };
 
 const MAX_IMAGE_SIZE = 1_500_000; // 1.5 MB
+
+const formatDateKey = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const getTaskDate = (task) => {
   if (task?.dueAt) return new Date(task.dueAt);
@@ -116,6 +129,71 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [myLeaves, setMyLeaves] = useState([]);
   const [myLeaveForm, setMyLeaveForm] = useState(initialMyLeaveForm);
   const [myLeaveStatus, setMyLeaveStatus] = useState({ message: '', isError: false });
+  const myAttendanceMap = useMemo(() => {
+    const map = new Map();
+    myAttendance.forEach((row) => {
+      if (row.date) map.set(row.date, row);
+    });
+    return map;
+  }, [myAttendance]);
+  const myCalendar = useMemo(() => {
+    const today = new Date();
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const startWeekday = monthStart.getDay();
+    const daysInMonth = monthEnd.getDate();
+    const monthLabel = today.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+    const cells = [];
+
+    for (let i = 0; i < startWeekday; i += 1) {
+      cells.push({ key: `empty-${i}`, empty: true });
+    }
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      const date = new Date(today.getFullYear(), today.getMonth(), day);
+      const key = formatDateKey(date);
+      const record = myAttendanceMap.get(key);
+      let status = 'pending';
+      let mark = '';
+      let tooltip = '';
+      let details = null;
+
+      if (record?.checkInAt) {
+        const checkInDate = new Date(record.checkInAt);
+        const hour = checkInDate.getHours() + checkInDate.getMinutes() / 60;
+        const within = hour >= 9 && hour <= 19;
+        status = within ? 'present' : 'absent';
+        mark = within ? '✓' : '✕';
+        tooltip = within ? 'Present' : 'Absent';
+        const workedLabel = record.checkOutAt
+          ? formatDuration(record.checkInAt, record.checkOutAt)
+          : 'In progress';
+        details = {
+          checkInLabel: formatDateTime(record.checkInAt),
+          checkOutLabel: record.checkOutAt ? formatDateTime(record.checkOutAt) : 'In progress',
+          workedLabel
+        };
+      } else if (date < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
+        status = 'absent';
+        mark = '✕';
+        tooltip = 'Absent';
+      }
+
+      cells.push({
+        key,
+        date,
+        day,
+        status,
+        mark,
+        tooltip,
+        details,
+        isToday: key === formatDateKey(today),
+        empty: false
+      });
+    }
+
+    return { monthLabel, cells };
+  }, [myAttendanceMap]);
   const [statNow, setStatNow] = useState(() => new Date());
   const [selectedPerfId, setSelectedPerfId] = useState(null);
   const [activePerf, setActivePerf] = useState(null);
@@ -1325,7 +1403,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           <div className="content-card">
             <div className="section-header">
               <h2 className="content-title">My Attendance</h2>
-              <p className="helper">Quick check-in/out for yourself.</p>
+              <p className="helper">Present (9am - 7pm) - Absent/Leave</p>
             </div>
             <div className="action-row">
               <button className="btn-primary" type="button" onClick={handleMyCheckIn}>
@@ -1338,30 +1416,56 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
             <p className="helper" style={{ color: '#9fb3c8', marginTop: '6px', marginBottom: '12px' }}>
               {myAttendanceMsg}
             </p>
-            <table className="table table-responsive">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Check In</th>
-                  <th>Check Out</th>
-                </tr>
-              </thead>
-              <tbody>
-                {myAttendance.length === 0 ? (
-                  <tr>
-                    <td colSpan="3">No records yet.</td>
-                  </tr>
-                ) : (
-                  myAttendance.map((row) => (
-                    <tr key={row.id}>
-                      <td data-label="Date">{row.date}</td>
-                      <td data-label="Check In">{formatDateTime(row.checkInAt)}</td>
-                      <td data-label="Check Out">{formatDateTime(row.checkOutAt)}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            <div className="attendance-calendar">
+              <div className="calendar-header">
+                <div>
+                  <h3>{myCalendar.monthLabel}</h3>
+                  <p className="helper">Present (9am - 7pm) - Absent/Leave</p>
+                </div>
+              </div>
+              <div className="calendar-weekdays">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                  <span key={day}>{day}</span>
+                ))}
+              </div>
+              <div className="calendar-grid">
+                {myCalendar.cells.map((cell) => (
+                  <div
+                    key={cell.key}
+                    className={`calendar-cell ${cell.empty ? 'is-empty' : ''} ${
+                      cell.status ? `is-${cell.status}` : ''
+                    } ${cell.isToday ? 'is-today' : ''}`}
+                    title={cell.details ? '' : cell.tooltip || ''}
+                  >
+                    {cell.empty ? null : (
+                      <>
+                        <span className="calendar-date">{cell.day}</span>
+                        <span className="calendar-mark">{cell.mark}</span>
+                        {cell.details ? (
+                          <div className="calendar-tooltip" role="tooltip">
+                            <div className="tooltip-title">
+                              {formatDate(cell.date)}
+                            </div>
+                            <div className="tooltip-row">
+                              <span>Check in</span>
+                              <strong>{cell.details.checkInLabel}</strong>
+                            </div>
+                            <div className="tooltip-row">
+                              <span>Check out</span>
+                              <strong>{cell.details.checkOutLabel}</strong>
+                            </div>
+                            <div className="tooltip-row">
+                              <span>Working hours</span>
+                              <strong>{cell.details.workedLabel}</strong>
+                            </div>
+                          </div>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
