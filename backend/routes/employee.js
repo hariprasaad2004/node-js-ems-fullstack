@@ -12,7 +12,7 @@ const router = express.Router();
 const rootDir = path.join(__dirname, '..', '..');
 const frontendIndex = path.join(rootDir, 'frontend', 'dist', 'index.html');
 const profileRoles = ['employee', 'teamlead', 'manager', 'admin'];
-const selfServiceRoles = ['employee', 'teamlead', 'admin'];
+const selfServiceRoles = ['employee', 'teamlead', 'manager', 'admin'];
 
 const toSafeEmployee = (user) => ({ // Sanitize employee data for API responses.
   id: user._id.toString(),
