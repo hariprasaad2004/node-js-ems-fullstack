@@ -71,6 +71,7 @@ const toSafeLeave = (leave) => ({ // Sanitize leave request for API responses.
         id: leave.employee._id?.toString?.() || leave.employee.toString(),
         name: leave.employee.name,
         email: leave.employee.email,
+        role: leave.employee.role,
         department: leave.employee.department || ''
       }
     : null
@@ -416,19 +417,36 @@ router.post('/api/admin/attendance/check-out', requireAuth, requireRole(adminRol
   }
 });
 
-router.get('/api/admin/leave', requireAuth, requireRole(leadRoles), async (req, res) => { // List leave requests.
+router.get('/api/admin/leave', requireAuth, requireRole(leadRoles), async (req, res) => { // List leave requests with role-based visibility.
   try {
     const leaves = await LeaveRequest.find()
       .sort({ createdAt: -1 })
       .limit(30)
-      .populate('employee', 'name email department');
-    return res.json(leaves.map(toSafeLeave));
+      .populate('employee', 'name email role department');
+
+    // Visibility rules:
+    // - Admin leave requests (employee.role === 'admin') are only visible to managers.
+    // - Team leads can see only employee/teamlead leave requests.
+    // - Managers see all.
+    // - Admins see everything except admin leave requests (so their own requests are routed to managers).
+    const filtered = leaves.filter((leave) => {
+      const role = leave.employee?.role;
+      if (role === 'admin') {
+        return req.userRole === 'manager';
+      }
+      if (req.userRole === 'teamlead') {
+        return role === 'employee' || role === 'teamlead';
+      }
+      return true; // manager or admin for non-admin employees
+    });
+
+    return res.json(filtered.map(toSafeLeave));
   } catch (err) {
     return res.status(500).json({ message: 'Failed to fetch leave requests.' });
   }
 });
 
-router.patch('/api/admin/leave/:id', requireAuth, requireRole(leadRoles), async (req, res) => { // Approve or reject a leave request.
+router.patch('/api/admin/leave/:id', requireAuth, requireRole(leadRoles), async (req, res) => { // Approve or reject a leave request with role-based permissions.
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -436,9 +454,23 @@ router.patch('/api/admin/leave/:id', requireAuth, requireRole(leadRoles), async 
       return res.status(400).json({ message: 'Invalid status.' });
     }
 
-    const leave = await LeaveRequest.findById(id).populate('employee', 'name email department');
+    const leave = await LeaveRequest.findById(id).populate('employee', 'name email role department');
     if (!leave) {
       return res.status(404).json({ message: 'Leave request not found.' });
+    }
+
+    const employeeRole = leave.employee?.role;
+    // Only managers can act on admin leave requests.
+    if (employeeRole === 'admin' && req.userRole !== 'manager') {
+      return res.status(403).json({ message: 'Only managers can process admin leave requests.' });
+    }
+    // Team leads can only process employee/teamlead leave requests.
+    if (req.userRole === 'teamlead' && employeeRole !== 'employee' && employeeRole !== 'teamlead') {
+      return res.status(403).json({ message: 'You can only process team/employee leave requests.' });
+    }
+    // Prevent self-approval.
+    if (leave.employee?._id?.toString?.() === req.userId) {
+      return res.status(403).json({ message: 'You cannot approve your own leave request.' });
     }
 
     leave.status = status;
