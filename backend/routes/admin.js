@@ -12,6 +12,8 @@ const router = express.Router();
 
 const rootDir = path.join(__dirname, '..', '..');
 const frontendIndex = path.join(rootDir, 'frontend', 'dist', 'index.html');
+const adminRoles = ['admin', 'manager'];
+const leadRoles = ['admin', 'manager', 'teamlead'];
 
 const toSafeEmployee = (user) => ({ // Sanitize employee data for API responses.
   id: user._id.toString(),
@@ -122,7 +124,23 @@ router.get('/admin', (req, res) => { // Serve the SPA for the admin route with r
   return res.sendFile(frontendIndex);
 });
 
-router.get('/api/admin/employees', requireAuth, requireRole('admin'), async (req, res) => { // List employees for admin view.
+router.get('/manager', (req, res) => { // Serve the SPA for the manager route with role checks.
+  const managerSession = getRoleSession(req, 'manager');
+  if (!managerSession?.userId) {
+    return res.redirect('/login');
+  }
+  return res.sendFile(frontendIndex);
+});
+
+router.get('/teamlead', (req, res) => { // Serve the SPA for the team lead route with role checks.
+  const leadSession = getRoleSession(req, 'teamlead');
+  if (!leadSession?.userId) {
+    return res.redirect('/login');
+  }
+  return res.sendFile(frontendIndex);
+});
+
+router.get('/api/admin/employees', requireAuth, requireRole(leadRoles), async (req, res) => { // List employees for admin/manager/lead view.
   try {
     const employees = await User.find({ role: 'employee' }).sort({ createdAt: -1 });
     return res.json(employees.map(toSafeEmployee));
@@ -131,7 +149,7 @@ router.get('/api/admin/employees', requireAuth, requireRole('admin'), async (req
   }
 });
 
-router.post('/api/admin/employees', requireAuth, requireRole('admin'), async (req, res) => { // Create a new employee.
+router.post('/api/admin/employees', requireAuth, requireRole(adminRoles), async (req, res) => { // Create a new employee.
   try {
     const {
       name,
@@ -177,7 +195,7 @@ router.post('/api/admin/employees', requireAuth, requireRole('admin'), async (re
   }
 });
 
-router.put('/api/admin/employees/:id', requireAuth, requireRole('admin'), async (req, res) => { // Update an employee.
+router.put('/api/admin/employees/:id', requireAuth, requireRole(adminRoles), async (req, res) => { // Update an employee.
   try {
     const { id } = req.params;
     const {
@@ -223,7 +241,7 @@ router.put('/api/admin/employees/:id', requireAuth, requireRole('admin'), async 
   }
 });
 
-router.delete('/api/admin/employees/:id', requireAuth, requireRole('admin'), async (req, res) => { // Delete an employee.
+router.delete('/api/admin/employees/:id', requireAuth, requireRole(adminRoles), async (req, res) => { // Delete an employee.
   try {
     const { id } = req.params;
     const employee = await User.findOne({ _id: id, role: 'employee' });
@@ -238,7 +256,7 @@ router.delete('/api/admin/employees/:id', requireAuth, requireRole('admin'), asy
   }
 });
 
-router.get('/api/admin/attendance', requireAuth, requireRole('admin'), async (req, res) => { // Fetch recent attendance records.
+router.get('/api/admin/attendance', requireAuth, requireRole(leadRoles), async (req, res) => { // Fetch recent attendance records.
   try {
     const records = await Attendance.find()
       .sort({ checkInAt: -1 })
@@ -250,7 +268,7 @@ router.get('/api/admin/attendance', requireAuth, requireRole('admin'), async (re
   }
 });
 
-router.get('/api/admin/attendance/summary', requireAuth, requireRole('admin'), async (req, res) => { // Summarize today's attendance across employees.
+router.get('/api/admin/attendance/summary', requireAuth, requireRole(leadRoles), async (req, res) => { // Summarize today's attendance across employees.
   try {
     const dateKey = typeof req.query.date === 'string' && req.query.date ? req.query.date : formatDateKey();
     const [employees, records] = await Promise.all([
@@ -293,7 +311,7 @@ router.get('/api/admin/attendance/summary', requireAuth, requireRole('admin'), a
   }
 });
 
-router.post('/api/admin/attendance/check-in', requireAuth, requireRole('admin'), async (req, res) => { // Admin-triggered employee check-in.
+router.post('/api/admin/attendance/check-in', requireAuth, requireRole(adminRoles), async (req, res) => { // Admin-triggered employee check-in.
   try {
     const { employeeId } = req.body;
     if (!employeeId) {
@@ -337,7 +355,7 @@ router.post('/api/admin/attendance/check-in', requireAuth, requireRole('admin'),
   }
 });
 
-router.post('/api/admin/attendance/check-out', requireAuth, requireRole('admin'), async (req, res) => { // Admin-triggered employee check-out.
+router.post('/api/admin/attendance/check-out', requireAuth, requireRole(adminRoles), async (req, res) => { // Admin-triggered employee check-out.
   try {
     const { employeeId } = req.body;
     if (!employeeId) {
@@ -371,7 +389,7 @@ router.post('/api/admin/attendance/check-out', requireAuth, requireRole('admin')
   }
 });
 
-router.get('/api/admin/leave', requireAuth, requireRole('admin'), async (req, res) => { // List leave requests.
+router.get('/api/admin/leave', requireAuth, requireRole(leadRoles), async (req, res) => { // List leave requests.
   try {
     const leaves = await LeaveRequest.find()
       .sort({ createdAt: -1 })
@@ -383,7 +401,7 @@ router.get('/api/admin/leave', requireAuth, requireRole('admin'), async (req, re
   }
 });
 
-router.patch('/api/admin/leave/:id', requireAuth, requireRole('admin'), async (req, res) => { // Approve or reject a leave request.
+router.patch('/api/admin/leave/:id', requireAuth, requireRole(leadRoles), async (req, res) => { // Approve or reject a leave request.
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -407,7 +425,7 @@ router.patch('/api/admin/leave/:id', requireAuth, requireRole('admin'), async (r
   }
 });
 
-router.get('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, res) => { // List recent tasks.
+router.get('/api/admin/tasks', requireAuth, requireRole(leadRoles), async (req, res) => { // List recent tasks.
   try {
     const tasks = await Task.find()
       .sort({ createdAt: -1 })
@@ -420,7 +438,7 @@ router.get('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, re
   }
 });
 
-router.post('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, res) => { // Assign a task to an employee.
+router.post('/api/admin/tasks', requireAuth, requireRole(leadRoles), async (req, res) => { // Assign a task to an employee.
   try {
     const { employeeId, details, dueAt } = req.body;
     if (!employeeId || !details || !String(details).trim()) {
@@ -457,7 +475,7 @@ router.post('/api/admin/tasks', requireAuth, requireRole('admin'), async (req, r
   }
 });
 
-router.get('/api/admin/eods', requireAuth, requireRole('admin'), async (req, res) => { // List EODs with analytics.
+router.get('/api/admin/eods', requireAuth, requireRole(leadRoles), async (req, res) => { // List EODs with analytics.
   try {
     const { employeeId } = req.query;
     const match = {};

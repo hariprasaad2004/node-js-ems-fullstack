@@ -11,6 +11,7 @@ const router = express.Router();
 
 const rootDir = path.join(__dirname, '..', '..');
 const frontendIndex = path.join(rootDir, 'frontend', 'dist', 'index.html');
+const selfServiceRoles = ['employee', 'teamlead', 'manager'];
 
 const toSafeEmployee = (user) => ({ // Sanitize employee data for API responses.
   id: user._id.toString(),
@@ -88,7 +89,7 @@ router.get('/employee', (req, res) => { // Serve the SPA for the employee route 
   return res.sendFile(frontendIndex);
 });
 
-router.get('/api/employee/me', requireAuth, requireRole('employee'), async (req, res) => { // Fetch employee profile.
+router.get('/api/employee/me', requireAuth, requireRole(selfServiceRoles), async (req, res) => { // Fetch employee profile.
   try {
     const user = await User.findById(req.userId);
     if (!user) {
@@ -100,7 +101,7 @@ router.get('/api/employee/me', requireAuth, requireRole('employee'), async (req,
   }
 });
 
-router.put('/api/employee/me', requireAuth, requireRole('employee'), async (req, res) => { // Update employee profile.
+router.put('/api/employee/me', requireAuth, requireRole(selfServiceRoles), async (req, res) => { // Update employee profile.
   try {
     const { phone, address } = req.body;
     const user = await User.findById(req.userId);
@@ -118,7 +119,7 @@ router.put('/api/employee/me', requireAuth, requireRole('employee'), async (req,
   }
 });
 
-router.get('/api/employee/attendance', requireAuth, requireRole('employee'), async (req, res) => { // List attendance records.
+router.get('/api/employee/attendance', requireAuth, requireRole(selfServiceRoles), async (req, res) => { // List attendance records.
   try {
     const records = await Attendance.find({ employee: req.userId })
       .sort({ checkInAt: -1 })
@@ -129,7 +130,7 @@ router.get('/api/employee/attendance', requireAuth, requireRole('employee'), asy
   }
 });
 
-router.post('/api/employee/attendance/check-in', requireAuth, requireRole('employee'), async (req, res) => { // Check in employee.
+router.post('/api/employee/attendance/check-in', requireAuth, requireRole(selfServiceRoles), async (req, res) => { // Check in employee.
   try {
     const now = new Date();
     const dateKey = formatDateKey(now);
@@ -166,7 +167,7 @@ router.post('/api/employee/attendance/check-in', requireAuth, requireRole('emplo
 router.post(
   '/api/employee/attendance/check-out',
   requireAuth,
-  requireRole('employee'),
+  requireRole(selfServiceRoles),
   async (req, res) => { // Check out employee.
     try {
       const now = new Date();
@@ -190,7 +191,7 @@ router.post(
   }
 );
 
-router.get('/api/employee/leave', requireAuth, requireRole('employee'), async (req, res) => { // List leave requests.
+router.get('/api/employee/leave', requireAuth, requireRole(selfServiceRoles), async (req, res) => { // List leave requests.
   try {
     const leaves = await LeaveRequest.find({ employee: req.userId })
       .sort({ createdAt: -1 })
@@ -201,7 +202,7 @@ router.get('/api/employee/leave', requireAuth, requireRole('employee'), async (r
   }
 });
 
-router.post('/api/employee/leave', requireAuth, requireRole('employee'), async (req, res) => { // Submit a leave request.
+router.post('/api/employee/leave', requireAuth, requireRole(selfServiceRoles), async (req, res) => { // Submit a leave request.
   try {
     const { fromDate, toDate, reason, category } = req.body;
     if (!fromDate || !toDate) {
@@ -248,7 +249,7 @@ router.post('/api/employee/leave', requireAuth, requireRole('employee'), async (
   }
 });
 
-router.get('/api/employee/eods', requireAuth, requireRole('employee'), async (req, res) => { // List recent end-of-day reports.
+router.get('/api/employee/eods', requireAuth, requireRole(selfServiceRoles), async (req, res) => { // List recent end-of-day reports.
   try {
     const reports = await EODReport.find({ employee: req.userId })
       .sort({ date: -1 })
@@ -259,7 +260,7 @@ router.get('/api/employee/eods', requireAuth, requireRole('employee'), async (re
   }
 });
 
-router.post('/api/employee/eods', requireAuth, requireRole('employee'), async (req, res) => { // Submit or update an EOD.
+router.post('/api/employee/eods', requireAuth, requireRole(selfServiceRoles), async (req, res) => { // Submit or update an EOD.
   try {
     const { date, session1, session2, status } = req.body;
     const parsedDate = date ? new Date(date) : new Date();
@@ -307,7 +308,7 @@ router.post('/api/employee/eods', requireAuth, requireRole('employee'), async (r
   }
 });
 
-router.get('/api/employee/tasks', requireAuth, requireRole('employee'), async (req, res) => { // List assigned tasks.
+router.get('/api/employee/tasks', requireAuth, requireRole(selfServiceRoles), async (req, res) => { // List assigned tasks.
   try {
     const tasks = await Task.find({ employee: req.userId })
       .sort({ createdAt: -1 })
@@ -319,7 +320,7 @@ router.get('/api/employee/tasks', requireAuth, requireRole('employee'), async (r
   }
 });
 
-router.patch('/api/employee/tasks/:id', requireAuth, requireRole('employee'), async (req, res) => { // Update task status.
+router.patch('/api/employee/tasks/:id', requireAuth, requireRole(selfServiceRoles), async (req, res) => { // Update task status.
   try {
     const { id } = req.params;
     const { status } = req.body;

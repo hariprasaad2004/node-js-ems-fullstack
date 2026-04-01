@@ -53,15 +53,27 @@ app.use(express.static(frontendDist));
 app.get('/', (req, res) => { // Root route redirects by session role.
   const roles = req.session?.roles || {};
   const lastRole = req.session?.lastRole;
+  const rolePath = {
+    admin: '/admin',
+    manager: '/manager',
+    teamlead: '/teamlead',
+    employee: '/employee'
+  };
 
   if (lastRole && roles[lastRole]?.userId) {
-    return res.redirect(lastRole === 'admin' ? '/admin' : '/employee');
+    return res.redirect(rolePath[lastRole] || '/login');
   }
   if (roles.admin?.userId) {
-    return res.redirect('/admin');
+    return res.redirect(rolePath.admin);
+  }
+  if (roles.manager?.userId) {
+    return res.redirect(rolePath.manager);
+  }
+  if (roles.teamlead?.userId) {
+    return res.redirect(rolePath.teamlead);
   }
   if (roles.employee?.userId) {
-    return res.redirect('/employee');
+    return res.redirect(rolePath.employee);
   }
   return res.redirect('/login');
 });

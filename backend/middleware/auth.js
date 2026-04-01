@@ -11,15 +11,18 @@ function requireAuth(req, res, next) { // Enforce at least one authenticated rol
   return next();
 }
 
-function requireRole(role) { // Enforce a specific user role.
+function requireRole(role) { // Enforce one or more user roles.
+  const allowed = Array.isArray(role) ? role : [role];
   return (req, res, next) => {
-    const roleSession = getRoleSession(req, role);
-    if (!roleSession?.userId) {
-      return res.status(403).json({ message: 'Forbidden' });
+    for (const candidate of allowed) {
+      const roleSession = getRoleSession(req, candidate);
+      if (roleSession?.userId) {
+        req.userId = roleSession.userId;
+        req.userRole = candidate;
+        return next();
+      }
     }
-    req.userId = roleSession.userId;
-    req.userRole = role;
-    return next();
+    return res.status(403).json({ message: 'Forbidden' });
   };
 }
 
