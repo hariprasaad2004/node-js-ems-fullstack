@@ -40,9 +40,8 @@ router.post('/login', async (req, res) => { // Handle login and create a session
       }
     }
 
-    if (!req.session.roles) {
-      req.session.roles = {};
-    }
+    // Reset any previously stored roles so a new login cannot leak data from another account.
+    req.session.roles = {};
     req.session.roles[user.role] = { userId: user._id.toString() };
     req.session.lastRole = user.role;
 
