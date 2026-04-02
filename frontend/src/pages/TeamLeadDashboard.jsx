@@ -192,14 +192,6 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
             <h1 className="page-title">Team Lead Dashboard</h1>
             <p className="helper">Assign tasks, watch attendance, and approve leaves.</p>
           </div>
-          <div className="toolbar-actions">
-            <button className="btn-ghost" type="button" onClick={loadAll} disabled={refreshing}>
-              {refreshing ? 'Refreshing...' : 'Refresh'}
-            </button>
-            <button className="btn-primary" type="button" onClick={handleLogout}>
-              Logout
-            </button>
-          </div>
         </div>
 
         <section className={`section ${activeSection === 'overview' ? 'active' : ''}`}>
