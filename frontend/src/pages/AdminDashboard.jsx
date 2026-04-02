@@ -2318,28 +2318,30 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                 </div>
               </div>
 
-              <div className="form-actions">
-                <button
-                  className="btn-ghost"
-                  type="button"
-                  onClick={() => {
-                    handleCloseInfo();
-                    handleEdit(infoEmployee);
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn-danger"
-                  type="button"
-                  onClick={() => {
-                    handleCloseInfo();
-                    handleDelete(infoEmployee);
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
+              {infoEmployee.role !== 'manager' ? (
+                <div className="form-actions">
+                  <button
+                    className="btn-ghost"
+                    type="button"
+                    onClick={() => {
+                      handleCloseInfo();
+                      handleEdit(infoEmployee);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn-danger"
+                    type="button"
+                    onClick={() => {
+                      handleCloseInfo();
+                      handleDelete(infoEmployee);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         ) : null}
