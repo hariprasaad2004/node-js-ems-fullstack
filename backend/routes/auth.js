@@ -33,6 +33,12 @@ router.post('/login', async (req, res) => { // Handle login and create a session
       return res.status(403).json({ message: 'Account is inactive.' });
     }
 
+    // Only admin and employee dashboards are allowed; block other roles.
+    const allowedRoles = ['admin', 'employee'];
+    if (!allowedRoles.includes(user.role)) {
+      return res.status(403).json({ message: 'This role is disabled for login.' });
+    }
+
     if (!allowPasswordless) {
       const ok = await bcrypt.compare(password, user.passwordHash);
       if (!ok) {

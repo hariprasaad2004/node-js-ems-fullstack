@@ -130,21 +130,9 @@ router.get('/admin', (req, res) => { // Serve the SPA for the admin route with r
   return res.sendFile(frontendIndex);
 });
 
-router.get('/manager', (req, res) => { // Serve the SPA for the manager route with role checks.
-  const managerSession = getRoleSession(req, 'manager');
-  if (!managerSession?.userId) {
-    return res.redirect('/login');
-  }
-  return res.sendFile(frontendIndex);
-});
-
-router.get('/teamlead', (req, res) => { // Serve the SPA for the team lead route with role checks.
-  const leadSession = getRoleSession(req, 'teamlead');
-  if (!leadSession?.userId) {
-    return res.redirect('/login');
-  }
-  return res.sendFile(frontendIndex);
-});
+// Manager and teamlead dashboards are disabled.
+router.get('/manager', (req, res) => res.status(404).send('Not found'));
+router.get('/teamlead', (req, res) => res.status(404).send('Not found'));
 
 router.get('/api/admin/employees', requireAuth, requireRole(leadRoles), async (req, res) => { // List employees for admin/manager/lead view.
   try {
