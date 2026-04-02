@@ -176,7 +176,7 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
   }, [isDark]);
 
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard">
       <Sidebar
         title="Team Lead"
         items={navItems}
@@ -186,13 +186,13 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
         logoutLabel="Logout"
       />
 
-      <main className="dashboard-main">
-        <header className="dashboard-header">
+      <main className="content">
+        <div className="content-card page-hero">
           <div>
             <h1 className="page-title">Team Lead Dashboard</h1>
             <p className="helper">Assign tasks, watch attendance, and approve leaves.</p>
           </div>
-          <div className="action-row">
+          <div className="toolbar-actions">
             <button className="btn-ghost" type="button" onClick={loadAll} disabled={refreshing}>
               {refreshing ? 'Refreshing...' : 'Refresh'}
             </button>
@@ -200,7 +200,7 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
               Logout
             </button>
           </div>
-        </header>
+        </div>
 
         <section className={`section ${activeSection === 'overview' ? 'active' : ''}`}>
           <div className="content-card">

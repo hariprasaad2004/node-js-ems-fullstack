@@ -179,7 +179,7 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
   }, [isDark]);
 
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard">
       <Sidebar
         title="Manager"
         items={navItems}
@@ -189,13 +189,13 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
         logoutLabel="Logout"
       />
 
-      <main className="dashboard-main">
-        <header className="dashboard-header">
+      <main className="content">
+        <div className="content-card page-hero">
           <div>
             <h1 className="page-title">Manager Dashboard</h1>
             <p className="helper">Lead the team, monitor delivery, and approve requests.</p>
           </div>
-          <div className="action-row">
+          <div className="toolbar-actions">
             <button className="btn-ghost" type="button" onClick={loadAll} disabled={refreshing}>
               {refreshing ? 'Refreshing...' : 'Refresh'}
             </button>
@@ -203,7 +203,7 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
               Logout
             </button>
           </div>
-        </header>
+        </div>
 
         <section className={`section ${activeSection === 'overview' ? 'active' : ''}`}>
           <div className="content-card">
