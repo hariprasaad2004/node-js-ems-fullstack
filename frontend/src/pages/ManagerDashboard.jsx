@@ -202,19 +202,21 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
             <p className="helper">Lead the team, monitor delivery, and approve requests.</p>
           </div>
           <div className="toolbar-actions">
-            <button className="icon-button" type="button" aria-label="Notifications">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M12 3a6 6 0 0 0-6 6v2.2c0 .7-.28 1.37-.78 1.86L4 14.3V16h16v-1.7l-1.22-1.24a2.64 2.64 0 0 1-.78-1.86V9a6 6 0 0 0-6-6Zm0 18a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 21Z"
-                  fill="currentColor"
-                />
-              </svg>
-            </button>
+            <div className="notification-wrapper">
+              <button className="icon-button" type="button" aria-label="Notifications">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 3a6 6 0 0 0-6 6v2.2c0 .7-.28 1.37-.78 1.86L4 14.3V16h16v-1.7l-1.22-1.24a2.64 2.64 0 0 1-.78-1.86V9a6 6 0 0 0-6-6Zm0 18a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 21Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </button>
+            </div>
             <div className="admin-profile">
               <div className="profile-avatar">{getInitial('Manager')}</div>
               <div className="profile-meta">
                 <strong>Manager</strong>
-                <span className="helper">Manager</span>
+                <span className="helper">MANAGER</span>
               </div>
             </div>
           </div>
