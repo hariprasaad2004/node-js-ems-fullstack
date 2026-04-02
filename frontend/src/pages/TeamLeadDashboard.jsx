@@ -6,6 +6,7 @@ import { formatDate, formatDateTime, formatEmployeeLabel, formatStatus } from '.
 
 const navItems = [
   { id: 'overview', label: 'Overview' },
+  { id: 'task-monitor', label: 'Task Monitor' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'leave', label: 'Leave' },
   { id: 'attendance', label: 'Attendance' }
@@ -162,11 +163,51 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
     [leaves]
   );
 
-  const todaysPresence = useMemo(() => {
-    const present = attendance.filter((row) => row.status === 'checked_in' || row.status === 'checked_out').length;
-    const out = attendance.filter((row) => row.status === 'checked_out').length;
-    return { present, out, total: attendance.length };
-  }, [attendance]);
+const todaysPresence = useMemo(() => {
+  const present = attendance.filter((row) => row.status === 'checked_in' || row.status === 'checked_out').length;
+  const out = attendance.filter((row) => row.status === 'checked_out').length;
+  return { present, out, total: attendance.length };
+}, [attendance]);
+
+const taskBuckets = useMemo(() => {
+  let planning = 0;
+  let inProgress = 0;
+  let completed = 0;
+  let overdue = 0;
+  const now = Date.now();
+  tasks.forEach((task) => {
+    const status = (task.status || '').toLowerCase();
+    if (status === 'completed') {
+      completed += 1;
+    } else if (status === 'processing' || status === 'in_progress') {
+      inProgress += 1;
+    } else {
+      planning += 1;
+    }
+    if (status !== 'completed' && task.dueAt) {
+      const due = new Date(task.dueAt).getTime();
+      if (!Number.isNaN(due) && due < now) overdue += 1;
+    }
+  });
+  const total = tasks.length;
+  return { planning, inProgress, completed, overdue, total };
+}, [tasks]);
+
+const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
+
+const filteredTasks = useMemo(() => {
+  if (taskMonitorStatus === 'all') return tasks;
+  if (taskMonitorStatus === 'overdue') {
+    const now = Date.now();
+    return tasks.filter((task) => {
+      const status = (task.status || '').toLowerCase();
+      if (status === 'completed') return false;
+      const due = new Date(task.dueAt).getTime();
+      return !Number.isNaN(due) && due < now;
+    });
+  }
+  return tasks.filter((task) => (task.status || '').toLowerCase() === taskMonitorStatus);
+}, [tasks, taskMonitorStatus]);
 
   const handleLogout = async () => {
     await apiRequest('/logout', {
@@ -329,6 +370,108 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </section>
+
+        <section className={`section ${activeSection === 'task-monitor' ? 'active' : ''}`}>
+          <div className="content-card">
+            <div className="content-card-head">
+              <div>
+                <h2 className="content-title">Task Monitor</h2>
+                <p className="helper">Analytics-first view of task velocity and risk.</p>
+              </div>
+              <div className="pill-group">
+                {['all', 'planning', 'processing', 'completed', 'overdue'].map((status) => {
+                  const label =
+                    status === 'processing'
+                      ? 'In Progress'
+                      : status.charAt(0).toUpperCase() + status.slice(1);
+                  return (
+                    <button
+                      key={status}
+                      className={`pill-button ${taskMonitorStatus === status ? 'active' : ''}`}
+                      type="button"
+                      onClick={() => setTaskMonitorStatus(status)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid-2">
+              <div className="task-monitor-list">
+                {filteredTasks.length === 0 ? (
+                  <div className="notice notice-muted">No tasks in this filter.</div>
+                ) : (
+                  <ul className="task-monitor-ul">
+                    {filteredTasks.map((task) => (
+                      <li key={task.id} className="task-monitor-row">
+                        <div>
+                          <div className="mini-title">{task.details || 'Task'}</div>
+                          <div className="mini-sub">
+                            {task.assignedBy?.name || 'Assigned'} • {formatDateTime(task.dueAt) || '-'}
+                          </div>
+                        </div>
+                        <span className="pill">{formatStatus(task.status)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="task-monitor-metrics">
+                <div className="donut-card">
+                  <div className="mini-chart-header">
+                    <span>System Velocity</span>
+                  </div>
+                  {(() => {
+                    const { total, completed, inProgress, planning } = taskBuckets;
+                    const totalCount = total || 1;
+                    const segments = [
+                      { value: completed, color: '#22c55e' },
+                      { value: inProgress, color: '#38bdf8' },
+                      { value: planning, color: '#f59e0b' }
+                    ];
+                    let current = 0;
+                    const stops = segments
+                      .map((seg) => {
+                        const start = (current / totalCount) * 360;
+                        current += seg.value;
+                        const end = (current / totalCount) * 360;
+                        return `${seg.color} ${start}deg ${end}deg`;
+                      })
+                      .join(', ');
+                    const background = `conic-gradient(${stops || '#1f2937 0deg'})`;
+                    return (
+                      <div className="donut" style={{ background }}>
+                        <div className="donut-center">
+                          <div className="donut-value">{total}</div>
+                          <div className="donut-label">Total</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className="task-alerts">
+                  <h4>Alerts</h4>
+                  <div className="alert-row">
+                    <span>Overdue tasks</span>
+                    <span className="alert-dot alert-red">{taskBuckets.overdue}</span>
+                  </div>
+                  <div className="alert-row">
+                    <span>Pending review</span>
+                    <span className="alert-dot alert-amber">{taskBuckets.planning}</span>
+                  </div>
+                  <div className="alert-row">
+                    <span>In progress</span>
+                    <span className="alert-dot alert-blue">{taskBuckets.inProgress}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
