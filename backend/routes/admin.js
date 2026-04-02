@@ -17,7 +17,7 @@ const leadRoles = ['admin', 'manager', 'teamlead'];
 const staffRoles = ['employee', 'teamlead', 'manager'];
 const managerScopedRoles = ['employee', 'teamlead'];
 const creatableRoles = ['employee', 'teamlead', 'manager']; // admins may create managers too
-const taskAssignRoles = ['admin', 'teamlead'];
+const taskAssignRoles = ['admin', 'manager', 'teamlead'];
 
 const toSafeEmployee = (user) => ({ // Sanitize employee data for API responses.
   id: user._id.toString(),

@@ -2113,6 +2113,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                   <label htmlFor="role">Role / Designation</label>
                   <select id="role" value={formData.role} onChange={handleFormChange}>
                     <option value="employee">Employee</option>
+                    <option value="manager">Manager</option>
                     <option value="teamlead">Team Lead</option>
                   </select>
                 </div>
