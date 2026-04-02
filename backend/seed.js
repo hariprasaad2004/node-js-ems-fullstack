@@ -22,14 +22,6 @@ async function run() {
   const employeeName = process.env.EMPLOYEE_NAME || 'Employee User';
   const employeePassword = process.env.EMPLOYEE_PASSWORD || 'Employee@123';
 
-  const leadEmail = (process.env.TEAM_LEAD_EMAIL || 'lead@company.com').toLowerCase();
-  const leadName = process.env.TEAM_LEAD_NAME || 'Team Lead';
-  const leadPassword = process.env.TEAM_LEAD_PASSWORD || 'Lead@123';
-
-  const managerEmail = (process.env.MANAGER_EMAIL || 'manager@company.com').toLowerCase();
-  const managerName = process.env.MANAGER_NAME || 'Manager User';
-  const managerPassword = process.env.MANAGER_PASSWORD || 'Manager@123';
-
   const existingAdmin = await User.findOne({ email: adminEmail });
   if (existingAdmin) {
     console.log('Admin already exists:', adminEmail);
@@ -60,40 +52,6 @@ async function run() {
     });
     console.log('Employee created:', employeeEmail);
     console.log('Employee password:', employeePassword);
-  }
-
-  const existingLead = await User.findOne({ email: leadEmail });
-  if (existingLead) {
-    console.log('Team lead already exists:', leadEmail);
-  } else {
-    const leadHash = await bcrypt.hash(leadPassword, 10);
-    await User.create({
-      role: 'teamlead',
-      name: leadName,
-      email: leadEmail,
-      passwordHash: leadHash,
-      status: 'active',
-      title: 'Team Lead'
-    });
-    console.log('Team lead created:', leadEmail);
-    console.log('Team lead password:', leadPassword);
-  }
-
-  const existingManager = await User.findOne({ email: managerEmail });
-  if (existingManager) {
-    console.log('Manager already exists:', managerEmail);
-  } else {
-    const managerHash = await bcrypt.hash(managerPassword, 10);
-    await User.create({
-      role: 'manager',
-      name: managerName,
-      email: managerEmail,
-      passwordHash: managerHash,
-      status: 'active',
-      title: 'Manager'
-    });
-    console.log('Manager created:', managerEmail);
-    console.log('Manager password:', managerPassword);
   }
 
   process.exit(0);
