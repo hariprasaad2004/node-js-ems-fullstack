@@ -211,7 +211,7 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
                 </button>
               </div>
               <div className="admin-profile">
-                <div className="profile-avatar">{getInitial('Team Lead')}</div>
+                <div className="admin-avatar">{getInitial('Team Lead')}</div>
                 <div className="profile-meta">
                   <strong>Team Lead</strong>
                   <span className="helper">TEAM LEAD</span>

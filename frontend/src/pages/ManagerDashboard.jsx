@@ -214,7 +214,7 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
                 </button>
               </div>
               <div className="admin-profile">
-                <div className="profile-avatar">{getInitial('Manager')}</div>
+                <div className="admin-avatar">{getInitial('Manager')}</div>
                 <div className="profile-meta">
                   <strong>Manager</strong>
                   <span className="helper">MANAGER</span>
