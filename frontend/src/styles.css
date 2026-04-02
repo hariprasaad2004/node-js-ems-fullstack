@@ -2301,11 +2301,14 @@ body.theme-dark .tooltip-list {
 .modal-card {
   position: relative;
   z-index: 1;
-  background: #ffffff;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
   padding: 24px;
   width: min(420px, 90vw);
-  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px) saturate(140%);
+  color: #e5e7eb;
   display: grid;
   gap: 12px;
 }
@@ -2384,6 +2387,7 @@ body.theme-dark .tooltip-list {
   margin: 0;
   font-family: var(--font-display);
   font-size: 20px;
+  color: #f8fafc;
 }
 
 .insight-row {
