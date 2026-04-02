@@ -194,26 +194,28 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
 
       <main className="content">
         <div className="content-card page-hero">
-          <div>
-            <h1 className="page-title">Team Lead Dashboard</h1>
-            <p className="helper">Assign tasks, watch attendance, and approve leaves.</p>
-          </div>
-          <div className="toolbar-actions">
-            <div className="notification-wrapper">
-              <button className="icon-button" type="button" aria-label="Notifications">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M12 3a6 6 0 0 0-6 6v2.2c0 .7-.28 1.37-.78 1.86L4 14.3V16h16v-1.7l-1.22-1.24a2.64 2.64 0 0 1-.78-1.86V9a6 6 0 0 0-6-6Zm0 18a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 21Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </button>
+          <div className="toolbar">
+            <div>
+              <h1 className="page-title">Team Lead Dashboard</h1>
+              <p className="helper">Assign tasks, watch attendance, and approve leaves.</p>
             </div>
-            <div className="admin-profile">
-              <div className="profile-avatar">{getInitial('Team Lead')}</div>
-              <div className="profile-meta">
-                <strong>Team Lead</strong>
-                <span className="helper">TEAM LEAD</span>
+            <div className="toolbar-actions">
+              <div className="notification-wrapper">
+                <button className="icon-button" type="button" aria-label="Notifications">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M12 3a6 6 0 0 0-6 6v2.2c0 .7-.28 1.37-.78 1.86L4 14.3V16h16v-1.7l-1.22-1.24a2.64 2.64 0 0 1-.78-1.86V9a6 6 0 0 0-6-6Zm0 18a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 21Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div className="admin-profile">
+                <div className="profile-avatar">{getInitial('Team Lead')}</div>
+                <div className="profile-meta">
+                  <strong>Team Lead</strong>
+                  <span className="helper">TEAM LEAD</span>
+                </div>
               </div>
             </div>
           </div>
