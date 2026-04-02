@@ -23,6 +23,7 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
   useBodyClass('page-dashboard');
 
   const [activeSection, setActiveSection] = useState('overview');
+  const [isDark] = useState(true); // lock to dark theme like admin/employee
   const [employees, setEmployees] = useState([]);
   const [employeesError, setEmployeesError] = useState('');
   const [attendance, setAttendance] = useState([]);
@@ -171,6 +172,11 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
     });
     window.location.assign('/login');
   };
+
+  useEffect(() => {
+    if (isDark) document.body.classList.add('theme-dark');
+    return () => document.body.classList.remove('theme-dark');
+  }, [isDark]);
 
   return (
     <div className="dashboard-layout">
