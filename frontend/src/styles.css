@@ -801,6 +801,17 @@ button:focus-visible,
   background: #ffffff;
 }
 
+.profile-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.profile-meta .helper {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
 .admin-avatar {
   width: 36px;
   height: 36px;
