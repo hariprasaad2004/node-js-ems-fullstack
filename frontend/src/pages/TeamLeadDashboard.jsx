@@ -192,6 +192,9 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
             <h1 className="page-title">Team Lead Dashboard</h1>
             <p className="helper">Assign tasks, watch attendance, and approve leaves.</p>
           </div>
+          <div className="toolbar-actions">
+            <span className="pill role-pill role-teamlead">Team Lead</span>
+          </div>
         </div>
 
         <section className={`section ${activeSection === 'overview' ? 'active' : ''}`}>

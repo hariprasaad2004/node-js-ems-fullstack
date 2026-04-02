@@ -195,6 +195,9 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
             <h1 className="page-title">Manager Dashboard</h1>
             <p className="helper">Lead the team, monitor delivery, and approve requests.</p>
           </div>
+          <div className="toolbar-actions">
+            <span className="pill role-pill role-manager">Manager</span>
+          </div>
         </div>
 
         <section className={`section ${activeSection === 'overview' ? 'active' : ''}`}>
