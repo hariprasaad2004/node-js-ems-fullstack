@@ -140,13 +140,55 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
     return { total, active, inactive: total - active, teamCount, leads };
   }, [employees]);
 
-  const attendanceCounts = useMemo(() => {
-    const counts = { checked_in: 0, checked_out: 0, not_checked_in: 0 };
-    attendance.forEach((row) => {
-      counts[row.status] = (counts[row.status] || 0) + 1;
-    });
-    return counts;
-  }, [attendance]);
+const attendanceCounts = useMemo(() => {
+  const counts = { checked_in: 0, checked_out: 0, not_checked_in: 0 };
+  attendance.forEach((row) => {
+    counts[row.status] = (counts[row.status] || 0) + 1;
+  });
+  return counts;
+}, [attendance]);
+
+const attendanceChart = useMemo(() => {
+  const counts = { present: 0, absent: 0, leave: 0 };
+  const dayMap = new Map();
+  attendance.forEach((record) => {
+    const status = record.status;
+    const bucket =
+      status === 'checked_in' || status === 'checked_out'
+        ? 'present'
+        : status === 'on_leave'
+          ? 'leave'
+          : 'absent';
+    counts[bucket] += 1;
+    const dateKey = record.date || record.dateKey;
+    if (dateKey) {
+      const day = dayMap.get(dateKey) || { present: 0, total: 0 };
+      if (bucket === 'present') day.present += 1;
+      day.total += 1;
+      dayMap.set(dateKey, day);
+    }
+  });
+  const total = counts.present + counts.absent + counts.leave;
+  const last7 = Array.from(dayMap.entries())
+    .sort((a, b) => (a[0] > b[0] ? 1 : -1))
+    .slice(-7)
+    .map(([day, data]) => ({
+      day,
+      rate: data.total ? Math.round((data.present / data.total) * 100) : 0
+    }));
+  return { counts, total, last7 };
+}, [attendance]);
+
+const attendanceInsights = useMemo(() => {
+  const total = attendance.length;
+  const checkedIn = attendance.filter(
+    (record) => record.status === 'checked_in' || record.status === 'checked_out'
+  ).length;
+  const checkedOut = attendance.filter((record) => record.status === 'checked_out').length;
+  const missing = attendance.filter((record) => record.status === 'not_checked_in').length;
+  const presenceRate = total ? Math.round((checkedIn / total) * 100) : 0;
+  return { total, checkedIn, checkedOut, missing, presenceRate };
+}, [attendance]);
 
   const pendingLeaves = useMemo(
     () => leaves.filter((leave) => leave.status === 'pending'),
@@ -327,34 +369,144 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
 
         <section className={`section ${activeSection === 'attendance' ? 'active' : ''}`}>
           <div className="content-card">
-            <h2 className="content-title">Attendance Today</h2>
+            <h2 className="content-title">Attendance Overview</h2>
+            <p className="helper">Monitor daily check-ins and hours.</p>
+
             {attendanceError ? (
               <div className="notice">{attendanceError}</div>
-            ) : attendance.length === 0 ? (
-              <div className="notice notice-muted">No attendance yet.</div>
             ) : (
-              <table className="table table-responsive">
-                <thead>
-                  <tr>
-                    <th>Employee</th>
-                    <th>Status</th>
-                    <th>Check In</th>
-                    <th>Check Out</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attendance.map((row) => (
-                    <tr key={row.employee?.id || row.date}>
-                      <td data-label="Employee">
-                        {row.employee ? formatEmployeeLabel(row.employee) : 'Unknown'}
-                      </td>
-                      <td data-label="Status">{formatStatus(row.status)}</td>
-                      <td data-label="Check In">{formatDateTime(row.checkInAt)}</td>
-                      <td data-label="Check Out">{formatDateTime(row.checkOutAt)}</td>
+              <>
+                <div className="attendance-visuals">
+                  <div className="mini-chart">
+                    <div className="mini-chart-header">
+                      <span>Daily attendance rate (last 7 days)</span>
+                      <strong>{attendanceChart.last7.slice(-1)[0]?.rate || 0}%</strong>
+                    </div>
+                    <svg viewBox="0 0 240 80" role="img" aria-label="Attendance rate line">
+                      <polyline
+                        fill="none"
+                        stroke="#2f6fed"
+                        strokeWidth="3"
+                        points={attendanceChart.last7
+                          .map((item, idx) => {
+                            const x =
+                              (idx / Math.max(1, attendanceChart.last7.length - 1)) * 230 + 5;
+                            const y = 70 - (item.rate / 100) * 60;
+                            return `${x},${y}`;
+                          })
+                          .join(' ')}
+                      />
+                      {attendanceChart.last7.map((item, idx) => {
+                        const x =
+                          (idx / Math.max(1, attendanceChart.last7.length - 1)) * 230 + 5;
+                        const y = 70 - (item.rate / 100) * 60;
+                        return <circle key={item.day} cx={x} cy={y} r="4" fill="#7dd3fc" />;
+                      })}
+                    </svg>
+                    <div className="mini-chart-footer">
+                      {attendanceChart.last7.map((item) => (
+                        <span key={item.day}>{item.day?.slice(5) || '-'}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="donut-card">
+                    <div className="mini-chart-header">
+                      <span>Present / Absent / Leave</span>
+                    </div>
+                    {(() => {
+                      const { present, absent, leave } = attendanceChart.counts;
+                      const total = attendanceChart.total || 1;
+                      const segments = [
+                        { value: present, color: '#22c55e' },
+                        { value: absent, color: '#ef4444' },
+                        { value: leave, color: '#3b82f6' }
+                      ];
+                      let current = 0;
+                      const stops = segments
+                        .map((seg) => {
+                          const start = (current / total) * 360;
+                          current += seg.value;
+                          const end = (current / total) * 360;
+                          return `${seg.color} ${start}deg ${end}deg`;
+                        })
+                        .join(', ');
+                      const background = `conic-gradient(${stops || '#1f2937 0deg'})`;
+                      return (
+                        <div className="donut sm" style={{ background }}>
+                          <div className="donut-center">
+                            <div className="donut-value">{total === 0 ? 0 : present}</div>
+                            <div className="donut-label">Present</div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    <div className="donut-legend">
+                      <div className="legend-row">
+                        <span className="legend-dot" style={{ background: '#22c55e' }} />
+                        <span>Present</span>
+                        <strong>{attendanceChart.counts.present}</strong>
+                      </div>
+                      <div className="legend-row">
+                        <span className="legend-dot" style={{ background: '#ef4444' }} />
+                        <span>Absent</span>
+                        <strong>{attendanceChart.counts.absent}</strong>
+                      </div>
+                      <div className="legend-row">
+                        <span className="legend-dot" style={{ background: '#3b82f6' }} />
+                        <span>Leave</span>
+                        <strong>{attendanceChart.counts.leave}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="insight-row compact">
+                  <div className="insight-chip">
+                    <span>Presence</span>
+                    <strong>{attendanceInsights.presenceRate}%</strong>
+                  </div>
+                  <div className="insight-chip">
+                    <span>Checked out</span>
+                    <strong>{attendanceInsights.checkedOut}</strong>
+                  </div>
+                  <div className="insight-chip">
+                    <span>Not checked in</span>
+                    <strong>{attendanceInsights.missing}</strong>
+                  </div>
+                </div>
+
+                <table className="table table-responsive">
+                  <thead>
+                    <tr>
+                      <th>Employee</th>
+                      <th>Status</th>
+                      <th>Check In</th>
+                      <th>Check Out</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {attendance.length === 0 ? (
+                      <tr>
+                        <td colSpan="4">Attendance data will appear here.</td>
+                      </tr>
+                    ) : (
+                      attendance.map((record, index) => (
+                        <tr key={`${record.employee?.id || 'unknown'}-${index}`}>
+                          <td data-label="Employee">
+                            {record.employee
+                              ? `${record.employee.name} (${record.employee.email})`
+                              : 'Unknown'}
+                          </td>
+                          <td data-label="Status">{formatStatus(record.status)}</td>
+                          <td data-label="Check In">{formatDateTime(record.checkInAt)}</td>
+                          <td data-label="Check Out">{formatDateTime(record.checkOutAt)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </>
             )}
           </div>
         </section>
