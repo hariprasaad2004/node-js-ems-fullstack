@@ -2528,6 +2528,27 @@ body.theme-dark .insight-sub {
   color: #b86d08;
 }
 
+/* Role badges */
+.role-pill {
+  font-weight: 600;
+  padding: 5px 12px;
+}
+.role-manager {
+  background: #2563eb;
+  border-color: #1e3a8a;
+  color: #f8fafc;
+}
+.role-teamlead {
+  background: #f59e0b;
+  border-color: #b45309;
+  color: #1f2937;
+}
+.role-employee {
+  background: #10b981;
+  border-color: #047857;
+  color: #f8fafc;
+}
+
 .eod-timeline {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

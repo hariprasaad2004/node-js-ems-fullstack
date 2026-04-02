@@ -49,6 +49,13 @@ const initialMyLeaveForm = {
   reason: ''
 };
 
+const getRoleBadgeClass = (role = '') => { // Map roles to badge tone classes.
+  const value = role.toLowerCase();
+  if (value === 'manager') return 'role-manager';
+  if (value === 'teamlead') return 'role-teamlead';
+  return 'role-employee';
+};
+
 const MAX_IMAGE_SIZE = 1_500_000; // 1.5 MB
 
 const formatDateKey = (date = new Date()) => {
@@ -2001,7 +2008,12 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                         <h3 className="employee-name">{employee.name}</h3>
                         <p className="employee-role">
                           {employee.title || roleLabel}
-                          <span className="pill" style={{ marginLeft: '8px' }}>{roleLabel}</span>
+                          <span
+                            className={`pill role-pill ${getRoleBadgeClass(employee.role)}`}
+                            style={{ marginLeft: '8px' }}
+                          >
+                            {roleLabel}
+                          </span>
                         </p>
                         <div className="employee-id">ID: {idSuffix}</div>
                       </div>
