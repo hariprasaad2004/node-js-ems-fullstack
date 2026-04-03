@@ -2195,7 +2195,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               <div className="modal-header">
                 <div>
                   <h3 id="task-form-title">Assign Task</h3>
-                  <p className="helper">Select an employee and set a due time.</p>
+                  <p className="helper">Assign to an employee or team lead and set a due time.</p>
                 </div>
                 <button className="btn-ghost modal-close" type="button" onClick={handleCloseTaskForm}>
                   Close
@@ -2204,7 +2204,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
 
               <form className="form-grid" onSubmit={handleAssignTask}>
                 <div>
-                  <label htmlFor="task-employee">Employee</label>
+                  <label htmlFor="task-employee">Assign To</label>
                   <select
                     id="task-employee"
                     name="employeeId"
@@ -2213,10 +2213,13 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
                     disabled={employees.length === 0}
                   >
                     <option value="">
-                      {employees.length === 0 ? 'No employees available' : 'Select employee'}
+                      {employees.length === 0 ? 'No assignees available' : 'Select assignee'}
                     </option>
                     {employees
-                      .filter((employee) => (employee.role || '').toLowerCase() === 'employee')
+                      .filter((employee) => {
+                        const role = (employee.role || '').toLowerCase();
+                        return role === 'employee' || role === 'teamlead';
+                      })
                       .map((employee) => (
                         <option key={employee.id} value={employee.id}>
                           {formatEmployeeLabel(employee)}
