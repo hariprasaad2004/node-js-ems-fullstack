@@ -1383,6 +1383,7 @@ body.theme-dark .insight-stat-row strong {
 .pill-ghost { background: #0f172a; border: 1px solid #1f2a44; color: #dbeafe; }
 .pill-due { background: #0f172a; border: 1px solid #f59e0b; color: #fbbf24; }
 .pill-soft { background: #0f172a; border: 1px solid #1f2a44; color: #e2e8f0; }
+.task-stack { display: grid; gap: 14px; }
 .status-planning { color: #fbbf24; border-color: #f59e0b; }
 .status-processing, .status-in_progress { color: #38bdf8; border-color: #38bdf8; }
 .status-completed { color: #22c55e; border-color: #22c55e; }

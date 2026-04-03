@@ -707,7 +707,7 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
                 {filteredTasks.length === 0 ? (
                   <div className="notice notice-muted">No tasks in this filter.</div>
                 ) : (
-                  <div className="task-card-grid task-card-grid-lined">
+                  <div className="task-stack">
                     {filteredTasks.map((task) => (
                       <div className="task-card task-card-lined" key={task.id}>
                         <div className="task-card-badge">
