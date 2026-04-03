@@ -26,6 +26,7 @@ async function run() {
   const managerName = process.env.MANAGER_NAME || 'Manager User';
   const managerPassword = process.env.MANAGER_PASSWORD || 'Manager@123';
 
+
   const existingAdmin = await User.findOne({ email: adminEmail });
   if (existingAdmin) {
     console.log('Admin already exists:', adminEmail);
@@ -73,6 +74,7 @@ async function run() {
     console.log('Manager created:', managerEmail);
     console.log('Manager password:', managerPassword);
   }
+
 
   process.exit(0);
 }
