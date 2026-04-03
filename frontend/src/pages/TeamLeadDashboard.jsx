@@ -149,6 +149,7 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
     }
     setTaskStatus('Task assigned.');
     setTaskForm(initialTaskForm);
+    setShowAssignForm(false);
     await loadTasks();
   }
 
@@ -577,61 +578,81 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
                 ))}
               </div>
             )}
-
-            {showAssignForm ? (
-              <form className="form-grid assign-form" onSubmit={handleAssignTask}>
-                <div>
-                  <label htmlFor="task-employee">Assign To</label>
-                  <select
-                    id="task-employee"
-                    name="employeeId"
-                    value={taskForm.employeeId}
-                    onChange={handleTaskFormChange}
-                  >
-                    <option value="">Select employee</option>
-                    {employees
-                      .filter((emp) => emp.role === 'employee' || emp.role === 'teamlead')
-                      .map((emp) => (
-                        <option value={emp.id} key={emp.id}>
-                          {formatEmployeeLabel(emp)}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="task-due">Due At</label>
-                  <input
-                    id="task-due"
-                    name="dueAt"
-                    type="datetime-local"
-                    value={taskForm.dueAt}
-                    onChange={handleTaskFormChange}
-                  />
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label htmlFor="task-details">Details</label>
-                  <textarea
-                    id="task-details"
-                    name="details"
-                    placeholder="Describe the task"
-                    value={taskForm.details}
-                    onChange={handleTaskFormChange}
-                  />
-                </div>
-                <div className="assign-actions">
-                  <button className="btn-ghost" type="button" onClick={() => setShowAssignForm(false)}>
-                    Cancel
-                  </button>
-                  <button className="btn-primary" type="submit">
-                    Assign
-                  </button>
-                </div>
-                <p className="helper" style={{ color: taskStatus.includes('failed') ? '#c13e2d' : '#0e7c7b' }}>
-                  {taskStatus}
-                </p>
-              </form>
-            ) : null}
           </div>
+
+          {showAssignForm ? (
+            <div className="modal active" aria-hidden={!showAssignForm}>
+              <div className="modal-backdrop" onClick={() => setShowAssignForm(false)} />
+              <div className="modal-card form-modal" role="dialog" aria-modal="true">
+                <div className="modal-header">
+                  <div>
+                    <h3>Assign Task</h3>
+                    <p className="helper">Assign to an employee or team lead and set a due time.</p>
+                  </div>
+                  <button className="btn-ghost modal-close" type="button" onClick={() => setShowAssignForm(false)}>
+                    Close
+                  </button>
+                </div>
+
+                <form className="form-grid" onSubmit={handleAssignTask}>
+                  <div className="span-2">
+                    <label htmlFor="task-employee">Assign To</label>
+                    <select
+                      id="task-employee"
+                      name="employeeId"
+                      value={taskForm.employeeId}
+                      onChange={handleTaskFormChange}
+                    >
+                      <option value="">Select employee</option>
+                      {employees
+                        .filter((emp) => emp.role === 'employee')
+                        .map((emp) => (
+                          <option value={emp.id} key={emp.id}>
+                            {formatEmployeeLabel(emp)}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="span-2">
+                    <label htmlFor="task-due">Due At</label>
+                    <input
+                      id="task-due"
+                      name="dueAt"
+                      type="datetime-local"
+                      value={taskForm.dueAt}
+                      onChange={handleTaskFormChange}
+                      placeholder="dd-mm-yyyy --:-- --"
+                    />
+                  </div>
+                  <div className="span-2">
+                    <label htmlFor="task-details">Details</label>
+                    <textarea
+                      id="task-details"
+                      name="details"
+                      placeholder="Describe the task"
+                      value={taskForm.details}
+                      onChange={handleTaskFormChange}
+                      rows={4}
+                    />
+                  </div>
+                  <div className="form-actions span-2" style={{ justifyContent: 'flex-end' }}>
+                    <button className="btn-ghost" type="button" onClick={() => setShowAssignForm(false)}>
+                      Cancel
+                    </button>
+                    <button className="btn-primary" type="submit">
+                      Assign
+                    </button>
+                  </div>
+                  <p
+                    className="helper span-2"
+                    style={{ color: taskStatus.includes('failed') ? '#c13e2d' : '#0e7c7b' }}
+                  >
+                    {taskStatus}
+                  </p>
+                </form>
+              </div>
+            </div>
+          ) : null}
 
           <div className="content-card">
             <h2 className="content-title">Active Tasks</h2>
