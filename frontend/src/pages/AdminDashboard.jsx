@@ -209,7 +209,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [statNow, setStatNow] = useState(() => new Date());
   const [selectedPerfId, setSelectedPerfId] = useState(null);
   const [activePerf, setActivePerf] = useState(null);
-  const [leaveEmployeeFilter, setLeaveEmployeeFilter] = useState('all');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -344,15 +343,9 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     });
   }, [employees, searchTerm, statusFilter, departmentFilter]);
 
-  const filteredPendingLeaves = useMemo(() => {
-    if (leaveEmployeeFilter === 'all') return pendingLeaves;
-    return pendingLeaves.filter((leave) => leave.employee?.id === leaveEmployeeFilter);
-  }, [pendingLeaves, leaveEmployeeFilter]);
+  const filteredPendingLeaves = useMemo(() => pendingLeaves, [pendingLeaves]);
 
-  const filteredLeaveHistory = useMemo(() => {
-    if (leaveEmployeeFilter === 'all') return leaveHistory;
-    return leaveHistory.filter((leave) => leave.employee?.id === leaveEmployeeFilter);
-  }, [leaveHistory, leaveEmployeeFilter]);
+  const filteredLeaveHistory = useMemo(() => leaveHistory, [leaveHistory]);
 
   useEffect(() => {
     const now = new Date();
@@ -2362,23 +2355,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
             >
               {leaveStatus.message}
             </p>
-            <div className="action-row" style={{ marginBottom: '12px' }}>
-              <label htmlFor="leave-filter">
-                <span className="helper">Filter by employee</span>
-                <select
-                  id="leave-filter"
-                  value={leaveEmployeeFilter}
-                  onChange={(e) => setLeaveEmployeeFilter(e.target.value)}
-                >
-                  <option value="all">All employees</option>
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.email})
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
             <div className="insight-row compact">
               <div className="insight-chip">
                 <span>Approval rate</span>

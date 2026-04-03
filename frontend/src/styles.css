@@ -1370,6 +1370,34 @@ body.theme-dark .insight-stat-row strong {
   font-weight: 600;
 }
 
+/* Task layout and my-tasks sidebar */
+.task-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; align-items: start; }
+.task-main { display: grid; gap: 16px; }
+.task-side { display: grid; gap: 16px; }
+.task-card-grid-lined { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.task-card-lined { position: relative; border: 1px solid #f59e0b; background: #0d1526; padding: 14px; box-shadow: inset 0 0 0 1px rgba(245,158,11,0.15), 0 12px 30px rgba(0,0,0,0.35); }
+.task-card-badge { position: absolute; top: 12px; right: 12px; }
+.task-card-lined .task-card-row span[role='img'] { font-size: 14px; }
+.task-card-lined .task-card-row strong { font-weight: 700; }
+.task-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 8px; border-top: 1px solid #1e293b; font-weight: 700; }
+.pill-ghost { background: #0f172a; border: 1px solid #1f2a44; color: #dbeafe; }
+.pill-due { background: #0f172a; border: 1px solid #f59e0b; color: #fbbf24; }
+.pill-soft { background: #0f172a; border: 1px solid #1f2a44; color: #e2e8f0; }
+.status-planning { color: #fbbf24; border-color: #f59e0b; }
+.status-processing, .status-in_progress { color: #38bdf8; border-color: #38bdf8; }
+.status-completed { color: #22c55e; border-color: #22c55e; }
+.status-overdue { color: #f87171; border-color: #f87171; }
+.mytask-card { position: sticky; top: 20px; }
+.mytask-list { display: grid; gap: 12px; }
+.mytask-item { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; background: #0c1224; border: 1px solid #1f2a44; border-radius: 12px; padding: 10px 12px; }
+.mytask-dot { width: 8px; height: 8px; border-radius: 50%; background: #38bdf8; }
+.mytask-title { font-weight: 800; font-size: 14px; color: #e2e8f0; }
+.mytask-meta { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+.mytask-due { font-size: 12px; color: #cbd5e1; margin-top: 4px; }
+.mytask-due span { font-weight: 700; margin-right: 6px; }
+.mytask-empty { background: #0f172a; border: 1px dashed #1f2a44; border-radius: 12px; padding: 12px 14px; color: #94a3b8; font-weight: 700; }
+@media (max-width: 980px) { .task-layout { grid-template-columns: 1fr; } .mytask-card { position: static; } }
+
 .table {
   width: 100%;
   border-collapse: collapse;
