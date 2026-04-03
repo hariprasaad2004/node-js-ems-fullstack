@@ -44,6 +44,10 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
   const [taskForm, setTaskForm] = useState(initialTaskForm);
   const [refreshing, setRefreshing] = useState(false);
   const [showAssignForm, setShowAssignForm] = useState(false);
+  const visibleTasks = useMemo(
+    () => tasks.filter((task) => (task.employee?.role || '').toLowerCase() !== 'manager'),
+    [tasks]
+  );
 
   useEffect(() => {
     loadAll();
@@ -103,7 +107,10 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
       setTasks([]);
       return;
     }
-    setTasks(Array.isArray(data) ? data : []);
+    const cleaned = (Array.isArray(data) ? data : []).filter(
+      (task) => (task.employee?.role || '').toLowerCase() !== 'manager'
+    );
+    setTasks(cleaned);
   }
 
   async function handleLeaveAction(id, status) { // Approve/reject within role scope.
@@ -176,14 +183,14 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
 
   const upcomingTasks = useMemo(
     () =>
-      tasks
+      visibleTasks
         .filter((task) => {
           const due = toTime(task.dueAt);
           return due && due > Date.now();
         })
         .sort((a, b) => toTime(a.dueAt) - toTime(b.dueAt))
         .slice(0, 4),
-    [tasks]
+    [visibleTasks]
   );
 
   const pendingLeaves = useMemo(
@@ -205,18 +212,19 @@ const todaysPresence = useMemo(() => {
   return { present, out, total: scopedAttendance.length };
 }, [scopedAttendance]);
 
-const taskBuckets = useMemo(() => {
-  let planning = 0;
-  let inProgress = 0;
-  let completed = 0;
-  let overdue = 0;
-  const now = Date.now();
-  tasks.forEach((task) => {
-    const status = (task.status || '').toLowerCase();
-    if (status === 'completed') {
-      completed += 1;
-    } else if (status === 'processing' || status === 'in_progress') {
-      inProgress += 1;
+  const taskBuckets = useMemo(() => {
+    let planning = 0;
+    let inProgress = 0;
+    let completed = 0;
+    let overdue = 0;
+    const now = Date.now();
+    visibleTasks
+      .forEach((task) => {
+        const status = (task.status || '').toLowerCase();
+        if (status === 'completed') {
+          completed += 1;
+        } else if (status === 'processing' || status === 'in_progress') {
+          inProgress += 1;
     } else {
       planning += 1;
     }
@@ -225,9 +233,9 @@ const taskBuckets = useMemo(() => {
       if (!Number.isNaN(due) && due < now) overdue += 1;
     }
   });
-  const total = tasks.length;
+  const total = visibleTasks.length;
   return { planning, inProgress, completed, overdue, total };
-}, [tasks]);
+}, [visibleTasks]);
 
   const completionRate = useMemo(() => {
     if (!taskBuckets.total) return 0;
@@ -235,25 +243,28 @@ const taskBuckets = useMemo(() => {
   }, [taskBuckets]);
 
   const myTasks = useMemo(
-    () => tasks.filter((task) => (task.employee?.role || '').toLowerCase() === 'teamlead'),
-    [tasks]
+    () =>
+    visibleTasks
+      .filter((task) => (task.employee?.role || '').toLowerCase() === 'teamlead'),
+    [visibleTasks]
   );
 
 const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
 
   const filteredTasks = useMemo(() => {
-    if (taskMonitorStatus === 'all') return tasks;
+    const scope = visibleTasks;
+    if (taskMonitorStatus === 'all') return scope;
     if (taskMonitorStatus === 'overdue') {
-    const now = Date.now();
-    return tasks.filter((task) => {
-      const status = (task.status || '').toLowerCase();
-      if (status === 'completed') return false;
-      const due = new Date(task.dueAt).getTime();
-      return !Number.isNaN(due) && due < now;
-    });
-  }
-  return tasks.filter((task) => (task.status || '').toLowerCase() === taskMonitorStatus);
-  }, [tasks, taskMonitorStatus]);
+      const now = Date.now();
+      return scope.filter((task) => {
+        const status = (task.status || '').toLowerCase();
+        if (status === 'completed') return false;
+        const due = new Date(task.dueAt).getTime();
+        return !Number.isNaN(due) && due < now;
+      });
+    }
+    return scope.filter((task) => (task.status || '').toLowerCase() === taskMonitorStatus);
+  }, [visibleTasks, taskMonitorStatus]);
 
   const overviewRanges = useMemo(() => {
     const now = new Date();
@@ -269,10 +280,11 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
     const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
     const summarize = (start, end) => {
-      const bucket = tasks.filter((task) => {
-        const dueTs = toTime(task.dueAt || task.createdAt);
-        return dueTs && dueTs >= start.getTime() && dueTs < end.getTime();
-      });
+      const bucket = visibleTasks
+        .filter((task) => {
+          const dueTs = toTime(task.dueAt || task.createdAt);
+          return dueTs && dueTs >= start.getTime() && dueTs < end.getTime();
+        });
       const completed = bucket.filter((task) => (task.status || '').toLowerCase() === 'completed')
         .length;
       const pending = bucket.length - completed;
@@ -291,7 +303,7 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
       week: { ...week, nextRefreshLabel: formatNext(endWeek) },
       month: { ...month, nextRefreshLabel: formatNext(endMonth) }
     };
-  }, [tasks]);
+  }, [visibleTasks]);
 
   const handleLogout = async () => {
     await apiRequest('/logout', {
@@ -568,11 +580,11 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
               </div>
             </div>
 
-            {tasks.length === 0 ? (
+            {visibleTasks.length === 0 ? (
               <div className="assign-empty">No tasks assigned yet.</div>
             ) : (
               <div className="task-summary-grid">
-                {tasks.map((task) => (
+                {visibleTasks.map((task) => (
                   <div className="task-summary-card" key={task.id}>
                     <div className="task-card-badge">
                       <span className={`pill pill-soft status-${(task.status || 'planning').toLowerCase()}`}>
@@ -708,7 +720,7 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
                   <div className="notice notice-muted">No tasks in this filter.</div>
                 ) : (
                   <div className="task-stack">
-                    {filteredTasks.map((task) => {
+                {filteredTasks.map((task) => {
                       const statusClass = `status-${(task.status || 'planning').toLowerCase()}`;
                       const statusLabel = formatStatus(task.status || 'planning');
                       const dueTs = new Date(task.dueAt).getTime();

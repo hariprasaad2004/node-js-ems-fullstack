@@ -44,6 +44,10 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
   const [eodSummary, setEodSummary] = useState(null);
   const [eodError, setEodError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const visibleTasks = useMemo(
+    () => tasks.filter((task) => (task.employee?.role || '').toLowerCase() !== 'manager'),
+    [tasks]
+  );
 
   useEffect(() => {
     loadAll();
@@ -100,7 +104,10 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
       setTasks([]);
       return;
     }
-    setTasks(Array.isArray(data) ? data : []);
+    const cleaned = (Array.isArray(data) ? data : []).filter(
+      (task) => (task.employee?.role || '').toLowerCase() !== 'manager'
+    );
+    setTasks(cleaned);
   }
 
   async function loadEods() { // Fetch EOD reports and summary.
@@ -197,7 +204,7 @@ const taskBuckets = useMemo(() => {
   let completed = 0;
   let overdue = 0;
   const now = Date.now();
-  tasks.forEach((task) => {
+  visibleTasks.forEach((task) => {
     const status = (task.status || '').toLowerCase();
     if (status === 'completed') {
       completed += 1;
@@ -211,25 +218,25 @@ const taskBuckets = useMemo(() => {
       if (!Number.isNaN(due) && due < now) overdue += 1;
     }
   });
-  const total = tasks.length;
+  const total = visibleTasks.length;
   return { planning, inProgress, completed, overdue, total };
-}, [tasks]);
+}, [visibleTasks]);
 
 const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
 
 const filteredTasks = useMemo(() => {
-  if (taskMonitorStatus === 'all') return tasks;
+  if (taskMonitorStatus === 'all') return visibleTasks;
   if (taskMonitorStatus === 'overdue') {
     const now = Date.now();
-    return tasks.filter((task) => {
+    return visibleTasks.filter((task) => {
       const status = (task.status || '').toLowerCase();
       if (status === 'completed') return false;
       const due = new Date(task.dueAt).getTime();
       return !Number.isNaN(due) && due < now;
     });
   }
-  return tasks.filter((task) => (task.status || '').toLowerCase() === taskMonitorStatus);
-}, [tasks, taskMonitorStatus]);
+  return visibleTasks.filter((task) => (task.status || '').toLowerCase() === taskMonitorStatus);
+}, [visibleTasks, taskMonitorStatus]);
 
   const pendingLeaves = useMemo(
     () => leaves.filter((leave) => leave.status === 'pending'),
@@ -250,17 +257,17 @@ const filteredTasks = useMemo(() => {
     [employees]
   );
 
-  const upcomingTasks = useMemo(
-    () =>
-      tasks
-        .filter((task) => {
-          const due = toTime(task.dueAt);
-          return due && due > Date.now();
-        })
-        .sort((a, b) => toTime(a.dueAt) - toTime(b.dueAt))
-        .slice(0, 4),
-    [tasks]
-  );
+const upcomingTasks = useMemo(
+  () =>
+    visibleTasks
+      .filter((task) => {
+        const due = toTime(task.dueAt);
+        return due && due > Date.now();
+      })
+      .sort((a, b) => toTime(a.dueAt) - toTime(b.dueAt))
+      .slice(0, 4),
+  [visibleTasks]
+);
 
   const recentTasks = useMemo(
     () =>
@@ -285,7 +292,7 @@ const filteredTasks = useMemo(() => {
     const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
     const summarize = (start, end) => {
-      const bucket = tasks.filter((task) => {
+      const bucket = visibleTasks.filter((task) => {
         const dueTs = toTime(task.dueAt || task.createdAt);
         return dueTs && dueTs >= start.getTime() && dueTs < end.getTime();
       });
@@ -307,7 +314,7 @@ const filteredTasks = useMemo(() => {
       week: { ...week, nextRefreshLabel: formatNext(endWeek) },
       month: { ...month, nextRefreshLabel: formatNext(endMonth) }
     };
-  }, [tasks]);
+  }, [visibleTasks]);
 
   const topEods = useMemo(
     () =>
@@ -875,11 +882,11 @@ const filteredTasks = useMemo(() => {
             <h2 className="content-title">Tasks</h2>
             {taskError ? (
               <div className="notice">{taskError}</div>
-            ) : tasks.length === 0 ? (
+            ) : visibleTasks.length === 0 ? (
               <div className="notice notice-muted">No tasks assigned.</div>
             ) : (
               <div className="task-card-grid">
-                {tasks.map((task) => (
+                {visibleTasks.map((task) => (
                   <div className="task-card" key={task.id}>
                     <div className="task-card-header">
                       <div>

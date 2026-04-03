@@ -869,7 +869,10 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       return;
     }
 
-    setTasks(Array.isArray(data) ? data : []);
+    const cleaned = (Array.isArray(data) ? data : []).filter(
+      (task) => (task.employee?.role || '').toLowerCase() !== 'manager'
+    );
+    setTasks(cleaned);
   }
 
   async function loadEods(selectedEmployee) { // Fetch EODs with analytics.
