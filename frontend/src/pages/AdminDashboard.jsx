@@ -533,16 +533,27 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   }, [eodSummary]);
 
   const performanceLeaderboard = useMemo(() => {
-    const list = (eodSummary?.perEmployee || []).map((item) => ({
-      name: item.name || 'Employee',
-      department: item.department || '',
-      score: item.completionRate || 0,
-      completed: item.completed || 0,
-      total: item.total || 0
-    }));
+    // Skip managers in performance widgets.
+    const roleLookup = new Map(
+      employees.map((emp) => {
+        const key = emp.id || emp.email || emp.name;
+        return [key, (emp.role || '').toLowerCase()];
+      })
+    );
+
+    const list = (eodSummary?.perEmployee || [])
+      .filter((item) => (roleLookup.get(item.employeeId || item.email || item.name) || '') !== 'manager')
+      .map((item) => ({
+        name: item.name || 'Employee',
+        department: item.department || '',
+        score: item.completionRate || 0,
+        completed: item.completed || 0,
+        total: item.total || 0
+      }));
+
     const sorted = list.slice().sort((a, b) => b.score - a.score);
     return sorted.slice(0, 5);
-  }, [eodSummary]);
+  }, [eodSummary, employees]);
 
   const performanceStatuses = useMemo(() => {
     const byId = new Map();
@@ -556,6 +567,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     });
 
     return employees
+      .filter((emp) => (emp.role || '').toLowerCase() !== 'manager')
       .slice()
       .sort((a, b) => (a.status === b.status ? 0 : a.status === 'active' ? -1 : 1))
       .map((emp) => {
