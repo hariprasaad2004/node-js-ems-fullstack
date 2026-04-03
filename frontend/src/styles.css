@@ -1404,6 +1404,13 @@ body.theme-dark .insight-stat-row strong {
 .mytask-empty { background: #0f172a; border: 1px dashed #1f2a44; border-radius: 12px; padding: 12px 14px; color: #94a3b8; font-weight: 700; }
 @media (max-width: 980px) { .task-layout { grid-template-columns: 1fr; } .mytask-card { position: static; } }
 
+.task-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 16px; }
+.task-summary-card { position: relative; background: #0c1224; border: 1px solid #1f2a44; border-radius: 14px; padding: 14px 16px; box-shadow: 0 12px 28px rgba(0,0,0,0.28); display: grid; gap: 10px; }
+.task-summary-top { display: flex; gap: 12px; align-items: center; }
+.task-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #1e293b, #0f172a); color: #dbeafe; display: grid; place-items: center; font-weight: 800; }
+.task-summary-row { display: flex; justify-content: space-between; font-size: 12px; color: #cbd5e1; }
+.task-summary-label { color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -2073,6 +2080,10 @@ body.theme-dark .tooltip-list {
   padding: 12px 14px;
   display: grid;
   gap: 6px;
+}
+
+.assign-metrics.compact {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .assign-label {

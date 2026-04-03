@@ -538,145 +538,66 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
         </section>
 
         <section className={`section ${activeSection === 'tasks' ? 'active' : ''}`}>
-          <div className="task-layout">
-            <div className="task-main">
-              <div className="content-card assign-card">
-                <div className="assign-head">
-                  <div>
-                    <h2 className="content-title">Assign Task</h2>
-                    <p className="helper">Assign tasks and track progress.</p>
-                  </div>
-                  <button
-                    className="btn-glow"
-                    type="button"
-                    onClick={() => setShowAssignForm((prev) => !prev)}
-                  >
-                    Assign Task
-                  </button>
-                </div>
-
-                <div className="assign-metrics">
-                  <div className="assign-metric">
-                    <span className="assign-label">Completion</span>
-                    <strong className="assign-value">{completionRate}%</strong>
-                  </div>
-                  <div className="assign-metric">
-                    <span className="assign-label">In Progress</span>
-                    <strong className="assign-value">{taskBuckets.inProgress}</strong>
-                  </div>
-                  <div className="assign-metric">
-                    <span className="assign-label">Planning</span>
-                    <strong className="assign-value">{taskBuckets.planning}</strong>
-                  </div>
-                  <div className="assign-metric">
-                    <span className="assign-label">Overdue</span>
-                    <strong className="assign-value">{taskBuckets.overdue}</strong>
-                  </div>
-                </div>
-
-                {tasks.length === 0 ? (
-                  <div className="assign-empty">No tasks assigned yet.</div>
-                ) : (
-                  <div className="mini-list dense">
-                    {tasks.slice(0, 4).map((task) => (
-                      <div className="mini-item" key={task.id}>
-                        <div>
-                          <div className="mini-title">{task.details || 'Task'}</div>
-                          <div className="mini-sub">
-                            {task.employee ? formatEmployeeLabel(task.employee) : 'Employee'}
-                          </div>
-                        </div>
-                        <div className="mini-side">
-                          <span className="mini-meta">{formatDate(task.dueAt)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+          <div className="content-card assign-card">
+            <div className="assign-head">
+              <div>
+                <h2 className="content-title">Assign Task</h2>
+                <p className="helper">Assign tasks and track progress.</p>
               </div>
+              <button className="btn-glow" type="button" onClick={() => setShowAssignForm(true)}>
+                Assign Task
+              </button>
+            </div>
 
-              <div className="content-card">
-                <h2 className="content-title">Active Tasks</h2>
-                {taskError ? (
-                  <div className="notice">{taskError}</div>
-                ) : tasks.length === 0 ? (
-                  <div className="notice notice-muted">No tasks yet.</div>
-                ) : (
-                  <div className="task-card-grid task-card-grid-lined">
-                    {tasks.map((task) => (
-                      <div className="task-card task-card-lined" key={task.id}>
-                        <div className="task-card-badge">
-                          <span className={`pill pill-soft status-${(task.status || 'planning').toLowerCase()}`}>
-                            {formatStatus(task.status)}
-                          </span>
-                        </div>
-                        <div className="task-card-header">
-                          <div>
-                            <div className="task-title">{task.details}</div>
-                          </div>
-                        </div>
-                        <div className="task-card-row">
-                          <span role="img" aria-label="assignee">👤</span>
-                          <strong>{task.employee ? formatEmployeeLabel(task.employee) : 'Unknown'}</strong>
-                        </div>
-                        <div className="task-card-row">
-                          <span role="img" aria-label="assigned">🗓️</span>
-                          <strong>{formatDateTime(task.createdAt)}</strong>
-                        </div>
-                        <div className="task-card-row">
-                          <span role="img" aria-label="due">⏳</span>
-                          <strong className="pill-soft pill-due">{formatDateTime(task.dueAt) || '-'}</strong>
-                        </div>
-                        <div className="task-card-footer">
-                          <span className="task-status-footer">{formatStatus(task.status || 'planning')}</span>
-                          <span className="pill pill-ghost">On track</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+            <div className="assign-metrics compact">
+              <div className="assign-metric">
+                <span className="assign-label">Completion</span>
+                <strong className="assign-value">{completionRate}%</strong>
+              </div>
+              <div className="assign-metric">
+                <span className="assign-label">In Progress</span>
+                <strong className="assign-value">{taskBuckets.inProgress}</strong>
+              </div>
+              <div className="assign-metric">
+                <span className="assign-label">Planning</span>
+                <strong className="assign-value">{taskBuckets.planning}</strong>
+              </div>
+              <div className="assign-metric">
+                <span className="assign-label">Overdue</span>
+                <strong className="assign-value">{taskBuckets.overdue}</strong>
               </div>
             </div>
 
-            <div className="task-side">
-              <div className="content-card mytask-card">
-                <h2 className="content-title">My Tasks</h2>
-                <p className="helper">Tasks assigned to you by admin/manager.</p>
-                {taskError ? (
-                  <div className="notice">{taskError}</div>
-                ) : myTasks.length === 0 ? (
-                  <div className="mytask-empty">No tasks assigned to you.</div>
-                ) : (
-                  <div className="mytask-list mytask-wide">
-                    {myTasks.map((task) => (
-                      <div className="mytask-panel" key={task.id}>
-                        <div className="mytask-top">
-                          <div>
-                            <div className="mytask-title">{task.details || 'Task'}</div>
-                            <div className="mytask-due-line">
-                              Due: <strong>{formatDateTime(task.dueAt) || '-'}</strong>
-                            </div>
-                          </div>
-                          <span className={`pill pill-soft status-${(task.status || 'planning').toLowerCase()}`}>
-                            {formatStatus(task.status)}
-                          </span>
-                        </div>
-                        <div className="mytask-meta-grid">
-                          <div>
-                            <span>Assigned By</span>
-                            <strong>{task.assignedBy?.name || task.assignedBy?.email || 'Admin / Manager'}</strong>
-                          </div>
-                          <div>
-                            <span>Assigned On</span>
-                            <strong>{formatDateTime(task.createdAt) || '-'}</strong>
-                          </div>
-                        </div>
+            {tasks.length === 0 ? (
+              <div className="assign-empty">No tasks assigned yet.</div>
+            ) : (
+              <div className="task-summary-grid">
+                {tasks.map((task) => (
+                  <div className="task-summary-card" key={task.id}>
+                    <div className="task-card-badge">
+                      <span className={`pill pill-soft status-${(task.status || 'planning').toLowerCase()}`}>
+                        {formatStatus(task.status)}
+                      </span>
+                    </div>
+                    <div className="task-summary-top">
+                      <div className="task-avatar">{getInitial(task.employee?.name || 'E')}</div>
+                      <div>
+                        <div className="task-title">{task.details || 'Task'}</div>
+                        <div className="task-meta">{task.employee ? formatEmployeeLabel(task.employee) : 'Employee'}</div>
                       </div>
-                    ))}
+                    </div>
+                    <div className="task-summary-row">
+                      <span className="task-summary-label">Due</span>
+                      <strong>{formatDateTime(task.dueAt) || '-'}</strong>
+                    </div>
+                    <div className="task-summary-row">
+                      <span className="task-summary-label">Assigned</span>
+                      <strong>{formatDateTime(task.createdAt) || '-'}</strong>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
-            </div>
+            )}
           </div>
 
           {showAssignForm ? (
@@ -731,7 +652,7 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
                       placeholder="Describe the task"
                       value={taskForm.details}
                       onChange={handleTaskFormChange}
-                      rows={4}
+                      rows={3}
                     />
                   </div>
                   <div className="form-actions span-2" style={{ justifyContent: 'flex-end' }}>
