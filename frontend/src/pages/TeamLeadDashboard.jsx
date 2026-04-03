@@ -647,22 +647,30 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
                 ) : myTasks.length === 0 ? (
                   <div className="mytask-empty">No tasks assigned to you.</div>
                 ) : (
-                  <div className="mytask-list">
+                  <div className="mytask-list mytask-wide">
                     {myTasks.map((task) => (
-                      <div className="mytask-item" key={task.id}>
-                        <div className="mytask-dot" />
-                        <div className="mytask-body">
-                          <div className="mytask-title">{task.details || 'Task'}</div>
-                          <div className="mytask-meta">
-                            {task.assignedBy?.name || task.assignedBy?.email || 'Admin / Manager'} — {formatDateTime(task.createdAt)}
+                      <div className="mytask-panel" key={task.id}>
+                        <div className="mytask-top">
+                          <div>
+                            <div className="mytask-title">{task.details || 'Task'}</div>
+                            <div className="mytask-due-line">
+                              Due: <strong>{formatDateTime(task.dueAt) || '-'}</strong>
+                            </div>
                           </div>
-                          <div className="mytask-due">
-                            <span>Due:</span> {formatDateTime(task.dueAt) || '-'}
+                          <span className={`pill pill-soft status-${(task.status || 'planning').toLowerCase()}`}>
+                            {formatStatus(task.status)}
+                          </span>
+                        </div>
+                        <div className="mytask-meta-grid">
+                          <div>
+                            <span>Assigned By</span>
+                            <strong>{task.assignedBy?.name || task.assignedBy?.email || 'Admin / Manager'}</strong>
+                          </div>
+                          <div>
+                            <span>Assigned On</span>
+                            <strong>{formatDateTime(task.createdAt) || '-'}</strong>
                           </div>
                         </div>
-                        <span className={`pill pill-soft status-${(task.status || 'planning').toLowerCase()}`}>
-                          {formatStatus(task.status)}
-                        </span>
                       </div>
                     ))}
                   </div>
@@ -778,19 +786,38 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
                 {filteredTasks.length === 0 ? (
                   <div className="notice notice-muted">No tasks in this filter.</div>
                 ) : (
-                  <ul className="task-monitor-ul">
+                  <div className="task-card-grid task-card-grid-lined">
                     {filteredTasks.map((task) => (
-                      <li key={task.id} className="task-monitor-row">
-                        <div>
-                          <div className="mini-title">{task.details || 'Task'}</div>
-                          <div className="mini-sub">
-                            {task.assignedBy?.name || 'Assigned'} - {formatDateTime(task.dueAt) || '-'}
+                      <div className="task-card task-card-lined" key={task.id}>
+                        <div className="task-card-badge">
+                          <span className={`pill pill-soft status-${(task.status || 'planning').toLowerCase()}`}>
+                            {formatStatus(task.status)}
+                          </span>
+                        </div>
+                        <div className="task-card-header">
+                          <div>
+                            <div className="task-title">{task.details || 'Task'}</div>
                           </div>
                         </div>
-                        <span className="pill">{formatStatus(task.status)}</span>
-                      </li>
+                        <div className="task-card-row">
+                          <span role="img" aria-label="assignee">👤</span>
+                          <strong>{task.employee ? formatEmployeeLabel(task.employee) : 'Employee'}</strong>
+                        </div>
+                        <div className="task-card-row">
+                          <span role="img" aria-label="assigned">🗓️</span>
+                          <strong>{formatDateTime(task.createdAt)}</strong>
+                        </div>
+                        <div className="task-card-row">
+                          <span role="img" aria-label="due">⏳</span>
+                          <strong className="pill-soft pill-due">{formatDateTime(task.dueAt) || '-'}</strong>
+                        </div>
+                        <div className="task-card-footer">
+                          <span className="task-status-footer">{formatStatus(task.status || 'planning')}</span>
+                          <span className="pill pill-ghost">On track</span>
+                        </div>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 )}
               </div>
 
