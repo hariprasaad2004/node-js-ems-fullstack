@@ -1990,6 +1990,106 @@ body.theme-dark .tooltip-list {
   color: #96a3c0;
 }
 
+/* Assign task hero card */
+.assign-card {
+  background: radial-gradient(circle at 10% 10%, rgba(79, 124, 255, 0.18), transparent 30%),
+    radial-gradient(circle at 90% 0%, rgba(16, 185, 129, 0.16), transparent 36%),
+    #0c1224;
+  border: 1px solid #1b2a46;
+  box-shadow: 0 26px 58px rgba(0, 0, 0, 0.48);
+  border-radius: 22px;
+  display: grid;
+  gap: 14px;
+}
+
+.assign-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.btn-glow {
+  background: linear-gradient(135deg, #5a7dff 0%, #3b82f6 100%);
+  border: none;
+  color: #f8fafc;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.btn-glow:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 36px rgba(59, 130, 246, 0.5);
+}
+
+.assign-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.assign-metric {
+  background: #0b182f;
+  border: 1px solid #1c2e4d;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.assign-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9bb2d7;
+  font-weight: 700;
+}
+
+.assign-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #e2e8f0;
+}
+
+.assign-empty {
+  background: linear-gradient(135deg, #fff7e6, #fde4c3);
+  color: #4a3222;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-weight: 600;
+}
+
+.assign-form {
+  background: #0f172a;
+  border: 1px solid #1f2a44;
+  border-radius: 16px;
+  padding: 14px;
+  margin-top: 4px;
+}
+
+.assign-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 820px) {
+  .assign-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .btn-glow {
+    width: 100%;
+    justify-self: stretch;
+    text-align: center;
+  }
+}
+
 .dept-list {
   display: grid;
   gap: 12px;
