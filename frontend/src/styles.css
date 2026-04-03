@@ -2667,6 +2667,44 @@ body.theme-dark .eod-meta {
   color: #e2e8f0;
 }
 
+.content-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pill-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pill-button {
+  border: 1px solid #23314d;
+  background: #0e1727;
+  color: #e5e7eb;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 92px;
+}
+
+.pill-button:hover {
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+.pill-button.active {
+  background: linear-gradient(135deg, #4b7cff, #7da6ff);
+  border-color: #3b82f6;
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(59, 130, 246, 0.35);
+}
+
 /* EOD analytics styling */
 .section[data-section='eods'] .content-card {
   background: radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.06), transparent 35%),
