@@ -1375,27 +1375,39 @@ body.theme-dark .insight-stat-row strong {
 .task-main { display: grid; gap: 16px; }
 .task-side { display: grid; gap: 16px; }
 .task-card-grid-lined { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-.task-card-lined { position: relative; border: 1px solid #f59e0b; background: #0d1526; padding: 14px; box-shadow: inset 0 0 0 1px rgba(245,158,11,0.15), 0 12px 30px rgba(0,0,0,0.35); }
-.task-card-badge { position: absolute; top: 12px; right: 12px; }
-.task-card-lined .task-card-row span[role='img'] { font-size: 14px; }
-.task-card-lined .task-card-row strong { font-weight: 700; }
-.task-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 8px; border-top: 1px solid #1e293b; font-weight: 700; }
-.pill-ghost { background: #0f172a; border: 1px solid #1f2a44; color: #dbeafe; }
-.pill-due { background: #0f172a; border: 1px solid #f59e0b; color: #fbbf24; }
+.task-card-lined { position: relative; border: 1px solid rgba(246, 200, 92, 0.9); background: radial-gradient(circle at 12% 10%, rgba(246, 200, 92, 0.08), transparent 38%), linear-gradient(135deg, #0b1426 0%, #0e1c34 55%, #0f233f 100%); padding: 16px 18px; box-shadow: 0 14px 32px rgba(0,0,0,0.38), inset 0 0 0 1px rgba(255,255,255,0.04); border-radius: 18px; display: grid; gap: 12px; }
+.task-card-topline { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.task-card-lined .task-title { color: #f8fafc; font-size: 15px; font-weight: 800; }
+.task-chip { display: inline-flex; align-items: center; justify-content: center; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: 0.02em; background: #111c33; border: 1px solid #f6c85c; color: #f6c85c; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); }
+.task-card-lined .task-chip.status-planning { border-color: #f6c85c; color: #f6c85c; background: rgba(246,200,92,0.14); }
+.task-card-lined .task-chip.status-processing,
+.task-card-lined .task-chip.status-in_progress { border-color: #38bdf8; color: #8ddcff; background: rgba(56,189,248,0.14); }
+.task-card-lined .task-chip.status-completed { border-color: #22c55e; color: #7ae89c; background: rgba(34,197,94,0.16); }
+.task-card-lined .task-chip.status-overdue { border-color: #f87171; color: #ffb4b4; background: rgba(248,113,113,0.18); }
+.task-meta-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.task-meta-row:last-of-type { border-bottom: none; }
+.task-meta-icon { width: 34px; height: 34px; border-radius: 12px; display: grid; place-items: center; box-shadow: 0 10px 18px rgba(0,0,0,0.35); }
+.task-meta-icon svg { width: 18px; height: 18px; color: inherit; }
+.task-meta-icon.icon-user { background: linear-gradient(135deg, #4c1d95, #6d28d9); color: #f3e8ff; }
+.task-meta-icon.icon-assigned { background: linear-gradient(135deg, #0f3d72, #1c4f9b); color: #dbeafe; }
+.task-meta-icon.icon-due { background: linear-gradient(135deg, #0f3b46, #0e7c7b); color: #c7f9ed; }
+.task-meta-text { display: grid; gap: 2px; }
+.task-meta-label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #9fb1d1; }
+.task-meta-text strong { color: #f8fafc; font-weight: 800; }
+.task-due-link { color: #6fb7ff; text-decoration: underline dotted; }
+.task-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); font-weight: 800; color: #e2e8f0; }
+.pill-ghost { background: #13223a; border: 1px solid #254068; color: #d7e9ff; box-shadow: 0 12px 24px rgba(0,0,0,0.35); }
+.pill-due { background: #0f172a; border: 1px solid #f6c85c; color: #fcd34d; }
 .pill-soft { background: #0f172a; border: 1px solid #1f2a44; color: #e2e8f0; }
-.status-planning { color: #fbbf24; border-color: #f59e0b; background: rgba(245, 158, 11, 0.12); }
-.status-processing, .status-in_progress { color: #38bdf8; border-color: #38bdf8; background: rgba(56, 189, 248, 0.12); }
-.status-completed { color: #22c55e; border-color: #22c55e; background: rgba(34, 197, 94, 0.12); }
-.status-overdue { color: #f87171; border-color: #f87171; background: rgba(248, 113, 113, 0.14); }
-.task-card-lined.status-planning { border-color: #f59e0b; background: rgba(245,158,11,0.08); box-shadow: inset 0 0 0 1px rgba(245,158,11,0.18), 0 12px 30px rgba(245,158,11,0.08); }
-.task-card-lined.status-processing, .task-card-lined.status-in_progress { border-color: #38bdf8; background: rgba(56,189,248,0.08); box-shadow: inset 0 0 0 1px rgba(56,189,248,0.18), 0 12px 30px rgba(56,189,248,0.08); }
-.task-card-lined.status-completed { border-color: #22c55e; background: rgba(34,197,94,0.08); box-shadow: inset 0 0 0 1px rgba(34,197,94,0.18), 0 12px 30px rgba(34,197,94,0.08); }
-.task-card-lined.status-overdue { border-color: #f87171; background: rgba(248,113,113,0.08); box-shadow: inset 0 0 0 1px rgba(248,113,113,0.2), 0 12px 30px rgba(248,113,113,0.12); }
+.status-planning { color: #f6c85c; border-color: #f6c85c; background: rgba(246, 200, 92, 0.14); }
+.status-processing, .status-in_progress { color: #38bdf8; border-color: #38bdf8; background: rgba(56, 189, 248, 0.14); }
+.status-completed { color: #22c55e; border-color: #22c55e; background: rgba(34, 197, 94, 0.16); }
+.status-overdue { color: #f87171; border-color: #f87171; background: rgba(248, 113, 113, 0.16); }
+.task-card-lined.status-planning { border-color: #f6c85c; box-shadow: 0 14px 32px rgba(246,200,92,0.08), inset 0 0 0 1px rgba(246,200,92,0.2); }
+.task-card-lined.status-processing, .task-card-lined.status-in_progress { border-color: #38bdf8; box-shadow: 0 14px 32px rgba(56,189,248,0.12), inset 0 0 0 1px rgba(56,189,248,0.24); }
+.task-card-lined.status-completed { border-color: #22c55e; box-shadow: 0 14px 32px rgba(34,197,94,0.12), inset 0 0 0 1px rgba(34,197,94,0.24); }
+.task-card-lined.status-overdue { border-color: #f87171; box-shadow: 0 14px 32px rgba(248,113,113,0.14), inset 0 0 0 1px rgba(248,113,113,0.28); }
 .task-stack { display: grid; gap: 14px; }
-.status-planning { color: #fbbf24; border-color: #f59e0b; }
-.status-processing, .status-in_progress { color: #38bdf8; border-color: #38bdf8; }
-.status-completed { color: #22c55e; border-color: #22c55e; }
-.status-overdue { color: #f87171; border-color: #f87171; }
 .mytask-card { position: sticky; top: 20px; }
 .mytask-list { display: grid; gap: 12px; }
 .mytask-wide { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }

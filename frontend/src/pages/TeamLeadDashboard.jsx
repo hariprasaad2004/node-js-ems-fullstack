@@ -710,32 +710,66 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
                   <div className="task-stack">
                     {filteredTasks.map((task) => {
                       const statusClass = `status-${(task.status || 'planning').toLowerCase()}`;
+                      const statusLabel = formatStatus(task.status || 'planning');
+                      const dueTs = new Date(task.dueAt).getTime();
+                      const isOverdue =
+                        !Number.isNaN(dueTs) && dueTs < Date.now() && (task.status || '').toLowerCase() !== 'completed';
                       return (
                         <div className={`task-card task-card-lined ${statusClass}`} key={task.id}>
-                          <div className="task-card-badge">
-                            <span className={`pill pill-soft ${statusClass}`}>{formatStatus(task.status)}</span>
-                          </div>
-                        <div className="task-card-header">
-                          <div>
+                          <div className="task-card-topline">
                             <div className="task-title">{task.details || 'Task'}</div>
+                            <span className={`task-chip ${statusClass}`}>{statusLabel}</span>
                           </div>
-                        </div>
-                        <div className="task-card-row">
-                          <span role="img" aria-label="assignee">👤</span>
-                          <strong>{task.employee ? formatEmployeeLabel(task.employee) : 'Employee'}</strong>
-                        </div>
-                        <div className="task-card-row">
-                          <span role="img" aria-label="assigned">🗓️</span>
-                          <strong>{formatDateTime(task.createdAt)}</strong>
-                        </div>
-                        <div className="task-card-row">
-                          <span role="img" aria-label="due">⏳</span>
-                          <strong className="pill-soft pill-due">{formatDateTime(task.dueAt) || '-'}</strong>
-                        </div>
-                        <div className="task-card-footer">
-                          <span className="task-status-footer">{formatStatus(task.status || 'planning')}</span>
-                          <span className="pill pill-ghost">On track</span>
-                        </div>
+
+                          <div className="task-meta-row">
+                            <span className="task-meta-icon icon-user" aria-hidden="true">
+                              <svg viewBox="0 0 24 24" role="presentation">
+                                <path
+                                  d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.33 0-6 1.34-6 3v1h12v-1c0-1.66-2.67-3-6-3Z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            </span>
+                            <div className="task-meta-text">
+                              <span className="task-meta-label">Owner</span>
+                              <strong>{task.employee ? formatEmployeeLabel(task.employee) : 'Employee'}</strong>
+                            </div>
+                          </div>
+
+                          <div className="task-meta-row">
+                            <span className="task-meta-icon icon-assigned" aria-hidden="true">
+                              <svg viewBox="0 0 24 24" role="presentation">
+                                <path
+                                  d="M7 3v2H5a2 2 0 0 0-2 2v11a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3V7a2 2 0 0 0-2-2h-2V3h-2v2H9V3ZM6 8h12v10a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1Z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            </span>
+                            <div className="task-meta-text">
+                              <span className="task-meta-label">Assigned</span>
+                              <strong>{formatDateTime(task.createdAt) || '-'}</strong>
+                            </div>
+                          </div>
+
+                          <div className="task-meta-row">
+                            <span className="task-meta-icon icon-due" aria-hidden="true">
+                              <svg viewBox="0 0 24 24" role="presentation">
+                                <path
+                                  d="M12 2a7 7 0 0 0-7 7.75c0 2.58 1.47 4.86 3.7 6a3.75 3.75 0 0 0 7.6 0c2.23-1.14 3.7-3.42 3.7-6A7 7 0 0 0 12 2Zm0 2a5 5 0 0 1 5 5.75 5 5 0 0 1-2.8 3.9l-.7.35-.05.78a1.75 1.75 0 0 1-3.9 0l-.05-.78-.7-.35A5 5 0 0 1 7 9.75 5 5 0 0 1 12 4Zm0 2.5a1 1 0 0 0-1 1v2.25l-1.1 1.1 1.4 1.4 1.6-1.6V7.5a1 1 0 0 0-1-1Z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            </span>
+                            <div className="task-meta-text">
+                              <span className="task-meta-label">Due</span>
+                              <strong className="task-due-link">{formatDateTime(task.dueAt) || '-'}</strong>
+                            </div>
+                          </div>
+
+                          <div className="task-card-footer">
+                            <span className="task-status-footer">{statusLabel}</span>
+                            <span className="pill pill-ghost">{isOverdue ? 'Needs attention' : 'On track'}</span>
+                          </div>
                         </div>
                       );
                     })}
