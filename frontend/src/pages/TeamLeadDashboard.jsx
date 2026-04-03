@@ -44,10 +44,13 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
   const [taskForm, setTaskForm] = useState(initialTaskForm);
   const [refreshing, setRefreshing] = useState(false);
   const [showAssignForm, setShowAssignForm] = useState(false);
-  const visibleTasks = useMemo(
-    () => tasks.filter((task) => (task.employee?.role || '').toLowerCase() !== 'manager'),
-    [tasks]
-  );
+  const visibleTasks = useMemo(() => {
+    const notManager = (task) => {
+      const role = (task.employee?.role || '').trim().toLowerCase();
+      return role !== 'manager';
+    };
+    return tasks.filter(notManager);
+  }, [tasks]);
 
   useEffect(() => {
     loadAll();
@@ -107,9 +110,10 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
       setTasks([]);
       return;
     }
-    const cleaned = (Array.isArray(data) ? data : []).filter(
-      (task) => (task.employee?.role || '').toLowerCase() !== 'manager'
-    );
+    const cleaned = (Array.isArray(data) ? data : []).filter((task) => {
+      const role = (task.employee?.role || '').trim().toLowerCase();
+      return role !== 'manager';
+    });
     setTasks(cleaned);
   }
 

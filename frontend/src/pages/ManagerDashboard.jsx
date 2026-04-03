@@ -44,10 +44,13 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
   const [eodSummary, setEodSummary] = useState(null);
   const [eodError, setEodError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const visibleTasks = useMemo(
-    () => tasks.filter((task) => (task.employee?.role || '').toLowerCase() !== 'manager'),
-    [tasks]
-  );
+  const visibleTasks = useMemo(() => {
+    const notManager = (task) => {
+      const role = (task.employee?.role || '').trim().toLowerCase();
+      return role !== 'manager';
+    };
+    return tasks.filter(notManager);
+  }, [tasks]);
 
   useEffect(() => {
     loadAll();
@@ -104,9 +107,10 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
       setTasks([]);
       return;
     }
-    const cleaned = (Array.isArray(data) ? data : []).filter(
-      (task) => (task.employee?.role || '').toLowerCase() !== 'manager'
-    );
+    const cleaned = (Array.isArray(data) ? data : []).filter((task) => {
+      const role = (task.employee?.role || '').trim().toLowerCase();
+      return role !== 'manager';
+    });
     setTasks(cleaned);
   }
 

@@ -869,9 +869,10 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
       return;
     }
 
-    const cleaned = (Array.isArray(data) ? data : []).filter(
-      (task) => (task.employee?.role || '').toLowerCase() !== 'manager'
-    );
+    const cleaned = (Array.isArray(data) ? data : []).filter((task) => {
+      const role = (task.employee?.role || '').trim().toLowerCase();
+      return role !== 'manager';
+    });
     setTasks(cleaned);
   }
 
