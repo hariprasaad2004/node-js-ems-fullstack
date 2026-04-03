@@ -236,6 +236,32 @@ const filteredTasks = useMemo(() => {
     [leaves]
   );
 
+  const newHires30 = useMemo(() => {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return employees.filter((emp) => toTime(emp.createdAt) >= cutoff).length;
+  }, [employees]);
+
+  const recentHires = useMemo(
+    () =>
+      employees
+        .slice()
+        .sort((a, b) => toTime(b.createdAt) - toTime(a.createdAt))
+        .slice(0, 4),
+    [employees]
+  );
+
+  const upcomingTasks = useMemo(
+    () =>
+      tasks
+        .filter((task) => {
+          const due = toTime(task.dueAt);
+          return due && due > Date.now();
+        })
+        .sort((a, b) => toTime(a.dueAt) - toTime(b.dueAt))
+        .slice(0, 4),
+    [tasks]
+  );
+
   const recentTasks = useMemo(
     () =>
       tasks
@@ -244,6 +270,44 @@ const filteredTasks = useMemo(() => {
         .slice(0, 6),
     [tasks]
   );
+
+  const overviewRanges = useMemo(() => {
+    const now = new Date();
+    const startDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+
+    const startWeek = new Date(startDay);
+    startWeek.setDate(startDay.getDate() - startDay.getDay());
+    const endWeek = new Date(startWeek);
+    endWeek.setDate(startWeek.getDate() + 7);
+
+    const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const summarize = (start, end) => {
+      const bucket = tasks.filter((task) => {
+        const dueTs = toTime(task.dueAt || task.createdAt);
+        return dueTs && dueTs >= start.getTime() && dueTs < end.getTime();
+      });
+      const completed = bucket.filter((task) => (task.status || '').toLowerCase() === 'completed')
+        .length;
+      const pending = bucket.length - completed;
+      const performance = bucket.length ? Math.round((completed / bucket.length) * 100) : 0;
+      return { total: bucket.length, pending, completed, performance };
+    };
+
+    const day = summarize(startDay, endDay);
+    const week = summarize(startWeek, endWeek);
+    const month = summarize(startMonth, endMonth);
+
+    const formatNext = (date) => date.toLocaleString('en-US');
+
+    return {
+      day: { ...day, nextRefreshLabel: formatNext(endDay) },
+      week: { ...week, nextRefreshLabel: formatNext(endWeek) },
+      month: { ...month, nextRefreshLabel: formatNext(endMonth) }
+    };
+  }, [tasks]);
 
   const topEods = useMemo(
     () =>
@@ -308,71 +372,174 @@ const filteredTasks = useMemo(() => {
         </div>
 
         <section className={`section ${activeSection === 'overview' ? 'active' : ''}`}>
-          <div className="content-card">
-            <div className="insight-row">
-              <div className="insight-card">
-                <span className="insight-label">Headcount</span>
-                <strong className="insight-value">{stats.total}</strong>
-                <div className="insight-sub">{stats.teamCount} teams</div>
+          <div className="content-card overview-modern">
+            <div className="metric-grid">
+              <div className="metric-tile metric-purple">
+                <span className="metric-kicker">Total Employees</span>
+                <div className="metric-number">{stats.total}</div>
+                <div className="metric-foot">{stats.teamCount} teams</div>
               </div>
-              <div className="insight-card">
-                <span className="insight-label">Active</span>
-                <strong className="insight-value">{stats.active}</strong>
-                <div className="insight-sub">{stats.inactive} inactive</div>
+              <div className="metric-tile metric-amber">
+                <span className="metric-kicker">New (30 days)</span>
+                <div className="metric-number">{newHires30}</div>
+                <div className="metric-foot">Latest additions</div>
               </div>
-              <div className="insight-card">
-                <span className="insight-label">Team Leads</span>
-                <strong className="insight-value">{stats.leads}</strong>
-                <div className="insight-sub">Mentors in org</div>
+              <div className="metric-tile metric-green">
+                <span className="metric-kicker">Active</span>
+                <div className="metric-number">{stats.active}</div>
+                <div className="metric-foot">Present today: {attendanceCounts.checked_in + attendanceCounts.checked_out}</div>
               </div>
-              <div className="insight-card">
-                <span className="insight-label">Attendance today</span>
-                <strong className="insight-value">
-                  {attendanceCounts.checked_in + attendanceCounts.checked_out}
-                </strong>
-                <div className="insight-sub">Checked in / out</div>
+              <div className="metric-tile metric-red">
+                <span className="metric-kicker">Inactive</span>
+                <div className="metric-number">{stats.inactive}</div>
+                <div className="metric-foot">Off duty</div>
               </div>
             </div>
 
-            <div className="grid-2">
-              <div className="overview-card">
-                <div className="overview-card-header">
-                  <h3>Latest Tasks</h3>
-                  <span className="helper">Newest assignments</span>
+            <div className="range-grid">
+              <div className="range-card" data-kind="day">
+                <div className="range-head">
+                  <div>
+                    <p className="range-title">Day Stats</p>
+                    <span className="range-sub">Refreshes daily</span>
+                  </div>
+                  <span className="range-percent">{overviewRanges.day.performance}%</span>
                 </div>
-                {taskError ? (
-                  <div className="notice">{taskError}</div>
-                ) : recentTasks.length === 0 ? (
-                  <p className="helper">No tasks yet.</p>
+                <div className="range-row">
+                  <span>Tasks today</span>
+                  <strong>{overviewRanges.day.total}</strong>
+                </div>
+                <div className="range-row">
+                  <span>Pending</span>
+                  <strong>{overviewRanges.day.pending}</strong>
+                </div>
+                <div className="progress-track">
+                  <div
+                    className="progress-bar"
+                    style={{ width: `${overviewRanges.day.performance}%` }}
+                  />
+                </div>
+                <p className="range-foot">Next refresh: {overviewRanges.day.nextRefreshLabel}</p>
+              </div>
+
+              <div className="range-card" data-kind="week">
+                <div className="range-head">
+                  <div>
+                    <p className="range-title">Week Stats</p>
+                    <span className="range-sub">Refreshes Sunday</span>
+                  </div>
+                  <span className="range-percent">{overviewRanges.week.performance}%</span>
+                </div>
+                <div className="range-row">
+                  <span>Tasks this week</span>
+                  <strong>{overviewRanges.week.total}</strong>
+                </div>
+                <div className="range-row">
+                  <span>Pending</span>
+                  <strong>{overviewRanges.week.pending}</strong>
+                </div>
+                <div className="progress-track">
+                  <div
+                    className="progress-bar"
+                    style={{ width: `${overviewRanges.week.performance}%` }}
+                  />
+                </div>
+                <p className="range-foot">Next refresh: {overviewRanges.week.nextRefreshLabel}</p>
+              </div>
+
+              <div className="range-card" data-kind="month">
+                <div className="range-head">
+                  <div>
+                    <p className="range-title">Month Stats</p>
+                    <span className="range-sub">Refreshes month end</span>
+                  </div>
+                  <span className="range-percent">{overviewRanges.month.performance}%</span>
+                </div>
+                <div className="range-row">
+                  <span>Finished</span>
+                  <strong>{overviewRanges.month.completed}</strong>
+                </div>
+                <div className="range-row">
+                  <span>Pending</span>
+                  <strong>{overviewRanges.month.pending}</strong>
+                </div>
+                <div className="progress-track">
+                  <div
+                    className="progress-bar"
+                    style={{ width: `${overviewRanges.month.performance}%` }}
+                  />
+                </div>
+                <p className="range-foot">Next refresh: {overviewRanges.month.nextRefreshLabel}</p>
+              </div>
+            </div>
+
+            <div className="panel-grid">
+              <div className="panel-card">
+                <div className="panel-head">
+                  <h3>Recent Hires</h3>
+                  <span className="panel-sub">Latest additions</span>
+                </div>
+                {employeesError ? (
+                  <div className="notice notice-muted">{employeesError}</div>
+                ) : recentHires.length === 0 ? (
+                  <p className="helper">No hires recorded.</p>
                 ) : (
-                  <div className="mini-list">
-                    {recentTasks.map((task) => (
-                      <div className="mini-item" key={task.id}>
+                  <div className="mini-list dense">
+                    {recentHires.map((emp) => (
+                      <div className="mini-item" key={emp.id}>
                         <div>
-                          <div className="mini-title">{task.details || 'Task'}</div>
-                          <div className="mini-sub">
-                            {task.employee?.name || 'Employee'} - {formatDateTime(task.dueAt)}
-                          </div>
+                          <div className="mini-title">{emp.name || 'Employee'}</div>
+                          <div className="mini-sub">{emp.department || emp.role || '-'}</div>
                         </div>
-                        <span className="pill">{formatStatus(task.status)}</span>
+                        <div className="mini-side">
+                          <span className="mini-meta">{formatDate(emp.createdAt)}</span>
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
 
-              <div className="overview-card">
-                <div className="overview-card-header">
-                  <h3>Pending Leave</h3>
-                  <span className="helper">Requests awaiting action</span>
+              <div className="panel-card">
+                <div className="panel-head">
+                  <h3>Upcoming Tasks</h3>
+                  <span className="panel-sub">Due soon</span>
+                </div>
+                {taskError ? (
+                  <div className="notice notice-muted">{taskError}</div>
+                ) : upcomingTasks.length === 0 ? (
+                  <p className="helper">No upcoming tasks scheduled.</p>
+                ) : (
+                  <div className="mini-list dense">
+                    {upcomingTasks.map((task) => (
+                      <div className="mini-item" key={task.id}>
+                        <div>
+                          <div className="mini-title">{task.details || 'Task'}</div>
+                          <div className="mini-sub">
+                            {task.employee ? formatEmployeeLabel(task.employee) : 'Employee'}
+                          </div>
+                        </div>
+                        <div className="mini-side">
+                          <span className="mini-meta">{formatDate(task.dueAt)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="panel-card">
+                <div className="panel-head">
+                  <h3>Pending Leaves</h3>
+                  <span className="panel-sub">Awaiting approval</span>
                 </div>
                 {leaveError ? (
-                  <div className="notice">{leaveError}</div>
+                  <div className="notice notice-muted">{leaveError}</div>
                 ) : pendingLeaves.length === 0 ? (
-                  <p className="helper">No pending leaves.</p>
+                  <p className="helper">No pending leave requests.</p>
                 ) : (
-                  <div className="mini-list">
-                    {pendingLeaves.map((leave) => (
+                  <div className="mini-list dense">
+                    {pendingLeaves.slice(0, 4).map((leave) => (
                       <div className="mini-item" key={leave.id}>
                         <div>
                           <div className="mini-title">
@@ -382,21 +549,8 @@ const filteredTasks = useMemo(() => {
                             {formatDate(leave.fromDate)} - {formatDate(leave.toDate)} ({leave.category})
                           </div>
                         </div>
-                        <div className="action-row">
-                          <button
-                            className="btn-ghost"
-                            type="button"
-                            onClick={() => handleLeaveAction(leave.id, 'approved')}
-                          >
-                            Approve
-                          </button>
-                          <button
-                            className="btn-danger"
-                            type="button"
-                            onClick={() => handleLeaveAction(leave.id, 'rejected')}
-                          >
-                            Reject
-                          </button>
+                        <div className="mini-side">
+                          <span className="pill">{formatStatus(leave.status)}</span>
                         </div>
                       </div>
                     ))}
@@ -590,7 +744,7 @@ const filteredTasks = useMemo(() => {
                         <div>
                           <div className="mini-title">{task.details || 'Task'}</div>
                           <div className="mini-sub">
-                            {task.employee?.name || 'Employee'} • {formatDateTime(task.dueAt) || '-'}
+                            {task.employee?.name || 'Employee'} - {formatDateTime(task.dueAt) || '-'}
                           </div>
                         </div>
                         <span className="pill">{formatStatus(task.status)}</span>
@@ -827,7 +981,7 @@ const filteredTasks = useMemo(() => {
                           {formatDate(entry.date)} - {entry.employee?.name || 'Employee'}
                         </div>
                         <div className="mini-sub">
-                          {entry.employee?.department || entry.employee?.email || '—'}
+                          {entry.employee?.department || entry.employee?.email || '-'}
                         </div>
                       </div>
                       <span className="pill">{formatStatus(entry.status)}</span>
