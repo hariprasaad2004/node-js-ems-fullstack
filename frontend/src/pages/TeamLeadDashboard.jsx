@@ -190,11 +190,6 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
     [leaves]
   );
 
-  const completionRate = useMemo(() => {
-    if (!taskBuckets.total) return 0;
-    return Math.round((taskBuckets.completed / taskBuckets.total) * 100);
-  }, [taskBuckets]);
-
 const todaysPresence = useMemo(() => {
   const present = attendance.filter((row) => row.status === 'checked_in' || row.status === 'checked_out').length;
   const out = attendance.filter((row) => row.status === 'checked_out').length;
@@ -224,6 +219,11 @@ const taskBuckets = useMemo(() => {
   const total = tasks.length;
   return { planning, inProgress, completed, overdue, total };
 }, [tasks]);
+
+  const completionRate = useMemo(() => {
+    if (!taskBuckets.total) return 0;
+    return Math.round((taskBuckets.completed / taskBuckets.total) * 100);
+  }, [taskBuckets]);
 
 const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
 
