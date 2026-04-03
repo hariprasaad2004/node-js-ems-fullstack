@@ -206,13 +206,14 @@ router.post('/api/admin/employees', requireAuth, requireRole(adminRoles), async 
   }
 });
 
-router.put('/api/admin/employees/:id', requireAuth, requireRole(adminRoles), async (req, res) => { // Update an employee.
+router.put('/api/admin/employees/:id', requireAuth, requireRole(leadRoles), async (req, res) => { // Update an employee.
   try {
     const { id } = req.params;
     const {
       name,
       email,
       password,
+      role,
       department,
       title,
       phone,
