@@ -708,13 +708,13 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
                   <div className="notice notice-muted">No tasks in this filter.</div>
                 ) : (
                   <div className="task-stack">
-                    {filteredTasks.map((task) => (
-                      <div className="task-card task-card-lined" key={task.id}>
-                        <div className="task-card-badge">
-                          <span className={`pill pill-soft status-${(task.status || 'planning').toLowerCase()}`}>
-                            {formatStatus(task.status)}
-                          </span>
-                        </div>
+                    {filteredTasks.map((task) => {
+                      const statusClass = `status-${(task.status || 'planning').toLowerCase()}`;
+                      return (
+                        <div className={`task-card task-card-lined ${statusClass}`} key={task.id}>
+                          <div className="task-card-badge">
+                            <span className={`pill pill-soft ${statusClass}`}>{formatStatus(task.status)}</span>
+                          </div>
                         <div className="task-card-header">
                           <div>
                             <div className="task-title">{task.details || 'Task'}</div>
@@ -736,8 +736,9 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
                           <span className="task-status-footer">{formatStatus(task.status || 'planning')}</span>
                           <span className="pill pill-ghost">On track</span>
                         </div>
-                      </div>
-                    ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
