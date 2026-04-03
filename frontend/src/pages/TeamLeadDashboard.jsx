@@ -191,11 +191,19 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
     [leaves]
   );
 
+  const scopedAttendance = useMemo(
+    () =>
+      attendance.filter(
+        (row) => (row.employee?.role || 'employee').toLowerCase() === 'employee'
+      ),
+    [attendance]
+  );
+
 const todaysPresence = useMemo(() => {
-  const present = attendance.filter((row) => row.status === 'checked_in' || row.status === 'checked_out').length;
-  const out = attendance.filter((row) => row.status === 'checked_out').length;
-  return { present, out, total: attendance.length };
-}, [attendance]);
+  const present = scopedAttendance.filter((row) => row.status === 'checked_in' || row.status === 'checked_out').length;
+  const out = scopedAttendance.filter((row) => row.status === 'checked_out').length;
+  return { present, out, total: scopedAttendance.length };
+}, [scopedAttendance]);
 
 const taskBuckets = useMemo(() => {
   let planning = 0;
@@ -225,6 +233,11 @@ const taskBuckets = useMemo(() => {
     if (!taskBuckets.total) return 0;
     return Math.round((taskBuckets.completed / taskBuckets.total) * 100);
   }, [taskBuckets]);
+
+  const myTasks = useMemo(
+    () => tasks.filter((task) => (task.employee?.role || '').toLowerCase() === 'teamlead'),
+    [tasks]
+  );
 
 const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
 
@@ -580,6 +593,34 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
             )}
           </div>
 
+          <div className="content-card">
+            <h2 className="content-title">My Tasks</h2>
+            <p className="helper">Tasks assigned to you by admin/manager.</p>
+            {taskError ? (
+              <div className="notice">{taskError}</div>
+            ) : myTasks.length === 0 ? (
+              <div className="notice notice-muted">No tasks assigned to you.</div>
+            ) : (
+              <div className="task-card-grid">
+                {myTasks.map((task) => (
+                  <div className="task-card" key={task.id}>
+                    <div className="task-card-header">
+                      <div>
+                        <div className="task-title">{task.details}</div>
+                        <div className="task-meta">Due: {formatDateTime(task.dueAt) || '-'}</div>
+                      </div>
+                      <span className="pill">{formatStatus(task.status)}</span>
+                    </div>
+                    <div className="task-card-row">
+                      <span>Assigned By</span>
+                      <strong>{task.assignedBy?.email || '-'}</strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {showAssignForm ? (
             <div className="modal active" aria-hidden={!showAssignForm}>
               <div className="modal-backdrop" onClick={() => setShowAssignForm(false)} />
@@ -855,7 +896,7 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
             <h2 className="content-title">Attendance Today</h2>
             {attendanceError ? (
               <div className="notice">{attendanceError}</div>
-            ) : attendance.length === 0 ? (
+            ) : scopedAttendance.length === 0 ? (
               <div className="notice notice-muted">No attendance data.</div>
             ) : (
               <table className="table table-responsive">
@@ -868,7 +909,7 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
                   </tr>
                 </thead>
                 <tbody>
-                  {attendance.map((row) => (
+                  {scopedAttendance.map((row) => (
                     <tr key={row.employee?.id || row.date}>
                       <td data-label="Employee">
                         {row.employee ? formatEmployeeLabel(row.employee) : 'Unknown'}
