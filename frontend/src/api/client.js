@@ -1,13 +1,17 @@
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
 export async function apiRequest(url, options = {}) { // Shared API helper with auth redirect.
-  const opts = { ...options };
-  const headers = { ...(opts.headers || {}) };
+  const opts = { credentials: 'include', ...options };
+  const headers = { Accept: 'application/json', ...(opts.headers || {}) };
 
   if (opts.body && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json';
   }
 
   opts.headers = headers;
-  const res = await fetch(url, opts);
+
+  const target = `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`;
+  const res = await fetch(target, opts);
 
   if (res.status === 401) {
     window.location.assign('/login');
