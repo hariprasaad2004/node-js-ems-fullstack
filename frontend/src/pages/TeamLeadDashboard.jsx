@@ -7,6 +7,7 @@ import { formatDate, formatDateTime, formatEmployeeLabel, formatStatus } from '.
 const navItems = [
   { id: 'overview', label: 'Overview' },
   { id: 'task-monitor', label: 'Task Monitor' },
+  { id: 'my-tasks', label: 'My Tasks' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'leave', label: 'Leave' },
   { id: 'attendance', label: 'Attendance' }
@@ -318,6 +319,14 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
     () =>
       visibleTasks.filter((task) => (task.employee?.role || '').toLowerCase() === 'teamlead'),
     [visibleTasks]
+  );
+
+  const myAdminTasks = useMemo(
+    () =>
+      myTasks.filter(
+        (task) => (task.assignedBy?.role || '').toLowerCase() === 'admin' || task.assignedBy?.name
+      ),
+    [myTasks]
   );
 
   const overviewRanges = useMemo(() => {
@@ -739,6 +748,85 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
               </div>
             </div>
           ) : null}
+        </section>
+
+        <section className={`section ${activeSection === 'my-tasks' ? 'active' : ''}`}>
+          <div className="content-card task-monitor">
+            <div className="section-header monitor-header">
+              <div>
+                <h2 className="content-title">My Tasks</h2>
+                <p className="helper">Tasks assigned to you by Admin.</p>
+              </div>
+            </div>
+
+            <div className="monitor-grid monitor-grid-balanced">
+              <div className="monitor-feed">
+                {myAdminTasks.length === 0 ? (
+                  <div className="notice notice-dark">No admin-assigned tasks yet.</div>
+                ) : (
+                  <ul className="tm-list">
+                    {myAdminTasks.map((task) => {
+                      const statusTone = getTaskStatusTone(task.status);
+                      const dueTone = getTaskDueTone(task);
+                      const assignee = task.employee ? formatEmployeeLabel(task.employee) : 'You';
+                      const dueLabel = getTaskDueText(task);
+                      const createdLabel = formatDateTime(task.createdAt);
+                      const assignedBy = task.assignedBy?.name || 'Admin';
+                      return (
+                        <li className="tm-item" key={`mytask-${task.id || task.createdAt}`}>
+                          <span className={`tm-dot ${statusTone}`} aria-hidden="true" />
+                          <div className="tm-content">
+                            <div className="tm-title">{task.details || 'Task'}</div>
+                            <div className="tm-meta">
+                              {assignee} — Assigned by {assignedBy} on {createdLabel}
+                            </div>
+                            <div className="tm-tags">
+                              <span className={`tm-pill ${statusTone}`}>
+                                {formatStatus(task.status)}
+                              </span>
+                              <span className={`tm-pill tm-pill-ghost ${dueTone}`}>
+                                Due: {dueLabel}
+                              </span>
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+
+              <div className="monitor-panel">
+                <div className="tm-panel">
+                  <div className="tm-panel-head">
+                    <span>Summary</span>
+                  </div>
+                  <div className="velocity-legend">
+                    <div className="legend-row">
+                      <span className="legend-dot legend-complete" />
+                      <span>Completed</span>
+                      <strong>{taskMonitor.counts.completed}</strong>
+                    </div>
+                    <div className="legend-row">
+                      <span className="legend-dot legend-active" />
+                      <span>Planning</span>
+                      <strong>{taskMonitor.counts.planning}</strong>
+                    </div>
+                    <div className="legend-row">
+                      <span className="legend-dot legend-active" style={{ background: '#38bdf8' }} />
+                      <span>Pending</span>
+                      <strong>{taskMonitor.counts.pending}</strong>
+                    </div>
+                    <div className="legend-row">
+                      <span className="legend-dot legend-active" style={{ background: '#ef4444' }} />
+                      <span>Overdue</span>
+                      <strong>{taskMonitor.counts.overdue}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section className={`section ${activeSection === 'task-monitor' ? 'active' : ''}`}>
