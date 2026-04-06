@@ -719,6 +719,13 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
 
     return { list: filtered, counts, segments, total: list.length };
   }, [tasks, taskMonitorStatus]);
+  const monitorTimeline = useMemo(
+    () =>
+      [...taskMonitor.list].sort(
+        (a, b) => (getTaskDate(b)?.getTime() || 0) - (getTaskDate(a)?.getTime() || 0)
+      ),
+    [taskMonitor.list]
+  );
 
   useEffect(() => {
     loadEmployees();
@@ -1848,17 +1855,17 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           data-section="task-monitor"
         >
           <div className="content-card task-monitor">
-            <div className="section-header">
+            <div className="section-header monitor-header">
               <div>
                 <h2 className="content-title">Task Monitor</h2>
                 <p className="helper">Analytics-first view of task velocity and risk.</p>
               </div>
-              <div className="chip-row">
-                {['all', 'planning', 'completed', 'pending', 'overdue'].map((key) => (
+              <div className="chip-row monitor-filter">
+                {['all', 'planning', 'pending', 'completed', 'overdue'].map((key) => (
                   <button
                     key={`tm-${key}`}
                     type="button"
-                    className={`chip ${taskMonitorStatus === key ? 'chip-active' : ''}`}
+                    className={`chip chip-solid ${taskMonitorStatus === key ? 'chip-active' : ''}`}
                     onClick={() => handleTaskMonitorFilter(key)}
                   >
                     {key === 'all' ? 'All' : formatStatus(key)}
@@ -1867,81 +1874,84 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               </div>
             </div>
 
-            <div className="monitor-grid">
-              <div className="monitor-cards">
-                {taskMonitor.list.length === 0 ? (
+            <div className="monitor-grid monitor-grid-balanced">
+              <div className="monitor-feed">
+                {monitorTimeline.length === 0 ? (
                   <div className="notice notice-dark">No tasks in this filter.</div>
                 ) : (
-                  taskMonitor.list.map((task) => {
-                    const statusTone = getTaskStatusTone(task.status);
-                    const dueTone = getTaskDueTone(task);
-                    const employeeName = task.employee?.name || 'Unknown';
-                    const dueLabel = getTaskDueText(task);
-                    const cardStatus = task.isOverdue ? 'status-overdue' : `status-${task.status}`;
-                    return (
-                      <article
-                        className={`monitor-card compact ${cardStatus}`}
-                        key={`monitor-${task.id}`}
-                        data-status={task.status}
-                      >
-                        <div className="monitor-accent" aria-hidden="true" />
-                        <div className="monitor-body">
-                          <div className="monitor-card-top">
-                            <div className="monitor-title">{task.details || 'Task'}</div>
-                            <span className={`pill ${statusTone}`}>{formatStatus(task.status)}</span>
+                  <ul className="tm-list">
+                    {monitorTimeline.map((task) => {
+                      const statusTone = getTaskStatusTone(task.status);
+                      const dueTone = getTaskDueTone(task);
+                      const employeeName = task.employee?.name || 'Unknown';
+                      const dueLabel = getTaskDueText(task);
+                      const createdLabel = formatDateTime(task.createdAt);
+                      return (
+                        <li className="tm-item" key={`timeline-${task.id || task.createdAt}`}>
+                          <span className={`tm-dot ${statusTone}`} aria-hidden="true" />
+                          <div className="tm-content">
+                            <div className="tm-title">{task.details || 'Task'}</div>
+                            <div className="tm-meta">
+                              {employeeName} - {createdLabel}
+                            </div>
+                            <div className="tm-tags">
+                              <span className={`tm-pill ${statusTone}`}>
+                                {formatStatus(task.status)}
+                              </span>
+                              <span className={`tm-pill tm-pill-ghost ${dueTone}`}>
+                                {task.isOverdue ? 'Overdue' : 'Due'}: {dueLabel}
+                              </span>
+                            </div>
                           </div>
-                          <div className="monitor-line">
-                            <span className="monitor-icon">👤</span>
-                            <span className="monitor-text">
-                              {employeeName}
-                              {task.assignedBy?.name ? ` (${task.assignedBy.name})` : ''}
-                            </span>
-                          </div>
-                          <div className="monitor-line">
-                            <span className="monitor-icon">🗓</span>
-                            <span className="monitor-text">Assigned: {formatDateTime(task.createdAt)}</span>
-                          </div>
-                          <div className="monitor-line">
-                            <span className="monitor-icon">⏳</span>
-                            <span className="monitor-text">
-                              Due: <span className={`task-due ${dueTone}`}>{dueLabel}</span>
-                            </span>
-                          </div>
-                        </div>
-                        <div className="monitor-footer">
-                          <span className="monitor-status-label">{formatStatus(task.status)}</span>
-                          <span className="monitor-elapsed">
-                            {task.isOverdue ? 'Overdue' : 'On track'}
-                          </span>
-                        </div>
-                      </article>
-                    );
-                  })
+                        </li>
+                      );
+                    })}
+                  </ul>
                 )}
               </div>
 
-              <div className="monitor-side">
-                <div className="insight-card">
-                  <span className="insight-label">System Velocity</span>
+              <div className="monitor-panel">
+                <div className="tm-panel">
+                  <div className="tm-panel-head">
+                    <span>System Velocity</span>
+                  </div>
                   {(() => {
-                    const total = taskMonitor.total || 1;
                     const completed = taskMonitor.counts.completed || 0;
-                    const active = Math.max(0, total - completed);
-                    const completedDeg = Math.min(360, Math.max(0, (completed / total) * 360));
-                    const background = `conic-gradient(#10b981 0deg ${completedDeg}deg, #f59e0b ${completedDeg}deg 360deg)`;
+                    const total = taskMonitor.total || 1;
+                    const angle = Math.min(360, (completed / total) * 360);
+                    const background = `conic-gradient(#f59e0b 0deg ${angle}deg, #0f1a2d ${angle}deg 360deg)`;
                     return (
-                      <div className="donut ring-simple" style={{ background }}>
-                        <div className="donut-center">
-                          <div className="donut-value">{taskMonitor.total}</div>
-                          <div className="donut-label">Total</div>
+                      <div className="velocity-wrap">
+                        <div className="velocity-ring" style={{ background }}>
+                          <div className="velocity-center">
+                            <div className="velocity-value">{taskMonitor.total}</div>
+                            <div className="velocity-label">Total</div>
+                          </div>
+                        </div>
+                        <div className="velocity-legend">
+                          <div className="legend-row">
+                            <span className="legend-dot legend-complete" />
+                            <span>Completed</span>
+                            <strong>{taskMonitor.counts.completed}</strong>
+                          </div>
+                          <div className="legend-row">
+                            <span className="legend-dot legend-active" />
+                            <span>Active</span>
+                            <strong>
+                              {Math.max(0, taskMonitor.total - taskMonitor.counts.completed)}
+                            </strong>
+                          </div>
                         </div>
                       </div>
                     );
                   })()}
                 </div>
-                <div className="insight-card">
-                  <span className="insight-label">Alerts</span>
-                  <div className="alert-list">
+
+                <div className="tm-panel tm-alerts-card">
+                  <div className="tm-panel-head">
+                    <span>Alerts</span>
+                  </div>
+                  <div className="alert-list tm-alerts">
                     <div className="alert-row">
                       <span>Overdue tasks</span>
                       <strong className="alert-badge danger">{taskMonitor.counts.overdue}</strong>
