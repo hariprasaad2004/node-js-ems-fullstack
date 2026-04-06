@@ -137,16 +137,20 @@ export default function TeamLeadDashboard() { // Team lead view for day-to-day c
     setLeaves(Array.isArray(data) ? data : []);
   }
 
-  async function loadTasks() { // Fetch tasks assigned to this team lead.
+  async function loadTasks() { // Fetch tasks to oversee.
     setTaskError('');
-    const res = await apiRequest('/api/employee/tasks');
+    const res = await apiRequest('/api/admin/tasks');
     const data = await readJson(res);
     if (!res.ok) {
       setTaskError(data?.message || 'Failed to load tasks.');
       setTasks([]);
       return;
     }
-    setTasks(Array.isArray(data) ? data : []);
+    const cleaned = (Array.isArray(data) ? data : []).filter((task) => {
+      const role = (task.employee?.role || '').trim().toLowerCase();
+      return role !== 'manager';
+    });
+    setTasks(cleaned);
   }
 
   async function handleLeaveAction(id, status) { // Approve/reject within role scope.
@@ -319,24 +323,11 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
 
   const myAdminTasks = useMemo(
     () =>
-      myTasks.filter((task) => task.assignedBy?.name || task.assignedBy?.email),
+      myTasks.filter(
+        (task) => (task.assignedBy?.role || '').toLowerCase() === 'admin' || task.assignedBy?.name
+      ),
     [myTasks]
   );
-
-  const handleUpdateMyTask = async (taskId, nextStatus) => {
-    setTaskStatus('Updating task...');
-    const res = await apiRequest(`/api/employee/tasks/${taskId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status: nextStatus })
-    });
-    const data = await readJson(res);
-    if (!res.ok) {
-      setTaskStatus(data?.message || 'Failed to update task.');
-      return;
-    }
-    setTaskStatus('Task updated.');
-    await loadTasks();
-  };
 
   const overviewRanges = useMemo(() => {
     const now = new Date();
@@ -796,20 +787,6 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
                               <span className={`tm-pill tm-pill-ghost ${dueTone}`}>
                                 Due: {dueLabel}
                               </span>
-                            </div>
-                            <div className="tm-tags">
-                              {['planning', 'processing', 'completed'].map((state) => (
-                                <button
-                                  key={`${task.id}-${state}`}
-                                  type="button"
-                                  className={`chip chip-ghost ${
-                                    task.status === state ? 'chip-active' : ''
-                                  }`}
-                                  onClick={() => handleUpdateMyTask(task.id, state)}
-                                >
-                                  {formatStatus(state)}
-                                </button>
-                              ))}
                             </div>
                           </div>
                         </li>
