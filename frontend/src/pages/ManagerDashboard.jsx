@@ -26,6 +26,41 @@ const getInitial = (name = '') => {
   return trimmed.charAt(0).toUpperCase();
 };
 
+const getTaskDate = (task) => {
+  if (task?.dueAt) return new Date(task.dueAt);
+  if (task?.createdAt) return new Date(task.createdAt);
+  return null;
+};
+
+const getTaskStatusTone = (status = '') => {
+  const value = status.toLowerCase();
+  if (value === 'completed') return 'status-completed';
+  if (value === 'pending') return 'status-pending';
+  if (value === 'planning') return 'status-planning';
+  if (value === 'processing' || value === 'in-progress' || value === 'in_progress')
+    return 'status-progress';
+  return 'status-default';
+};
+
+const getTaskDueTone = (task) => {
+  if (!task?.dueAt) return 'due-none';
+  const dueDate = new Date(task.dueAt);
+  if (Number.isNaN(dueDate.getTime())) return 'due-none';
+  const now = new Date();
+  const statusValue = task.status?.toLowerCase() || '';
+  if (statusValue === 'completed') return 'due-ok';
+  const diff = dueDate.getTime() - now.getTime();
+  if (diff < 0) return 'due-overdue';
+  if (diff <= 24 * 60 * 60 * 1000) return 'due-soon';
+  return 'due-upcoming';
+};
+
+const getTaskDueText = (task) => {
+  if (!task?.dueAt) return 'No due time';
+  const formatted = formatDateTime(task.dueAt);
+  return formatted === '-' ? 'No due time' : formatted;
+};
+
 export default function ManagerDashboard() { // Manager view focused on oversight/approvals.
   useBodyClass('page-dashboard');
 
@@ -202,45 +237,40 @@ const attendanceInsights = useMemo(() => {
   return { total, checkedIn, checkedOut, missing, presenceRate };
 }, [attendance]);
 
-const taskBuckets = useMemo(() => {
-  let planning = 0;
-  let inProgress = 0;
-  let completed = 0;
-  let overdue = 0;
-  const now = Date.now();
-  visibleTasks.forEach((task) => {
-    const status = (task.status || '').toLowerCase();
-    if (status === 'completed') {
-      completed += 1;
-    } else if (status === 'processing' || status === 'in_progress') {
-      inProgress += 1;
-    } else {
-      planning += 1;
-    }
-    if (status !== 'completed' && task.dueAt) {
-      const due = new Date(task.dueAt).getTime();
-      if (!Number.isNaN(due) && due < now) overdue += 1;
-    }
-  });
-  const total = visibleTasks.length;
-  return { planning, inProgress, completed, overdue, total };
-}, [visibleTasks]);
-
 const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
 
-const filteredTasks = useMemo(() => {
-  if (taskMonitorStatus === 'all') return visibleTasks;
-  if (taskMonitorStatus === 'overdue') {
-    const now = Date.now();
-    return visibleTasks.filter((task) => {
-      const status = (task.status || '').toLowerCase();
-      if (status === 'completed') return false;
-      const due = new Date(task.dueAt).getTime();
-      return !Number.isNaN(due) && due < now;
-    });
-  }
-  return visibleTasks.filter((task) => (task.status || '').toLowerCase() === taskMonitorStatus);
+const taskMonitor = useMemo(() => {
+  const now = Date.now();
+  const counts = { pending: 0, planning: 0, completed: 0, overdue: 0 };
+  const list = visibleTasks.map((task) => {
+    const status = (task.status || 'planning').toLowerCase();
+    const due = toTime(task.dueAt);
+    const isCompleted = status === 'completed';
+    const isOverdue = !isCompleted && due && due < now;
+    if (status === 'pending') counts.pending += 1;
+    else if (status === 'completed') counts.completed += 1;
+    else counts.planning += 1;
+    if (isOverdue) counts.overdue += 1;
+    return { ...task, status, due, isOverdue };
+  });
+
+  const filtered =
+    taskMonitorStatus === 'all'
+      ? list
+      : list.filter((task) =>
+          taskMonitorStatus === 'overdue' ? task.isOverdue : task.status === taskMonitorStatus
+        );
+
+  return { list: filtered, counts, total: list.length };
 }, [visibleTasks, taskMonitorStatus]);
+
+const monitorTimeline = useMemo(
+  () =>
+    [...taskMonitor.list].sort(
+      (a, b) => (getTaskDate(b)?.getTime() || 0) - (getTaskDate(a)?.getTime() || 0)
+    ),
+  [taskMonitor.list]
+);
 
   const pendingLeaves = useMemo(
     () => leaves.filter((leave) => leave.status === 'pending'),
@@ -718,100 +748,116 @@ const upcomingTasks = useMemo(
         </section>
 
         <section className={`section ${activeSection === 'task-monitor' ? 'active' : ''}`}>
-          <div className="content-card">
-            <div className="content-card-head">
+          <div className="content-card task-monitor">
+            <div className="section-header monitor-header">
               <div>
                 <h2 className="content-title">Task Monitor</h2>
                 <p className="helper">Analytics-first view of task velocity and risk.</p>
               </div>
-              <div className="pill-group">
-                {['all', 'planning', 'processing', 'completed', 'overdue'].map((status) => {
-                  const label =
-                    status === 'processing'
-                      ? 'In Progress'
-                      : status.charAt(0).toUpperCase() + status.slice(1);
-                  return (
-                    <button
-                      key={status}
-                      className={`pill-button ${taskMonitorStatus === status ? 'active' : ''}`}
-                      type="button"
-                      onClick={() => setTaskMonitorStatus(status)}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
+              <div className="chip-row monitor-filter">
+                {['all', 'planning', 'pending', 'completed', 'overdue'].map((key) => (
+                  <button
+                    key={`tm-${key}`}
+                    type="button"
+                    className={`chip chip-solid ${taskMonitorStatus === key ? 'chip-active' : ''}`}
+                    onClick={() => setTaskMonitorStatus(key)}
+                  >
+                    {key === 'all' ? 'All' : formatStatus(key)}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div className="grid-2">
-              <div className="task-monitor-list">
-                {filteredTasks.length === 0 ? (
-                  <div className="notice notice-muted">No tasks in this filter.</div>
+            <div className="monitor-grid monitor-grid-balanced">
+              <div className="monitor-feed">
+                {monitorTimeline.length === 0 ? (
+                  <div className="notice notice-dark">No tasks in this filter.</div>
                 ) : (
-                  <ul className="task-monitor-ul">
-                    {filteredTasks.map((task) => (
-                      <li key={task.id} className="task-monitor-row">
-                        <div>
-                          <div className="mini-title">{task.details || 'Task'}</div>
-                          <div className="mini-sub">
-                            {task.employee?.name || 'Employee'} - {formatDateTime(task.dueAt) || '-'}
+                  <ul className="tm-list">
+                    {monitorTimeline.map((task) => {
+                      const statusTone = getTaskStatusTone(task.status);
+                      const dueTone = getTaskDueTone(task);
+                      const employeeName = task.employee?.name || 'Unknown';
+                      const dueLabel = getTaskDueText(task);
+                      const createdLabel = formatDateTime(task.createdAt);
+                      return (
+                        <li className="tm-item" key={`timeline-${task.id || task.createdAt}`}>
+                          <span className={`tm-dot ${statusTone}`} aria-hidden="true" />
+                          <div className="tm-content">
+                            <div className="tm-title">{task.details || 'Task'}</div>
+                            <div className="tm-meta">
+                              {employeeName} - {createdLabel}
+                            </div>
+                            <div className="tm-tags">
+                              <span className={`tm-pill ${statusTone}`}>
+                                {formatStatus(task.status)}
+                              </span>
+                              <span className={`tm-pill tm-pill-ghost ${dueTone}`}>
+                                {task.isOverdue ? 'Overdue' : 'Due'}: {dueLabel}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                        <span className="pill">{formatStatus(task.status)}</span>
-                      </li>
-                    ))}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>
 
-              <div className="task-monitor-metrics">
-                <div className="donut-card">
-                  <div className="mini-chart-header">
+              <div className="monitor-panel">
+                <div className="tm-panel">
+                  <div className="tm-panel-head">
                     <span>System Velocity</span>
                   </div>
                   {(() => {
-                    const { total, completed, inProgress, planning } = taskBuckets;
-                    const totalCount = total || 1;
-                    const segments = [
-                      { value: completed, color: '#22c55e' },
-                      { value: inProgress, color: '#38bdf8' },
-                      { value: planning, color: '#f59e0b' }
-                    ];
-                    let current = 0;
-                    const stops = segments
-                      .map((seg) => {
-                        const start = (current / totalCount) * 360;
-                        current += seg.value;
-                        const end = (current / totalCount) * 360;
-                        return `${seg.color} ${start}deg ${end}deg`;
-                      })
-                      .join(', ');
-                    const background = `conic-gradient(${stops || '#1f2937 0deg'})`;
+                    const completed = taskMonitor.counts.completed || 0;
+                    const total = taskMonitor.total || 1;
+                    const angle = Math.min(360, (completed / total) * 360);
+                    const background = `conic-gradient(#f59e0b 0deg ${angle}deg, #0f1a2d ${angle}deg 360deg)`;
                     return (
-                      <div className="donut" style={{ background }}>
-                        <div className="donut-center">
-                          <div className="donut-value">{total}</div>
-                          <div className="donut-label">Total</div>
+                      <div className="velocity-wrap">
+                        <div className="velocity-ring" style={{ background }}>
+                          <div className="velocity-center">
+                            <div className="velocity-value">{taskMonitor.total}</div>
+                            <div className="velocity-label">Total</div>
+                          </div>
+                        </div>
+                        <div className="velocity-legend">
+                          <div className="legend-row">
+                            <span className="legend-dot legend-complete" />
+                            <span>Completed</span>
+                            <strong>{taskMonitor.counts.completed}</strong>
+                          </div>
+                          <div className="legend-row">
+                            <span className="legend-dot legend-active" />
+                            <span>Active</span>
+                            <strong>
+                              {Math.max(0, taskMonitor.total - taskMonitor.counts.completed)}
+                            </strong>
+                          </div>
                         </div>
                       </div>
                     );
                   })()}
                 </div>
 
-                <div className="task-alerts">
-                  <h4>Alerts</h4>
-                  <div className="alert-row">
-                    <span>Overdue tasks</span>
-                    <span className="alert-dot alert-red">{taskBuckets.overdue}</span>
+                <div className="tm-panel tm-alerts-card">
+                  <div className="tm-panel-head">
+                    <span>Alerts</span>
                   </div>
-                  <div className="alert-row">
-                    <span>Pending review</span>
-                    <span className="alert-dot alert-amber">{taskBuckets.planning}</span>
-                  </div>
-                  <div className="alert-row">
-                    <span>In progress</span>
-                    <span className="alert-dot alert-blue">{taskBuckets.inProgress}</span>
+                  <div className="alert-list tm-alerts">
+                    <div className="alert-row">
+                      <span>Overdue tasks</span>
+                      <strong className="alert-badge danger">{taskMonitor.counts.overdue}</strong>
+                    </div>
+                    <div className="alert-row">
+                      <span>Pending review</span>
+                      <strong className="alert-badge warn">{taskMonitor.counts.pending}</strong>
+                    </div>
+                    <div className="alert-row">
+                      <span>In progress</span>
+                      <strong className="alert-badge info">{taskMonitor.counts.planning}</strong>
+                    </div>
                   </div>
                 </div>
               </div>
