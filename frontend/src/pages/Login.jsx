@@ -36,7 +36,8 @@ export default function Login() { // Login page and auth redirect logic.
       } else if (data?.role === 'manager') {
         navigate('/manager');
       } else if (data?.role === 'teamlead') {
-        navigate('/teamlead');
+        // team leads now reuse the employee dashboard; dedicated TL UI removed.
+        navigate('/employee');
       } else {
         navigate('/employee');
       }
