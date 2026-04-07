@@ -8,6 +8,7 @@ const LeaveRequest = require('../models/LeaveRequest');
 const Task = require('../models/Task');
 const EODReport = require('../models/EODReport');
 const { requireAuth, requireRole, getRoleSession } = require('../middleware/auth');
+const { Types } = require('mongoose');
 
 const router = express.Router();
 
@@ -591,13 +592,18 @@ router.get('/api/admin/eods', requireAuth, requireRole(leadRoles), async (req, r
         baseQuery.department = lead.department;
       }
       const employees = await User.find(baseQuery, '_id');
-      const allowedIds = [...employees.map((e) => e._id), mongoose.Types.ObjectId(req.userId)];
+      const allowedIds = [...employees.map((e) => e._id), Types.ObjectId(req.userId)];
       match.employee = { $in: allowedIds };
     }
-    if (employeeId) {
-      match.employee = match.employee
-        ? { $in: [].concat(match.employee.$in || match.employee).filter((id) => id.toString() === employeeId) }
-        : employeeId;
+    if (employeeId && Types.ObjectId.isValid(employeeId)) {
+      const id = Types.ObjectId(employeeId);
+      if (match.employee && match.employee.$in) {
+        match.employee = { $in: match.employee.$in.filter((allowedId) => allowedId.equals(id)) };
+      } else if (match.employee) {
+        match.employee = match.employee;
+      } else {
+        match.employee = id;
+      }
     }
 
     const reports = await EODReport.find(match)

@@ -14,6 +14,8 @@ const navItems = [
   { id: 'eod', label: 'EOD' }
 ];
 
+const initialTaskForm = { employeeId: '', details: '', dueAt: '' };
+
 const toTime = (value) => {
   if (!value) return 0;
   const time = new Date(value).getTime();
@@ -75,6 +77,8 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
   const [leaveStatus, setLeaveStatus] = useState('');
   const [tasks, setTasks] = useState([]);
   const [taskError, setTaskError] = useState('');
+  const [taskForm, setTaskForm] = useState(initialTaskForm);
+  const [taskStatus, setTaskStatus] = useState({ message: '', isError: false });
   const [eods, setEods] = useState([]);
   const [eodSummary, setEodSummary] = useState(null);
   const [eodError, setEodError] = useState('');
@@ -149,6 +153,33 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
     setTasks(cleaned);
   }
 
+  const managerDept = useMemo(() => {
+    const self = employees.find((emp) => (emp.role || '').toLowerCase() === 'manager');
+    return self?.department?.trim() || '';
+  }, [employees]);
+
+  const assignOptions = useMemo(() => {
+    return employees
+      .filter((emp) => {
+        const role = (emp.role || '').toLowerCase();
+        if (role !== 'teamlead' && role !== 'employee') return false;
+        if (managerDept) return (emp.department || '').trim() === managerDept;
+        return true;
+      })
+      .map((emp) => ({
+        value: emp.id,
+        label: `${emp.name} — ${emp.role}`,
+        role: emp.role,
+        dept: emp.department || ''
+      }));
+  }, [employees, managerDept]);
+
+  useEffect(() => {
+    if (!taskForm.employeeId && assignOptions.length) {
+      setTaskForm((prev) => ({ ...prev, employeeId: assignOptions[0].value }));
+    }
+  }, [assignOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function loadEods() { // Fetch EOD reports and summary.
     setEodError('');
     const res = await apiRequest('/api/admin/eods');
@@ -177,6 +208,53 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
     setLeaveStatus(`Marked as ${status}.`);
     await loadLeaves();
   }
+
+  const handleTaskChange = (event) => { // Track assignment form fields.
+    const { name, value } = event.target;
+    setTaskForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAssignTask = async (event) => { // Manager assigns task within department.
+    event.preventDefault();
+    setTaskStatus({ message: '', isError: false });
+
+    const payload = {
+      employeeId: taskForm.employeeId,
+      details: (taskForm.details || '').trim(),
+      dueAt: taskForm.dueAt
+    };
+
+    if (!payload.employeeId) {
+      setTaskStatus({ message: 'Select a team lead or employee.', isError: true });
+      return;
+    }
+    if (!payload.details) {
+      setTaskStatus({ message: 'Enter task details.', isError: true });
+      return;
+    }
+    if (!payload.dueAt) {
+      setTaskStatus({ message: 'Select a due time.', isError: true });
+      return;
+    }
+    const parsedDue = new Date(payload.dueAt);
+    if (Number.isNaN(parsedDue.getTime()) || parsedDue.getTime() < Date.now()) {
+      setTaskStatus({ message: 'Due time must be a valid future date/time.', isError: true });
+      return;
+    }
+
+    const res = await apiRequest('/api/admin/tasks', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const data = await readJson(res);
+    if (!res.ok) {
+      setTaskStatus({ message: data?.message || 'Failed to assign task.', isError: true });
+      return;
+    }
+    setTaskStatus({ message: 'Task assigned.', isError: false });
+    setTaskForm(initialTaskForm);
+    await loadTasks();
+  };
 
   const stats = useMemo(() => { // Quick org stats.
     const total = employees.length;
@@ -966,6 +1044,69 @@ const upcomingTasks = useMemo(
         </section>
 
         <section className={`section ${activeSection === 'tasks' ? 'active' : ''}`}>
+          <div className="content-card assign-card">
+            <div className="assign-head">
+              <div>
+                <h2 className="content-title">Assign Task (Dept)</h2>
+                <p className="helper">
+                  Managers can assign only to team leads or employees in their department.
+                </p>
+              </div>
+              <div className="assign-metrics compact">
+                <div className="assign-metric">
+                  <span className="assign-label">Assignable</span>
+                  <strong className="assign-value">{assignOptions.length}</strong>
+                </div>
+                <div className="assign-metric">
+                  <span className="assign-label">Visible tasks</span>
+                  <strong className="assign-value">{visibleTasks.length}</strong>
+                </div>
+              </div>
+            </div>
+
+            <form className="assign-form" onSubmit={handleAssignTask}>
+              <label>
+                <span className="assign-label">Assignee</span>
+                <select name="employeeId" value={taskForm.employeeId} onChange={handleTaskChange}>
+                  <option value="">Select team lead / employee</option>
+                  {assignOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label} {opt.dept ? `· ${opt.dept}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span className="assign-label">Task details</span>
+                <textarea
+                  name="details"
+                  value={taskForm.details}
+                  onChange={handleTaskChange}
+                  placeholder="Describe the task outcome"
+                />
+              </label>
+              <label>
+                <span className="assign-label">Due at</span>
+                <input
+                  type="datetime-local"
+                  name="dueAt"
+                  value={taskForm.dueAt}
+                  onChange={handleTaskChange}
+                />
+              </label>
+              <div className="assign-actions">
+                <button className="btn primary" type="submit">
+                  Assign Task
+                </button>
+                {taskStatus.message ? (
+                  <span className={taskStatus.isError ? 'helper error' : 'helper success'}>
+                    {taskStatus.message}
+                  </span>
+                ) : null}
+              </div>
+            </form>
+          </div>
+
           <div className="content-card">
             <h2 className="content-title">Tasks</h2>
             {taskError ? (
