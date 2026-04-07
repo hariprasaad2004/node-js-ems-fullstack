@@ -14,6 +14,21 @@ const navItems = [
   { id: 'eod', label: 'EOD' }
 ];
 
+const getTodayInput = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const initialEodForm = {
+  date: getTodayInput(),
+  session1: '',
+  session2: '',
+  status: 'completed'
+};
+
 const toTime = (value) => {
   if (!value) return 0;
   const time = new Date(value).getTime();
@@ -78,6 +93,8 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
   const [eods, setEods] = useState([]);
   const [eodSummary, setEodSummary] = useState(null);
   const [eodError, setEodError] = useState('');
+  const [eodForm, setEodForm] = useState(initialEodForm);
+  const [eodStatus, setEodStatus] = useState({ message: '', isError: false });
   const [refreshing, setRefreshing] = useState(false);
   const visibleTasks = useMemo(() => {
     const notManager = (task) => {
@@ -163,6 +180,26 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
     setEodSummary(data?.summary || null);
   }
 
+  const handleEodChange = (field) => (event) => { // Track EOD form edits.
+    setEodForm((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleEodSubmit = async (event) => { // Managers can submit their own EOD.
+    event.preventDefault();
+    setEodStatus({ message: '', isError: false });
+    const res = await apiRequest('/api/employee/eods', {
+      method: 'POST',
+      body: JSON.stringify(eodForm)
+    });
+    const data = await readJson(res);
+    if (!res.ok) {
+      setEodStatus({ message: data?.message || 'Failed to submit EOD.', isError: true });
+      return;
+    }
+    setEodStatus({ message: 'EOD saved.', isError: false });
+    await loadEods();
+  };
+
   async function handleLeaveAction(id, status) { // Approve or reject leave.
     setLeaveStatus('Updating leave request...');
     const res = await apiRequest(`/api/admin/leave/${id}`, {
@@ -236,6 +273,35 @@ const attendanceInsights = useMemo(() => {
   const presenceRate = total ? Math.round((checkedIn / total) * 100) : 0;
   return { total, checkedIn, checkedOut, missing, presenceRate };
 }, [attendance]);
+
+const eodChart = useMemo(() => { // Last 7 days completion bars.
+  const byDate = new Map();
+  eods.forEach((entry) => {
+    const key = entry.dateKey || (entry.date ? entry.date.slice(0, 10) : '');
+    if (!key) return;
+    const bucket = byDate.get(key) || { total: 0, completed: 0 };
+    bucket.total += 1;
+    if ((entry.status || '').toLowerCase() === 'completed') bucket.completed += 1;
+    byDate.set(key, bucket);
+  });
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const rows = [];
+  for (let i = 6; i >= 0; i -= 1) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const bucket = byDate.get(key) || { total: 0, completed: 0 };
+    const pct = bucket.total ? Math.round((bucket.completed / bucket.total) * 100) : 0;
+    rows.push({
+      key,
+      label: `${d.getDate()}/${d.getMonth() + 1}`,
+      percent: pct,
+      total: bucket.total
+    });
+  }
+  return rows;
+}, [eods]);
 
 const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
 
@@ -997,56 +1063,116 @@ const upcomingTasks = useMemo(
         </section>
 
         <section className={`section ${activeSection === 'eod' ? 'active' : ''}`}>
-          <div className="content-card">
+          <div className="content-card" data-section="eods">
             <div className="employee-header">
               <div>
                 <h2 className="content-title">EOD Snapshot</h2>
-                <p className="helper">Completion and recent highlights.</p>
+                <p className="helper">Submit your log and review team momentum.</p>
               </div>
             </div>
 
             {eodError ? (
               <div className="notice">{eodError}</div>
             ) : (
-              <>
-                <div className="insight-row">
-                  <div className="insight-card">
-                    <span className="insight-label">Completion rate</span>
-                    <strong className="insight-value">{eodSummary?.completionRate || 0}%</strong>
-                  </div>
-                  <div className="insight-card">
-                    <span className="insight-label">In progress</span>
-                    <strong className="insight-value">{eodSummary?.inProgress || 0}</strong>
-                  </div>
-                  <div className="insight-card">
-                    <span className="insight-label">Total logs</span>
-                    <strong className="insight-value">{eodSummary?.total || 0}</strong>
-                  </div>
-                  <div className="insight-card">
-                    <span className="insight-label">Last 7 days</span>
-                    <strong className="insight-value">
-                      {eodSummary?.last7Days?.completionRate || 0}%
-                    </strong>
-                  </div>
+              <div className="eod-grid">
+                <div className="card-block">
+                  <h3>Submit my EOD</h3>
+                  <form className="form" onSubmit={handleEodSubmit}>
+                    <label className="form-field">
+                      <span>Date</span>
+                      <input
+                        type="date"
+                        value={eodForm.date}
+                        onChange={handleEodChange('date')}
+                        required
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span>Session 1</span>
+                      <textarea
+                        value={eodForm.session1}
+                        onChange={handleEodChange('session1')}
+                        placeholder="Morning accomplishments"
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span>Session 2</span>
+                      <textarea
+                        value={eodForm.session2}
+                        onChange={handleEodChange('session2')}
+                        placeholder="Afternoon accomplishments"
+                      />
+                    </label>
+                    <label className="form-field">
+                      <span>Status</span>
+                      <select value={eodForm.status} onChange={handleEodChange('status')}>
+                        <option value="completed">Completed</option>
+                        <option value="in_progress">In progress</option>
+                      </select>
+                    </label>
+                    <button className="btn primary" type="submit">
+                      Submit EOD
+                    </button>
+                    {eodStatus.message ? (
+                      <p className={eodStatus.isError ? 'helper error' : 'helper success'}>
+                        {eodStatus.message}
+                      </p>
+                    ) : null}
+                  </form>
                 </div>
 
-                <div className="mini-list">
-                  {topEods.map((entry) => (
-                    <div className="mini-item" key={entry.id}>
-                      <div>
-                        <div className="mini-title">
-                          {formatDate(entry.date)} - {entry.employee?.name || 'Employee'}
-                        </div>
-                        <div className="mini-sub">
-                          {entry.employee?.department || entry.employee?.email || '-'}
-                        </div>
-                      </div>
-                      <span className="pill">{formatStatus(entry.status)}</span>
+                <div className="card-block">
+                  <div className="insight-row">
+                    <div className="insight-card">
+                      <span className="insight-label">Completion rate</span>
+                      <strong className="insight-value">{eodSummary?.completionRate || 0}%</strong>
                     </div>
-                  ))}
-                  {topEods.length === 0 ? <p className="helper">No EODs yet.</p> : null}
+                    <div className="insight-card">
+                      <span className="insight-label">In progress</span>
+                      <strong className="insight-value">{eodSummary?.inProgress || 0}</strong>
+                    </div>
+                    <div className="insight-card">
+                      <span className="insight-label">Total logs</span>
+                      <strong className="insight-value">{eodSummary?.total || 0}</strong>
+                    </div>
+                    <div className="insight-card">
+                      <span className="insight-label">Last 7 days</span>
+                      <strong className="insight-value">
+                        {eodSummary?.last7Days?.completionRate || 0}%
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="bar-chart">
+                    {eodChart.map((row) => (
+                      <div className="bar-item" key={row.key}>
+                        <span className="bar-label">{row.label}</span>
+                        <div className="bar-track">
+                          <div className="bar-fill" style={{ width: `${row.percent}%` }} />
+                        </div>
+                        <span className="bar-value">{row.percent}%</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mini-list">
+                    {topEods.map((entry) => (
+                      <div className="mini-item" key={entry.id}>
+                        <div>
+                          <div className="mini-title">
+                            {formatDate(entry.date)} - {entry.employee?.name || 'Employee'}
+                          </div>
+                          <div className="mini-sub">
+                            {entry.employee?.department || entry.employee?.email || '-'}
+                          </div>
+                        </div>
+                        <span className="pill">{formatStatus(entry.status)}</span>
+                      </div>
+                    ))}
+                    {topEods.length === 0 ? <p className="helper">No EODs yet.</p> : null}
+                  </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </section>

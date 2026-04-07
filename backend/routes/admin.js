@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const LeaveRequest = require('../models/LeaveRequest');
@@ -556,8 +557,29 @@ router.get('/api/admin/eods', requireAuth, requireRole(leadRoles), async (req, r
   try {
     const { employeeId } = req.query;
     const match = {};
+
+    // Role-based visibility:
+    // - Admin: all
+    // - Manager: team leads + employees
+    // - Team Lead: self + employees in same department
+    if (req.userRole === 'manager') {
+      const allowed = await User.find({ role: { $in: ['employee', 'teamlead'] } }, '_id');
+      match.employee = { $in: allowed.map((u) => u._id) };
+    }
+    if (req.userRole === 'teamlead') {
+      const lead = await User.findById(req.userId);
+      const baseQuery = { role: 'employee' };
+      if (lead?.department) {
+        baseQuery.department = lead.department;
+      }
+      const employees = await User.find(baseQuery, '_id');
+      const allowedIds = [...employees.map((e) => e._id), mongoose.Types.ObjectId(req.userId)];
+      match.employee = { $in: allowedIds };
+    }
     if (employeeId) {
-      match.employee = employeeId;
+      match.employee = match.employee
+        ? { $in: [].concat(match.employee.$in || match.employee).filter((id) => id.toString() === employeeId) }
+        : employeeId;
     }
 
     const reports = await EODReport.find(match)

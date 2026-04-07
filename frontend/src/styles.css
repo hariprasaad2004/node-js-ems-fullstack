@@ -3113,6 +3113,62 @@ body.theme-dark .eod-meta {
   color: #cbd5e1;
 }
 
+.eod-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.card-block {
+  background: #0f172a;
+  border: 1px solid #1f2b46;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 14px 32px rgba(2, 6, 23, 0.35);
+}
+
+.card-block h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.bar-chart {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.bar-item {
+  display: grid;
+  grid-template-columns: 70px 1fr 48px;
+  gap: 10px;
+  align-items: center;
+}
+
+.bar-label {
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.bar-track {
+  background: #1f2b46;
+  border-radius: 999px;
+  overflow: hidden;
+  height: 10px;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #2dd4bf);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.bar-value {
+  color: #e2e8f0;
+  font-weight: 700;
+}
+
 body:not(.theme-dark) .content-card.task-monitor {
   background: #f7f9fc;
   border: 1px solid #e2e8f0;
