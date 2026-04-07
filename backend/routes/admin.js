@@ -522,16 +522,34 @@ router.post('/api/admin/tasks', requireAuth, requireRole(taskAssignRoles), async
       return res.status(400).json({ message: 'Invalid due time.' });
     }
 
-    // Assignment permissions:
-    // - Admin / Manager -> employees or team leads
-    // - Team Lead -> employees only
+    const assigner = await User.findById(req.userId);
+    if (!assigner) {
+      return res.status(403).json({ message: 'Assigner not found.' });
+    }
+
+    // Assignment permissions with hierarchy:
+    // - Admin: any employee/teamlead
+    // - Manager: only their team leads or employees (same department if set)
+    // - Team Lead: only their employees (same department if set)
     let allowedRoles;
-    if (req.userRole === 'admin' || req.userRole === 'manager') {
+    const query = { _id: employeeId };
+    if (req.userRole === 'admin') {
       allowedRoles = ['employee', 'teamlead'];
+    } else if (req.userRole === 'manager') {
+      allowedRoles = ['employee', 'teamlead'];
+      query.role = { $in: allowedRoles };
+      if (assigner.department) query.department = assigner.department;
     } else {
       allowedRoles = ['employee'];
+      query.role = { $in: allowedRoles };
+      if (assigner.department) query.department = assigner.department;
     }
-    const employee = await User.findOne({ _id: employeeId, role: { $in: allowedRoles } });
+
+    if (!query.role) {
+      query.role = { $in: allowedRoles };
+    }
+
+    const employee = await User.findOne(query);
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found.' });
     }
