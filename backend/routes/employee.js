@@ -273,6 +273,9 @@ router.get('/api/employee/eods', requireAuth, requireRole(selfServiceRoles), asy
 
 router.post('/api/employee/eods', requireAuth, requireRole(selfServiceRoles), async (req, res) => { // Submit or update an EOD.
   try {
+    if (req.userRole === 'manager') {
+      return res.status(403).json({ message: 'Managers cannot submit EODs.' });
+    }
     const { date, session1, session2, status } = req.body;
     const parsedDate = date ? new Date(date) : new Date();
     if (Number.isNaN(parsedDate.getTime())) {

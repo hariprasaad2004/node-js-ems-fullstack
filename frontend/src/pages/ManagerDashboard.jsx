@@ -14,21 +14,6 @@ const navItems = [
   { id: 'eod', label: 'EOD' }
 ];
 
-const getTodayInput = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const initialEodForm = {
-  date: getTodayInput(),
-  session1: '',
-  session2: '',
-  status: 'completed'
-};
-
 const toTime = (value) => {
   if (!value) return 0;
   const time = new Date(value).getTime();
@@ -93,8 +78,6 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
   const [eods, setEods] = useState([]);
   const [eodSummary, setEodSummary] = useState(null);
   const [eodError, setEodError] = useState('');
-  const [eodForm, setEodForm] = useState(initialEodForm);
-  const [eodStatus, setEodStatus] = useState({ message: '', isError: false });
   const [refreshing, setRefreshing] = useState(false);
   const visibleTasks = useMemo(() => {
     const notManager = (task) => {
@@ -179,26 +162,6 @@ export default function ManagerDashboard() { // Manager view focused on oversigh
     setEods(Array.isArray(data?.reports) ? data.reports : []);
     setEodSummary(data?.summary || null);
   }
-
-  const handleEodChange = (field) => (event) => { // Track EOD form edits.
-    setEodForm((prev) => ({ ...prev, [field]: event.target.value }));
-  };
-
-  const handleEodSubmit = async (event) => { // Managers can submit their own EOD.
-    event.preventDefault();
-    setEodStatus({ message: '', isError: false });
-    const res = await apiRequest('/api/employee/eods', {
-      method: 'POST',
-      body: JSON.stringify(eodForm)
-    });
-    const data = await readJson(res);
-    if (!res.ok) {
-      setEodStatus({ message: data?.message || 'Failed to submit EOD.', isError: true });
-      return;
-    }
-    setEodStatus({ message: 'EOD saved.', isError: false });
-    await loadEods();
-  };
 
   async function handleLeaveAction(id, status) { // Approve or reject leave.
     setLeaveStatus('Updating leave request...');
@@ -1085,52 +1048,6 @@ const upcomingTasks = useMemo(
             ) : (
               <div className="eod-grid">
                 <div className="card-block">
-                  <h3>Submit my EOD</h3>
-                  <form className="form" onSubmit={handleEodSubmit}>
-                    <label className="form-field">
-                      <span>Date</span>
-                      <input
-                        type="date"
-                        value={eodForm.date}
-                        onChange={handleEodChange('date')}
-                        required
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span>Session 1</span>
-                      <textarea
-                        value={eodForm.session1}
-                        onChange={handleEodChange('session1')}
-                        placeholder="Morning accomplishments"
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span>Session 2</span>
-                      <textarea
-                        value={eodForm.session2}
-                        onChange={handleEodChange('session2')}
-                        placeholder="Afternoon accomplishments"
-                      />
-                    </label>
-                    <label className="form-field">
-                      <span>Status</span>
-                      <select value={eodForm.status} onChange={handleEodChange('status')}>
-                        <option value="completed">Completed</option>
-                        <option value="in_progress">In progress</option>
-                      </select>
-                    </label>
-                    <button className="btn primary" type="submit">
-                      Submit EOD
-                    </button>
-                    {eodStatus.message ? (
-                      <p className={eodStatus.isError ? 'helper error' : 'helper success'}>
-                        {eodStatus.message}
-                      </p>
-                    ) : null}
-                  </form>
-                </div>
-
-                <div className="card-block">
                   <div className="insight-row">
                     <div className="insight-card">
                       <span className="insight-label">Completion rate</span>
@@ -1180,20 +1097,22 @@ const upcomingTasks = useMemo(
                     ) : null}
                   </div>
 
-                  <div className="mini-list">
-                    {topEods.map((entry) => (
-                      <div className="mini-item" key={entry.id}>
-                        <div>
-                          <div className="mini-title">
-                            {formatDate(entry.date)} - {entry.employee?.name || 'Employee'}
+                  <h4 style={{ margin: '12px 0 6px' }}>Recent highlights</h4>
+                  <div className="bar-list">
+                    {topEods.map((entry) => {
+                      const pct = (entry.status || '').toLowerCase() === 'completed' ? 100 : 35;
+                      return (
+                        <div className="bar-item compact" key={entry.id}>
+                          <div className="bar-label">
+                            {formatDate(entry.date)} · {entry.employee?.name || 'Employee'}
                           </div>
-                          <div className="mini-sub">
-                            {entry.employee?.department || entry.employee?.email || '-'}
+                          <div className="bar-track">
+                            <div className="bar-fill" style={{ width: `${pct}%` }} />
                           </div>
+                          <span className="bar-value">{formatStatus(entry.status)}</span>
                         </div>
-                        <span className="pill">{formatStatus(entry.status)}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {topEods.length === 0 ? <p className="helper">No EODs yet.</p> : null}
                   </div>
                 </div>
