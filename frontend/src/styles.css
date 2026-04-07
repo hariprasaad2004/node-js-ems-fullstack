@@ -3145,6 +3145,10 @@ body.theme-dark .eod-meta {
   align-items: center;
 }
 
+.bar-item.compact {
+  grid-template-columns: 1fr 64px;
+}
+
 .bar-label {
   color: #cbd5e1;
   font-size: 13px;
@@ -3167,6 +3171,16 @@ body.theme-dark .eod-meta {
 .bar-value {
   color: #e2e8f0;
   font-weight: 700;
+}
+
+.bar-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.bar-list .bar-track {
+  height: 12px;
 }
 
 body:not(.theme-dark) .content-card.task-monitor {

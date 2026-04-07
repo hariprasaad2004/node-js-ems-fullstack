@@ -422,6 +422,15 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
     [myTasks]
   );
 
+  const eodPeopleChart = useMemo(() => {
+    const list = (eodSummary?.perEmployee || []).slice(0, 6);
+    return list.map((item) => ({
+      label: item.name || 'Employee',
+      value: item.completionRate || 0,
+      total: item.total || 0
+    }));
+  }, [eodSummary]);
+
   const overviewRanges = useMemo(() => {
     const now = new Date();
     const startDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -1227,6 +1236,22 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
                         <span className="bar-value">{row.percent}%</span>
                       </div>
                     ))}
+                  </div>
+
+                  <h4 style={{ margin: '12px 0 6px' }}>My team completion</h4>
+                  <div className="bar-list">
+                    {eodPeopleChart.map((row) => (
+                      <div className="bar-item compact" key={row.label}>
+                        <div className="bar-label">{row.label}</div>
+                        <div className="bar-track">
+                          <div className="bar-fill" style={{ width: `${row.value}%` }} />
+                        </div>
+                        <span className="bar-value">{row.value}%</span>
+                      </div>
+                    ))}
+                    {eodPeopleChart.length === 0 ? (
+                      <p className="helper">No submissions yet.</p>
+                    ) : null}
                   </div>
 
                   <div className="mini-list">
