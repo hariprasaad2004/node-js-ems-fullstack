@@ -24,6 +24,9 @@ const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0'; // Bind to all interfaces for cloud providers (e.g., Render).
 const MONGODB_URI = process.env.MONGODB_URI;
 
+// Ensure Express knows it is behind a proxy (Render/Heroku/etc.) so secure cookies are set correctly.
+app.set('trust proxy', 1);
+
 if (!MONGODB_URI) {
   console.error('Missing MONGODB_URI in .env');
   process.exit(1);
