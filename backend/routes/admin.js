@@ -8,6 +8,7 @@ const LeaveRequest = require('../models/LeaveRequest');
 const Task = require('../models/Task');
 const EODReport = require('../models/EODReport');
 const { requireAuth, requireRole, getRoleSession } = require('../middleware/auth');
+const { emitEvent } = require('../realtime');
 const { Types } = require('mongoose');
 
 const router = express.Router();
@@ -202,7 +203,9 @@ router.post('/api/admin/employees', requireAuth, requireRole(adminRoles), async 
       status: status || 'active'
     });
 
-    return res.status(201).json(toSafeEmployee(employee));
+    const safeEmployee = toSafeEmployee(employee);
+    emitEvent('employee:created', { employee: safeEmployee });
+    return res.status(201).json(safeEmployee);
   } catch (err) {
     return res.status(500).json({ message: 'Failed to create employee.' });
   }
@@ -260,7 +263,9 @@ router.put('/api/admin/employees/:id', requireAuth, requireRole(leadRoles), asyn
     if (profileImage !== undefined) employee.profileImage = profileImage;
 
     await employee.save();
-    return res.json(toSafeEmployee(employee));
+    const safeEmployee = toSafeEmployee(employee);
+    emitEvent('employee:updated', { employee: safeEmployee });
+    return res.json(safeEmployee);
   } catch (err) {
     return res.status(500).json({ message: 'Failed to update employee.' });
   }
@@ -279,6 +284,7 @@ router.delete('/api/admin/employees/:id', requireAuth, requireRole(adminRoles), 
     }
 
     await employee.deleteOne();
+    emitEvent('employee:deleted', { id: employee._id.toString() });
     return res.json({ ok: true });
   } catch (err) {
     return res.status(500).json({ message: 'Failed to delete employee.' });
@@ -370,7 +376,9 @@ router.post('/api/admin/attendance/check-in', requireAuth, requireRole(adminRole
       checkInAt: now
     });
 
-    return res.status(201).json(toSafeAttendance(record));
+    const payload = toSafeAttendance(record);
+    emitEvent('attendance:updated', { attendance: payload });
+    return res.status(201).json(payload);
   } catch (err) {
     if (err && err.code === 11000) {
       const dateKey = formatDateKey();
@@ -415,7 +423,9 @@ router.post('/api/admin/attendance/check-out', requireAuth, requireRole(adminRol
     record.checkOutAt = now;
     await record.save();
 
-    return res.json(toSafeAttendance(record));
+    const payload = toSafeAttendance(record);
+    emitEvent('attendance:updated', { attendance: payload });
+    return res.json(payload);
   } catch (err) {
     return res.status(500).json({ message: 'Failed to check out employee.' });
   }
@@ -489,7 +499,9 @@ router.patch('/api/admin/leave/:id', requireAuth, requireRole(leadRoles), async 
     leave.reviewedAt = new Date();
     await leave.save();
 
-    return res.json(toSafeLeave(leave));
+    const payload = toSafeLeave(leave);
+    emitEvent('leave:updated', { leave: payload });
+    return res.json(payload);
   } catch (err) {
     return res.status(500).json({ message: 'Failed to update leave request.' });
   }
@@ -566,7 +578,9 @@ router.post('/api/admin/tasks', requireAuth, requireRole(taskAssignRoles), async
     await task.populate('employee', 'name email department');
     await task.populate('assignedBy', 'name email');
 
-    return res.status(201).json(toSafeTask(task));
+    const payload = toSafeTask(task);
+    emitEvent('task:created', { task: payload });
+    return res.status(201).json(payload);
   } catch (err) {
     return res.status(500).json({ message: 'Failed to assign task.' });
   }

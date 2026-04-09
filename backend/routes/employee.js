@@ -6,6 +6,7 @@ const LeaveRequest = require('../models/LeaveRequest');
 const Task = require('../models/Task');
 const EODReport = require('../models/EODReport');
 const { requireAuth, requireRole, getRoleSession } = require('../middleware/auth');
+const { emitEvent } = require('../realtime');
 
 const router = express.Router();
 
@@ -150,7 +151,9 @@ router.post('/api/employee/attendance/check-in', requireAuth, requireRole(selfSe
       checkInAt: now
     });
 
-    return res.status(201).json(toSafeAttendance(record));
+    const payload = toSafeAttendance(record);
+    emitEvent('attendance:updated', { attendance: payload });
+    return res.status(201).json(payload);
   } catch (err) {
     if (err && err.code === 11000) {
       const dateKey = formatDateKey();
@@ -186,7 +189,9 @@ router.post(
 
       record.checkOutAt = now;
       await record.save();
-      return res.json(toSafeAttendance(record));
+      const payload = toSafeAttendance(record);
+      emitEvent('attendance:updated', { attendance: payload });
+      return res.json(payload);
     } catch (err) {
       return res.status(500).json({ message: 'Failed to check out.' });
     }
@@ -254,7 +259,9 @@ router.post('/api/employee/leave', requireAuth, requireRole(selfServiceRoles), a
       ...autoReviewed
     });
 
-    return res.status(201).json(toSafeLeave(leave));
+    const payload = toSafeLeave(leave);
+    emitEvent('leave:created', { leave: payload });
+    return res.status(201).json(payload);
   } catch (err) {
     return res.status(500).json({ message: 'Failed to submit leave request.' });
   }
@@ -309,7 +316,9 @@ router.post('/api/employee/eods', requireAuth, requireRole(selfServiceRoles), as
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
 
-    return res.status(201).json(toSafeEod(report));
+    const safeReport = toSafeEod(report);
+    emitEvent('eod:updated', { eod: safeReport });
+    return res.status(201).json(safeReport);
   } catch (err) {
     if (err && err.code === 11000) {
       const dateKey = formatDateKey(new Date());
@@ -352,7 +361,9 @@ router.patch('/api/employee/tasks/:id', requireAuth, requireRole(selfServiceRole
 
     task.status = status;
     await task.save();
-    return res.json(toSafeTask(task));
+    const payload = toSafeTask(task);
+    emitEvent('task:updated', { task: payload });
+    return res.json(payload);
   } catch (err) {
     return res.status(500).json({ message: 'Failed to update task status.' });
   }

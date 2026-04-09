@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiRequest, readJson } from '../api/client.js';
+import { createSocket } from '../api/socket.js';
 import Sidebar from '../components/Sidebar.jsx';
 import { useBodyClass } from '../hooks/useBodyClass.js';
 import {
@@ -107,6 +108,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   const [showNotifications, setShowNotifications] = useState(false);
   const [lastSeenAt, setLastSeenAt] = useState(0);
   const notificationRef = useRef(null);
+  const socketRef = useRef(null);
   const [employees, setEmployees] = useState([]);
   const [employeeError, setEmployeeError] = useState('');
   const [attendance, setAttendance] = useState([]);
@@ -734,6 +736,41 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
     loadEods();
     loadMyAttendance();
     loadMyLeaves();
+  }, []);
+
+  useEffect(() => {
+    const socket = createSocket();
+    socketRef.current = socket;
+
+    const refreshAttendance = () => {
+      loadAttendance();
+      loadMyAttendance();
+    };
+
+    const refreshLeaves = () => {
+      loadLeaves();
+      loadMyLeaves();
+    };
+
+    const handlers = {
+      'employee:created': loadEmployees,
+      'employee:updated': loadEmployees,
+      'employee:deleted': loadEmployees,
+      'attendance:updated': refreshAttendance,
+      'leave:created': refreshLeaves,
+      'leave:updated': refreshLeaves,
+      'task:created': loadTasks,
+      'task:updated': loadTasks,
+      'eod:updated': loadEods
+    };
+
+    Object.entries(handlers).forEach(([event, handler]) => socket.on(event, handler));
+
+    return () => {
+      Object.entries(handlers).forEach(([event, handler]) => socket.off(event, handler));
+      socket.disconnect();
+      socketRef.current = null;
+    };
   }, []);
 
   async function loadEmployees() { // Fetch employees and refresh summary data.

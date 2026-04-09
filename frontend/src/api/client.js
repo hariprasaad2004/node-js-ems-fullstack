@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 export async function apiRequest(url, options = {}) { // Shared API helper with auth redirect.
   const opts = { credentials: 'include', ...options };

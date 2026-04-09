@@ -1,10 +1,12 @@
 const path = require('path');
+const http = require('http');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
 const session = require('express-session');
 const mongoose = require('mongoose');
 const { MongoStore } = require('connect-mongo');
+const { initSocket } = require('./realtime');
 
 // Allowed origins for CORS; override in .env with comma-separated list.
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(',')
@@ -23,6 +25,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0'; // Bind to all interfaces for cloud providers (e.g., Render).
 const MONGODB_URI = process.env.MONGODB_URI;
+
+// HTTP + Socket.IO server setup.
+const httpServer = http.createServer(app);
+initSocket(httpServer, ALLOWED_ORIGINS);
 
 // Ensure Express knows it is behind a proxy (Render/Heroku/etc.) so secure cookies are set correctly.
 app.set('trust proxy', 1);
@@ -121,7 +127,7 @@ app.use((req, res) => { // 404 handler for unmatched API routes.
   res.status(404).json({ message: 'Not found' });
 });
 
-app.listen(PORT, HOST, () => { // Start the HTTP server.
+httpServer.listen(PORT, HOST, () => { // Start the HTTP + WebSocket server.
   console.log(`Server running on http://${HOST}:${PORT}`);
 });
 
