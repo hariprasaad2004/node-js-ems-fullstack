@@ -217,11 +217,14 @@ router.post('/api/chat/messages', requireAuth, requireRole(chatRoles), async (re
 
     return res.status(201).json(payload);
   } catch (err) {
-    // Surface validation errors as 400; everything else as 500.
+    // Surface validation errors as 400; everything else as 500 with basic detail for debugging.
     if (err?.name === 'ValidationError' || err?.name === 'CastError') {
-      return res.status(400).json({ message: 'Invalid chat payload.' });
+      return res.status(400).json({ message: 'Invalid chat payload.', detail: err.message });
     }
-    return res.status(500).json({ message: 'Failed to send message.' });
+    // Log server-side so platform logs show the root cause.
+    // eslint-disable-next-line no-console
+    console.error('chat:message failed', err);
+    return res.status(500).json({ message: 'Failed to send message.', detail: err.message || 'server_error' });
   }
 });
 
