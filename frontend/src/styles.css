@@ -4173,9 +4173,11 @@ body:not(.theme-dark) .monitor-text {
   box-shadow: var(--shadow);
 }
 .chat-panel {
-  margin-top: 10px;
+  position: absolute;
+  right: 0;
+  bottom: 56px; /* sit above launcher */
   width: 360px;
-  max-height: 520px;
+  max-height: min(520px, calc(100vh - 120px));
   background: var(--dash-card);
   border: 1px solid var(--border);
   border-radius: 16px;
