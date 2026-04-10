@@ -1,4 +1,5 @@
 const express = require('express');
+const { Types } = require('mongoose');
 const ChatMessage = require('../models/ChatMessage');
 const User = require('../models/User');
 const { requireAuth, requireRole } = require('../middleware/auth');
@@ -181,6 +182,9 @@ router.post('/api/chat/messages', requireAuth, requireRole(chatRoles), async (re
       const targetId = toUserId || getOtherId(resolvedThreadKey, senderId);
       if (!targetId) {
         return res.status(400).json({ message: 'Missing recipient.' });
+      }
+      if (!Types.ObjectId.isValid(targetId)) {
+        return res.status(400).json({ message: 'Invalid recipient id.' });
       }
 
       const targetUser = await User.findById(targetId).select('status');

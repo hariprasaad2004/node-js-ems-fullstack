@@ -590,6 +590,13 @@ router.get('/api/admin/eods', requireAuth, requireRole(leadRoles), async (req, r
   try {
     const { employeeId } = req.query;
     const match = {};
+    const castIds = (list = []) =>
+      list
+        .map((id) => {
+          const value = id?._id ? id._id : id;
+          return Types.ObjectId.isValid(value) ? Types.ObjectId(value) : null;
+        })
+        .filter(Boolean);
 
     // Role-based visibility:
     // - Admin: all
@@ -597,7 +604,8 @@ router.get('/api/admin/eods', requireAuth, requireRole(leadRoles), async (req, r
     // - Team Lead: self + employees in same department
     if (req.userRole === 'manager') {
       const allowed = await User.find({ role: { $in: ['employee', 'teamlead'] } }, '_id');
-      match.employee = { $in: allowed.map((u) => u._id) };
+      const ids = castIds(allowed);
+      match.employee = { $in: ids };
     }
     if (req.userRole === 'teamlead') {
       const lead = await User.findById(req.userId);
@@ -606,15 +614,22 @@ router.get('/api/admin/eods', requireAuth, requireRole(leadRoles), async (req, r
         baseQuery.department = lead.department;
       }
       const employees = await User.find(baseQuery, '_id');
-      const allowedIds = [...employees.map((e) => e._id), Types.ObjectId(req.userId)];
+      const allowedIds = castIds([...employees, req.userId]);
       match.employee = { $in: allowedIds };
     }
-    if (employeeId && Types.ObjectId.isValid(employeeId)) {
+    if (employeeId) {
+      if (!Types.ObjectId.isValid(employeeId)) {
+        return res.status(400).json({ message: 'Invalid employeeId.' });
+      }
       const id = Types.ObjectId(employeeId);
       if (match.employee && match.employee.$in) {
-        match.employee = { $in: match.employee.$in.filter((allowedId) => allowedId.equals(id)) };
+        const allowed = match.employee.$in.some((allowedId) => allowedId.equals(id));
+        if (!allowed) {
+          return res.status(403).json({ message: 'Not allowed to view this employee.' });
+        }
+        match.employee = { $in: [id] };
       } else if (match.employee) {
-        match.employee = match.employee;
+        match.employee = id;
       } else {
         match.employee = id;
       }
