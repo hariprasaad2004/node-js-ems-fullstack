@@ -15,7 +15,7 @@ exports.getMessages = async (req, res) => {
 
 exports.sendMessage = async (req, res) => {
   try {
-    const { chatId, content } = req.body;
+    const { chatId, content, tempId } = req.body;
     if (!chatId || !content) return res.status(400).json({ message: 'chatId and content are required.' });
 
     const message = await Message.create({
@@ -28,7 +28,12 @@ exports.sendMessage = async (req, res) => {
     await Chat.findByIdAndUpdate(chatId, { updatedAt: new Date() });
 
     const populated = await message.populate('senderId', 'name email role');
-    return res.status(201).json(populated);
+   
+    // Return the populated message, including the tempId so the frontend can replace the optimistic UI
+    const result = populated.toObject();
+    if (tempId) result.tempId = tempId;
+
+    return res.status(201).json(result);
   } catch (err) {
     return res.status(500).json({ message: 'Failed to send message', detail: err.message });
   }

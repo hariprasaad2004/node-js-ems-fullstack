@@ -26,21 +26,10 @@ export default function ChatWidget() {
     socket.on('chat:message', (msg) => {
       setMessages((prev) => {
         const list = prev[msg.chatId] ? [...prev[msg.chatId]] : [];
-
-        // Replace matching optimistic message if tempId matches
-        const optimisticIdx = list.findIndex(
-          (m) => m.tempId && msg.tempId && m.tempId === msg.tempId
-        );
-        if (optimisticIdx !== -1) {
-          list[optimisticIdx] = msg;
-          return { ...prev, [msg.chatId]: list };
-        }
-
-        // Prevent duplicates when sender receives its own socket event
-        if (list.some((m) => m._id === msg._id)) {
+        // Prevent duplicate messages if the sender receives their own message back from socket
+        if (list.some(m => m._id === msg._id || (m.tempId && m.tempId === msg.tempId))) {
           return prev;
         }
-
         return { ...prev, [msg.chatId]: [...list, msg] };
       });
     });
@@ -118,17 +107,10 @@ export default function ChatWidget() {
       // Replace optimistic message with real message from server
       setMessages((prev) => ({
         ...prev,
-        [activeId]: prev[activeId].map((m) => (m.tempId === tempId ? data : m))
+        [activeId]: prev[activeId].map(m => m.tempId === tempId ? data : m)
       }));
       socketRef.current?.emit('chat:send', data);
-      return;
     }
-
-    // On failure remove optimistic bubble so UI does not get stuck
-    setMessages((prev) => ({
-      ...prev,
-      [activeId]: (prev[activeId] || []).filter((m) => m.tempId !== tempId)
-    }));
   };
 
   const typingLabel = useMemo(() => {
@@ -146,7 +128,7 @@ export default function ChatWidget() {
   return (
     <div className={`chat-widget ${open ? 'open' : ''}`}>
       <button type="button" className="chat-launcher" onClick={() => setOpen((p) => !p)}>
-        Chat
+        💬 Chat
       </button>
       {open ? (
         <div className="chat-panel">
