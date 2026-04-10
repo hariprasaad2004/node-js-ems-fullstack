@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiRequest, readJson } from '../api/client.js';
 import Sidebar from '../components/Sidebar.jsx';
-import ChatWidget from '../components/ChatWidget.jsx';
 import { useBodyClass } from '../hooks/useBodyClass.js';
 import { formatDate, formatDateTime, formatDuration, formatStatus } from '../utils/format.js';
 
@@ -1233,8 +1232,6 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
           </section>
         </main>
       </div>
-      <ChatWidget />
-
       <div className={`modal ${modalOpen ? 'active' : ''}`} aria-hidden={!modalOpen}>
         <div className="modal-backdrop" onClick={() => setModalOpen(false)} />
         <div className="modal-card" role="dialog" aria-modal="true" aria-labelledby="leave-modal-title">

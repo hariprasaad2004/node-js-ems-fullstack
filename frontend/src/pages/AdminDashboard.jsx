@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiRequest, readJson } from '../api/client.js';
 import { createSocket } from '../api/socket.js';
 import Sidebar from '../components/Sidebar.jsx';
-import ChatWidget from '../components/ChatWidget.jsx';
 import { useBodyClass } from '../hooks/useBodyClass.js';
 import {
   formatDate,
@@ -2906,7 +2905,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
         </section>
       </main>
       </div>
-      <ChatWidget />
     </>
   );
 }
