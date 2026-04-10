@@ -6,7 +6,10 @@ const chatMessageSchema = new mongoose.Schema(
     type: { type: String, enum: ['group', 'direct'], required: true },
     text: { type: String, required: true, trim: true, maxlength: 2000 },
     sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+    participants: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+      default: []
+    }
   },
   { timestamps: true }
 );

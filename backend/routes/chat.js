@@ -17,24 +17,26 @@ const toSafeUser = (user) => ({
 });
 
 const toSafeMessage = (message) => {
-  const participants = (message.participants || [])
-    .map((participant) => {
-      if (!participant) return null;
-      if (participant._id) {
-        return {
-          id: participant._id.toString(),
-          name: participant.name,
-          role: participant.role,
-          email: participant.email
-        };
-      }
-      return { id: participant.toString() };
-    })
-    .filter(Boolean);
+  const participants = Array.isArray(message.participants)
+    ? message.participants
+        .map((participant) => {
+          if (!participant) return null;
+          if (participant._id) {
+            return {
+              id: participant._id.toString(),
+              name: participant.name,
+              role: participant.role,
+              email: participant.email
+            };
+          }
+          return { id: participant.toString() };
+        })
+        .filter(Boolean)
+    : [];
 
   const sender = message.sender
     ? {
-        id: message.sender._id?.toString?.() || message.sender.toString(),
+        id: message.sender._id?.toString?.() || message.sender.toString?.() || String(message.sender),
         name: message.sender.name || '',
         role: message.sender.role || '',
         email: message.sender.email || ''
@@ -142,11 +144,10 @@ router.get('/api/chat/messages', requireAuth, requireRole(chatRoles), async (req
     }
 
     const limit = Math.min(Number(req.query.limit) || 80, 300);
-    const messages = await ChatMessage.find(
-      threadKey.startsWith('direct:')
-        ? { threadKey, participants: req.userId }
-        : { threadKey }
-    )
+    const query = threadKey.startsWith('direct:')
+      ? { threadKey, participants: req.userId }
+      : { threadKey };
+    const messages = await ChatMessage.find(query)
       .sort({ createdAt: 1 })
       .limit(limit)
       .populate('sender', 'name role email')
@@ -155,6 +156,9 @@ router.get('/api/chat/messages', requireAuth, requireRole(chatRoles), async (req
 
     return res.json(messages.map(toSafeMessage));
   } catch (err) {
+    if (err?.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid chat identifier.' });
+    }
     return res.status(500).json({ message: 'Failed to load messages.' });
   }
 });
