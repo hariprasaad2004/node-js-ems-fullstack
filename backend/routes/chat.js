@@ -214,13 +214,25 @@ router.post('/api/chat/messages', requireAuth, requireRole(chatRoles), async (re
       participants: cleanParticipants
     });
 
-    const populated = await message
-      .populate('sender', 'name role email')
-      .populate('participants', 'name role email');
+    let payload = toSafeMessage(message);
 
-    const payload = toSafeMessage(populated);
-    emitChatToThread(resolvedThreadKey, 'chat:message', payload);
-    emitChatToUsers(participants, 'chat:message', payload);
+    try {
+      const populated = await message
+        .populate('sender', 'name role email')
+        .populate('participants', 'name role email');
+      payload = toSafeMessage(populated);
+    } catch (populateErr) {
+      // eslint-disable-next-line no-console
+      console.error('chat:populate failed', populateErr);
+    }
+
+    try {
+      emitChatToThread(resolvedThreadKey, 'chat:message', payload);
+      emitChatToUsers(participants, 'chat:message', payload);
+    } catch (emitErr) {
+      // eslint-disable-next-line no-console
+      console.error('chat:emit failed', emitErr);
+    }
 
     return res.status(201).json(payload);
   } catch (err) {
