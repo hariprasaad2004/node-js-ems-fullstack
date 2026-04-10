@@ -4,10 +4,10 @@ function getRoleSession(req, role) { // Fetch role-specific session data.
 
 function requireAuth(req, res, next) { // Enforce at least one authenticated role.
   const roles = req.session?.roles || {};
-  const hasRole = Object.values(roles).some((entry) => entry && entry.userId);
-  if (!hasRole) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
+  const first = Object.entries(roles).find(([, entry]) => entry && entry.userId);
+  if (!first) return res.status(401).json({ message: 'Unauthorized' });
+  req.userRole = first[0];
+  req.userId = first[1].userId;
   return next();
 }
 
