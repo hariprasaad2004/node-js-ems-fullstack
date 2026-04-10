@@ -26,21 +26,10 @@ export default function ChatWidget() {
     socket.on('chat:message', (msg) => {
       setMessages((prev) => {
         const list = prev[msg.chatId] ? [...prev[msg.chatId]] : [];
-
-        // If this socket message corresponds to an optimistic entry, replace it in-place.
-        const optimisticIdx = list.findIndex(
-          (m) => m.tempId && msg.tempId && m.tempId === msg.tempId
-        );
-        if (optimisticIdx !== -1) {
-          list[optimisticIdx] = msg;
-          return { ...prev, [msg.chatId]: list };
-        }
-
-        // Prevent duplicates (e.g., if the sender also receives the socket event)
-        if (list.some((m) => m._id === msg._id)) {
+        // Prevent duplicate messages if the sender receives their own message back from socket
+        if (list.some(m => m._id === msg._id || (m.tempId && m.tempId === msg.tempId))) {
           return prev;
         }
-
         return { ...prev, [msg.chatId]: [...list, msg] };
       });
     });
@@ -113,22 +102,15 @@ export default function ChatWidget() {
 
     // Send via API
     const { res, data } = await sendMessage(payload);
-
+   
     if (res.ok) {
       // Replace optimistic message with real message from server
       setMessages((prev) => ({
         ...prev,
-        [activeId]: prev[activeId].map((m) => (m.tempId === tempId ? data : m))
+        [activeId]: prev[activeId].map(m => m.tempId === tempId ? data : m)
       }));
       socketRef.current?.emit('chat:send', data);
-      return;
     }
-
-    // On failure, remove the optimistic message to avoid a stuck bubble
-    setMessages((prev) => ({
-      ...prev,
-      [activeId]: (prev[activeId] || []).filter((m) => m.tempId !== tempId)
-    }));
   };
 
   const typingLabel = useMemo(() => {
@@ -146,7 +128,7 @@ export default function ChatWidget() {
   return (
     <div className={`chat-widget ${open ? 'open' : ''}`}>
       <button type="button" className="chat-launcher" onClick={() => setOpen((p) => !p)}>
-        ?? Chat
+        💬 Chat
       </button>
       {open ? (
         <div className="chat-panel">
@@ -205,3 +187,45 @@ export default function ChatWidget() {
   );
 }
 
+
+in backend,  messageController,
+const Message = require('../models/Message');
+const Chat = require('../models/Chat');
+
+exports.getMessages = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const messages = await Message.find({ chatId })
+      .sort({ createdAt: 1 })
+      .populate('senderId', 'name email role');
+    return res.json(messages);
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to load messages' });
+  }
+};
+
+exports.sendMessage = async (req, res) => {
+  try {
+    const { chatId, content, tempId } = req.body;
+    if (!chatId || !content) return res.status(400).json({ message: 'chatId and content are required.' });
+
+    const message = await Message.create({
+      senderId: req.userId,
+      chatId,
+      content,
+      readBy: [req.userId]
+    });
+
+    await Chat.findByIdAndUpdate(chatId, { updatedAt: new Date() });
+
+    const populated = await message.populate('senderId', 'name email role');
+   
+    // Return the populated message, including the tempId so the frontend can replace the optimistic UI
+    const result = populated.toObject();
+    if (tempId) result.tempId = tempId;
+
+    return res.status(201).json(result);
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to send message', detail: err.message });
+  }
+};
