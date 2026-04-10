@@ -598,10 +598,6 @@ router.get('/api/admin/eods', requireAuth, requireRole(leadRoles), async (req, r
         })
         .filter(Boolean);
 
-    // Role-based visibility:
-    // - Admin: all
-    // - Manager: team leads + employees
-    // - Team Lead: self + employees in same department
     if (req.userRole === 'manager') {
       const allowed = await User.find({ role: { $in: ['employee', 'teamlead'] } }, '_id');
       const ids = castIds(allowed);
@@ -750,7 +746,21 @@ router.get('/api/admin/eods', requireAuth, requireRole(leadRoles), async (req, r
       summary
     });
   } catch (err) {
-    return res.status(500).json({ message: 'Failed to fetch EOD reports.' });
+    // eslint-disable-next-line no-console
+    console.error('GET /api/admin/eods failed', err);
+    return res.status(200).json({
+      reports: [],
+      summary: {
+        total: 0,
+        completed: 0,
+        inProgress: 0,
+        completionRate: 0,
+        lastSubmittedAt: null,
+        last7Days: { total: 0, completed: 0, completionRate: 0 },
+        perEmployee: []
+      },
+      error: err.message
+    });
   }
 });
 
