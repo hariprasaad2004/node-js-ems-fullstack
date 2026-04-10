@@ -170,6 +170,10 @@ router.post('/api/chat/messages', requireAuth, requireRole(chatRoles), async (re
     let { threadKey, toUserId, type } = req.body || {};
     const senderId = req.userId;
 
+    if (!senderId) {
+      return res.status(401).json({ message: 'Please sign in again to send messages.' });
+    }
+
     if (!text) return res.status(400).json({ message: 'Message text is required.' });
 
     let resolvedThreadKey = (threadKey || '').trim();
@@ -213,6 +217,10 @@ router.post('/api/chat/messages', requireAuth, requireRole(chatRoles), async (re
 
     return res.status(201).json(payload);
   } catch (err) {
+    // Surface validation errors as 400; everything else as 500.
+    if (err?.name === 'ValidationError' || err?.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid chat payload.' });
+    }
     return res.status(500).json({ message: 'Failed to send message.' });
   }
 });
