@@ -1,4 +1,7 @@
 const { Server } = require('socket.io');
+const Message = require('./models/Message');
+const Chat = require('./models/Chat');
+const User = require('./models/User');
 
 let ioInstance = null;
 
@@ -14,22 +17,58 @@ function initSocket(server, allowedOrigins = []) {
     // eslint-disable-next-line no-console
     console.log('Socket connected', socket.id);
 
-    socket.on('chat:register', (userId) => {
+    socket.on('chat:register', async (userId) => {
       if (!userId) return;
-      socket.data.userId = userId;
-      socket.join(`user:${userId}`);
+      socket.data.userId = userId.toString();
+      socket.join(socket.data.userId);
+      try {
+        await User.findByIdAndUpdate(socket.data.userId, { isOnline: true });
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('socket register user update failed', err.message);
+      }
     });
 
-    socket.on('chat:join', (threadKeys = []) => {
-      const rooms = Array.isArray(threadKeys) ? threadKeys : [threadKeys];
-      rooms
-        .filter((room) => typeof room === 'string' && room.trim())
-        .forEach((room) => socket.join(room.trim()));
+    socket.on('chat:join', (chatId) => {
+      if (!chatId) return;
+      socket.join(chatId.toString());
+    });
+
+    socket.on('chat:typing', (chatId) => {
+      if (!chatId) return;
+      socket.to(chatId.toString()).emit('chat:typing', { chatId, userId: socket.data.userId });
+    });
+
+    socket.on('chat:stopTyping', (chatId) => {
+      if (!chatId) return;
+      socket.to(chatId.toString()).emit('chat:stopTyping', { chatId, userId: socket.data.userId });
+    });
+
+    socket.on('chat:send', async ({ chatId, content }) => {
+      try {
+        if (!chatId || !content || !socket.data.userId) return;
+        const msg = await Message.create({
+          senderId: socket.data.userId,
+          chatId,
+          content: String(content).trim(),
+          readBy: [socket.data.userId]
+        });
+        await Chat.findByIdAndUpdate(chatId, { updatedAt: new Date() });
+        const populated = await msg.populate('senderId', 'name email role');
+        ioInstance.to(chatId.toString()).emit('chat:message', populated);
+        socket.to(chatId.toString()).emit('chat:notification', { chatId, message: populated });
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('chat:send failed', err);
+      }
     });
 
     socket.on('disconnect', () => {
       // eslint-disable-next-line no-console
       console.log('Socket disconnected', socket.id);
+      if (socket.data?.userId) {
+        User.findByIdAndUpdate(socket.data.userId, { isOnline: false }).catch(() => {});
+      }
     });
   });
 
@@ -42,20 +81,4 @@ function emitEvent(event, payload) {
   }
 }
 
-function emitChatToUsers(userIds = [], event, payload) {
-  if (!ioInstance || !event) return;
-  const ids = Array.isArray(userIds) ? userIds : [userIds];
-  ids
-    .filter(Boolean)
-    .map((id) => id.toString())
-    .forEach((id) => {
-      ioInstance.to(`user:${id}`).emit(event, payload);
-    });
-}
-
-function emitChatToThread(threadKey, event, payload) {
-  if (!ioInstance || !threadKey || !event) return;
-  ioInstance.to(threadKey).emit(event, payload);
-}
-
-module.exports = { initSocket, emitEvent, emitChatToUsers, emitChatToThread };
+module.exports = { initSocket, emitEvent };

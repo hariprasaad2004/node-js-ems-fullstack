@@ -16,7 +16,8 @@ const userSchema = new mongoose.Schema(
     address: { type: String, trim: true },
     salary: { type: Number },
     profileImage: { type: String, trim: true },
-    status: { type: String, enum: ['active', 'inactive'], default: 'active' }
+    status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+    isOnline: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

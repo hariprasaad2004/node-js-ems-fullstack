@@ -4155,8 +4155,114 @@ body:not(.theme-dark) .monitor-text {
   justify-self: center;
 }
 
+/* Chat widget */
+.chat-widget {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 95;
+  font-family: var(--font-sans);
+}
+.chat-launcher {
+  background: var(--accent);
+  color: #0b1020;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+.chat-panel {
+  margin-top: 10px;
+  width: 360px;
+  max-height: 520px;
+  background: var(--dash-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+.chat-list {
+  border-bottom: 1px solid var(--border);
+  max-height: 140px;
+  overflow-y: auto;
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+}
+.chat-list-item {
+  border: 1px solid var(--border);
+  background: var(--dash-pill);
+  color: var(--ink);
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+.chat-list-item.active {
+  border-color: var(--accent);
+  background: #102542;
+}
+.chat-body {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 10px;
+  gap: 8px;
+}
+.chat-messages {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+.bubble {
+  background: var(--dash-pill);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 10px;
+  max-width: 90%;
+}
+.bubble.mine {
+  align-self: flex-end;
+  background: linear-gradient(135deg, var(--accent), #7cb8ff);
+  color: #0b1020;
+}
+.bubble-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+}
+.chat-input {
+  display: flex;
+  gap: 8px;
+}
+.chat-input input {
+  flex: 1;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--dash-pill);
+  color: var(--ink);
+  padding: 10px;
+}
+.chat-input button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: var(--accent);
+  color: #0b1020;
+  cursor: pointer;
+}
+.typing {
+  font-size: 12px;
+  color: var(--muted);
+}
 
-/* --- Chat panel --- */
+
+
 .chat-launcher {
   position: fixed;
   right: 18px;

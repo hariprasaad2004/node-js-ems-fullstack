@@ -1,20 +1,28 @@
 import { apiRequest, readJson } from './client.js';
 
-export async function fetchThreads() { // Load chat threads + peers + current user.
-  const res = await apiRequest('/api/chat/threads');
+export async function getChats() {
+  const res = await apiRequest('/api/chat');
   const data = await readJson(res);
   return { res, data };
 }
 
-export async function fetchMessages(threadKey, limit = 120) { // Fetch messages for a thread.
-  const params = new URLSearchParams({ threadKey, limit: String(limit) });
-  const res = await apiRequest(`/api/chat/messages?${params.toString()}`);
+export async function createChat(payload) {
+  const res = await apiRequest('/api/chat', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
   const data = await readJson(res);
   return { res, data };
 }
 
-export async function sendChatMessage(payload) { // Send a chat message (group or direct).
-  const res = await apiRequest('/api/chat/messages', {
+export async function getMessages(chatId) {
+  const res = await apiRequest(`/api/messages/${chatId}`);
+  const data = await readJson(res);
+  return { res, data };
+}
+
+export async function sendMessage(payload) {
+  const res = await apiRequest('/api/messages', {
     method: 'POST',
     body: JSON.stringify(payload)
   });
