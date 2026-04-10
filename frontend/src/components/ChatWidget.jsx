@@ -2,6 +2,8 @@
 import { createSocket } from '../api/socket.js';
 import { getChats, getMessages, sendMessage } from '../api/chat.js';
 
+const fallbackChat = { id: null, isGroupChat: true, groupName: 'Select a chat', users: [] };
+
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [chats, setChats] = useState([]);
@@ -14,7 +16,7 @@ export default function ChatWidget() {
   const scrollRef = useRef(null);
 
   const activeMessages = messages[activeId] || [];
-  const activeChat = chats.find((c) => c.id === activeId) || systemChat;
+  const activeChat = chats.find((c) => c.id === activeId) || fallbackChat;
 
   useEffect(() => {
     loadChats();
@@ -63,6 +65,8 @@ export default function ChatWidget() {
       setActiveId(firstId);
       await joinChat(firstId);
       await loadMessages(firstId);
+    } else {
+      setActiveId(null);
     }
   }
 
@@ -120,6 +124,7 @@ export default function ChatWidget() {
       {open ? (
         <div className="chat-panel">
           <aside className="chat-list">
+            {chats.length === 0 ? <div className="chat-sub">No chats yet</div> : null}
             {chats.map((chat) => (
               <button
                 key={chat.id}
