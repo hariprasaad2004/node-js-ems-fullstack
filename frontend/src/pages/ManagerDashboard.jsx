@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
+import ChatPanel from '../components/ChatPanel.jsx';
 import { apiRequest, readJson } from '../api/client.js';
 import { useBodyClass } from '../hooks/useBodyClass.js';
 import { formatDate, formatDateTime, formatEmployeeLabel, formatStatus } from '../utils/format.js';
@@ -489,15 +490,16 @@ const upcomingTasks = useMemo(
   }, [isDark]);
 
   return (
-    <div className="dashboard">
-      <Sidebar
-        title="Manager"
-        items={navItems}
-        activeSection={activeSection}
-        onSelect={setActiveSection}
-        onLogout={handleLogout}
-        logoutLabel="Logout"
-      />
+    <>
+      <div className="dashboard">
+        <Sidebar
+          title="Manager"
+          items={navItems}
+          activeSection={activeSection}
+          onSelect={setActiveSection}
+          onLogout={handleLogout}
+          logoutLabel="Logout"
+        />
 
       <main className="content">
         <div className="content-card page-hero">
@@ -1262,6 +1264,8 @@ const upcomingTasks = useMemo(
           </div>
         </section>
       </main>
-    </div>
+      </div>
+      <ChatPanel title="EMS Chat" />
+    </>
   );
 }

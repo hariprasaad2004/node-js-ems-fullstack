@@ -16,6 +16,7 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173')
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const employeeRoutes = require('./routes/employee');
+const chatRoutes = require('./routes/chat');
 
 const rootDir = path.join(__dirname, '..');
 const frontendDist = path.join(rootDir, 'frontend', 'dist');
@@ -115,6 +116,7 @@ const rolePath = {
 app.use(authRoutes);
 app.use(adminRoutes);
 app.use(employeeRoutes);
+app.use(chatRoutes);
 
 app.get('*', (req, res) => { // SPA fallback for non-API routes.
   if (req.path.startsWith('/api')) {

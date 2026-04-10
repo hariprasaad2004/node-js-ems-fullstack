@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiRequest, readJson } from '../api/client.js';
 import { createSocket } from '../api/socket.js';
 import Sidebar from '../components/Sidebar.jsx';
+import ChatPanel from '../components/ChatPanel.jsx';
 import { useBodyClass } from '../hooks/useBodyClass.js';
 import {
   formatDate,
@@ -1424,14 +1425,15 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
   );
 
   return (
-    <div className="dashboard">
-      <Sidebar
-        title="Admin"
-        items={navItems}
-        activeSection={activeSection}
-        onSelect={setActiveSection}
-        onLogout={handleLogout}
-      />
+    <>
+      <div className="dashboard">
+        <Sidebar
+          title="Admin"
+          items={navItems}
+          activeSection={activeSection}
+          onSelect={setActiveSection}
+          onLogout={handleLogout}
+        />
 
       <main className="content">
         <div className="content-card page-hero">
@@ -2903,7 +2905,9 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
           </div>
         </section>
       </main>
-    </div>
+      </div>
+      <ChatPanel title="EMS Chat" />
+    </>
   );
 }
 
