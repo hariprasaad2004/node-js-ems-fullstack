@@ -199,12 +199,19 @@ router.post('/api/chat/messages', requireAuth, requireRole(chatRoles), async (re
       type = 'direct';
     }
 
+    const cleanParticipants = (participants || [])
+      .map((id) => (Types.ObjectId.isValid(id) ? Types.ObjectId(id) : null))
+      .filter(Boolean);
+    const cleanSender = Types.ObjectId.isValid(senderId) ? Types.ObjectId(senderId) : null;
+    if (!cleanSender) return res.status(401).json({ message: 'Invalid session. Please re-login.' });
+    if (!cleanParticipants.length) cleanParticipants.push(cleanSender);
+
     const message = await ChatMessage.create({
       threadKey: resolvedThreadKey,
       type: type || 'group',
       text,
-      sender: senderId,
-      participants
+      sender: cleanSender,
+      participants: cleanParticipants
     });
 
     const populated = await message
