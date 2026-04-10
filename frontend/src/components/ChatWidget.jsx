@@ -26,8 +26,11 @@ export default function ChatWidget() {
     socket.on('chat:message', (msg) => {
       setMessages((prev) => {
         const list = prev[msg.chatId] ? [...prev[msg.chatId]] : [];
-        list.push(msg);
-        return { ...prev, [msg.chatId]: list };
+        // Prevent duplicate messages if the sender receives their own message back from socket
+        if (list.some(m => m._id === msg._id || (m.tempId && m.tempId === msg.tempId))) {
+          return prev;
+        }
+        return { ...prev, [msg.chatId]: [...list, msg] };
       });
     });
 
@@ -79,14 +82,35 @@ export default function ChatWidget() {
   const handleSend = async (event) => {
     event?.preventDefault?.();
     if (!text.trim() || !activeId) return;
-    const payload = { chatId: activeId, content: text.trim() };
+
+    const tempId = Date.now().toString();
+    const payload = { chatId: activeId, content: text.trim(), tempId };
+   
+    // Optimistic Update
+    const optimisticMsg = {
+      ...payload,
+      senderId: { _id: userIdRef.current, name: 'Me' },
+      createdAt: new Date().toISOString(),
+      isOptimistic: true
+    };
+
     setText('');
     setMessages((prev) => ({
       ...prev,
-      [activeId]: [...(prev[activeId] || []), { ...payload, senderId: { id: userIdRef.current, name: 'Me' }, createdAt: new Date().toISOString() }]
+      [activeId]: [...(prev[activeId] || []), optimisticMsg]
     }));
-    socketRef.current?.emit('chat:send', payload);
-    await sendMessage(payload);
+
+    // Send via API
+    const { res, data } = await sendMessage(payload);
+   
+    if (res.ok) {
+      // Replace optimistic message with real message from server
+      setMessages((prev) => ({
+        ...prev,
+        [activeId]: prev[activeId].map(m => m.tempId === tempId ? data : m)
+      }));
+      socketRef.current?.emit('chat:send', data);
+    }
   };
 
   const typingLabel = useMemo(() => {
@@ -127,15 +151,21 @@ export default function ChatWidget() {
               <div>{activeChat.isGroupChat ? activeChat.groupName || 'Group' : 'Direct Chat'}</div>
             </header>
             <div className="chat-messages" ref={scrollRef}>
-              {(activeMessages || []).map((msg) => (
-                <div key={msg._id || msg.createdAt} className={`bubble ${msg.senderId?.id === userIdRef.current ? 'mine' : ''}`}>
-                  <div className="bubble-meta">
-                    <span>{msg.senderId?.name || 'User'}</span>
-                    <span>{new Date(msg.createdAt || Date.now()).toLocaleTimeString()}</span>
+              {(activeMessages || []).map((msg) => {
+                // Robust ID check: handles both populated object and flat ID string
+                const senderId = msg.senderId?._id || msg.senderId?.id || msg.senderId;
+                const isMine = senderId === userIdRef.current;
+
+                return (
+                  <div key={msg._id || msg.tempId || msg.createdAt} className={`bubble ${isMine ? 'mine' : ''}`}>
+                    <div className="bubble-meta">
+                      <span>{isMine ? 'Me' : (msg.senderId?.name || 'User')}</span>
+                      <span>{new Date(msg.createdAt || Date.now()).toLocaleTimeString()}</span>
+                    </div>
+                    <div>{msg.content}</div>
                   </div>
-                  <div>{msg.content}</div>
-                </div>
-              ))}
+                );
+              })}
               {typingLabel ? <div className="typing">{typingLabel}</div> : null}
             </div>
             <form className="chat-input" onSubmit={handleSend}>
@@ -156,3 +186,46 @@ export default function ChatWidget() {
     </div>
   );
 }
+
+
+in backend,  messageController,
+const Message = require('../models/Message');
+const Chat = require('../models/Chat');
+
+exports.getMessages = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const messages = await Message.find({ chatId })
+      .sort({ createdAt: 1 })
+      .populate('senderId', 'name email role');
+    return res.json(messages);
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to load messages' });
+  }
+};
+
+exports.sendMessage = async (req, res) => {
+  try {
+    const { chatId, content, tempId } = req.body;
+    if (!chatId || !content) return res.status(400).json({ message: 'chatId and content are required.' });
+
+    const message = await Message.create({
+      senderId: req.userId,
+      chatId,
+      content,
+      readBy: [req.userId]
+    });
+
+    await Chat.findByIdAndUpdate(chatId, { updatedAt: new Date() });
+
+    const populated = await message.populate('senderId', 'name email role');
+   
+    // Return the populated message, including the tempId so the frontend can replace the optimistic UI
+    const result = populated.toObject();
+    if (tempId) result.tempId = tempId;
+
+    return res.status(201).json(result);
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to send message', detail: err.message });
+  }
+};
