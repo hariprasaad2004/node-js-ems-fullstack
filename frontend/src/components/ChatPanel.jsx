@@ -63,6 +63,7 @@ export default function ChatPanel({ title = 'Team Chat' }) {
   const scrollRef = useRef(null);
   const openRef = useRef(false);
   const activeRef = useRef(defaultThread.threadKey);
+  const askedNotification = useRef(false);
 
   const totalUnread = useMemo(
     () => Object.values(unread).reduce((sum, value) => sum + (value || 0), 0),
@@ -137,6 +138,7 @@ export default function ChatPanel({ title = 'Team Chat' }) {
 
     socket.on('chat:message', (payload) => {
       if (!payload?.threadKey) return;
+      maybeNotify(payload);
       setThreads((prev) => {
         const exists = prev.some((t) => t.threadKey === payload.threadKey);
         if (exists) {
@@ -187,6 +189,29 @@ export default function ChatPanel({ title = 'Team Chat' }) {
       return { ...prev, [threadKey]: list };
     });
   };
+
+  function maybeNotify(message) {
+    const notViewing =
+      !openRef.current ||
+      activeRef.current !== message.threadKey ||
+      document.visibilityState === 'hidden';
+
+    if (!notViewing) return;
+
+    if (!askedNotification.current && 'Notification' in window) {
+      askedNotification.current = true;
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const titleText = message.sender?.name || 'New message';
+      const bodyText = message.text || 'New chat message';
+      const notice = new Notification(titleText, { body: bodyText });
+      setTimeout(() => notice.close(), 4000);
+    }
+  }
 
   const handleThreadSelect = async (threadKey) => {
     setActiveKey(threadKey);
