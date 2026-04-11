@@ -3,7 +3,7 @@ import { apiRequest, readJson } from '../api/client.js';
 import { createSocket } from '../api/socket.js';
 import Sidebar from '../components/Sidebar.jsx';
 import ChatWidget from '../components/ChatWidget.jsx';
-import ChangePasswordModal from '../components/ChangePasswordModal.jsx';
+import SettingsModal from '../components/SettingsModal.jsx';
 import { useBodyClass } from '../hooks/useBodyClass.js';
 import {
   formatDate,
@@ -1444,7 +1444,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               <p className="helper">Manage employees, roles, and active status.</p>
             </div>
               <div className="toolbar-actions">
-              <ChangePasswordModal />
+              <SettingsModal />
               <div className="notification-wrapper" ref={notificationRef}>
                 <button
                   className={`icon-button ${showNotifications ? 'is-open' : ''}`}

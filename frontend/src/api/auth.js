@@ -26,3 +26,9 @@ export async function updatePassword({ currentPassword, newPassword }) { // Chan
   const data = await readJson(res);
   return { res, data };
 }
+
+export async function getMe() { // Fetch current user profile.
+  const res = await apiRequest('/api/me');
+  const data = await readJson(res);
+  return { res, data };
+}

@@ -90,6 +90,24 @@ router.post('/logout', (req, res) => { // Destroy the session and log out.
   return req.session.destroy(() => res.json({ ok: true }));
 });
 
+router.get('/api/me', requireAuth, async (req, res) => { // Return minimal profile for the logged-in user.
+  try {
+    const user = await User.findById(req.userId).select('name email role department title status');
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    return res.json({
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      department: user.department || null,
+      title: user.title || null,
+      status: user.status
+    });
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to load profile.' });
+  }
+});
+
 router.post('/api/password/forgot', async (req, res) => { // Generate a one-time code for password recovery.
   try {
     const { email } = req.body || {};
