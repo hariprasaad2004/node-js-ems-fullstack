@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
 import ChatWidget from '../components/ChatWidget.jsx';
-import SettingsModal from '../components/SettingsModal.jsx';
 import { apiRequest, readJson } from '../api/client.js';
 import { useBodyClass } from '../hooks/useBodyClass.js';
 import { formatDate, formatDateTime, formatEmployeeLabel, formatStatus } from '../utils/format.js';
@@ -510,7 +509,6 @@ const upcomingTasks = useMemo(
               <p className="helper">Lead the team, monitor delivery, and approve requests.</p>
             </div>
             <div className="toolbar-actions">
-              <SettingsModal />
               <div className="notification-wrapper">
                 <button className="icon-button" type="button" aria-label="Notifications">
                   <svg viewBox="0 0 24 24" aria-hidden="true">

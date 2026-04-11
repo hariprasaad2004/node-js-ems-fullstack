@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiRequest, readJson } from '../api/client.js';
 import Sidebar from '../components/Sidebar.jsx';
 import ChatWidget from '../components/ChatWidget.jsx';
-import SettingsModal from '../components/SettingsModal.jsx';
 import { useBodyClass } from '../hooks/useBodyClass.js';
 import { formatDate, formatDateTime, formatDuration, formatStatus } from '../utils/format.js';
 
@@ -661,7 +660,6 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
                 <p className="helper">View your profile and update personal contact info.</p>
               </div>
               <div className="toolbar-actions">
-              <SettingsModal />
               <div className="notification-wrapper" ref={notificationRef}>
                   <button
                     className={`icon-button ${showNotifications ? 'is-open' : ''}`}
