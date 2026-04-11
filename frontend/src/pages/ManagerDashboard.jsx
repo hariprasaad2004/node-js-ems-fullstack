@@ -509,6 +509,7 @@ const upcomingTasks = useMemo(
               <p className="helper">Lead the team, monitor delivery, and approve requests.</p>
             </div>
             <div className="toolbar-actions">
+              <ChatWidget />
               <div className="notification-wrapper">
                 <button className="icon-button" type="button" aria-label="Notifications">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1265,7 +1266,6 @@ const upcomingTasks = useMemo(
         </section>
       </main>
       </div>
-      <ChatWidget />
     </>
   );
 }

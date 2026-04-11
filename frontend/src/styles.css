@@ -4157,10 +4157,10 @@ body:not(.theme-dark) .monitor-text {
 
 /* Chat widget */
 .chat-widget {
-  position: fixed;
-  right: 18px;
-  bottom: 18px;
+  position: relative;
   z-index: 95;
+  display: inline-block;
+  margin-right: 12px;
 }
 .chat-launcher {
   background: #128c7e;
@@ -4175,7 +4175,7 @@ body:not(.theme-dark) .monitor-text {
 .chat-panel {
   position: absolute;
   right: 0;
-  bottom: 56px; /* sit above launcher */
+  top: 46px;
   width: 360px;
   height: min(70vh, 560px);
   max-height: calc(100vh - 120px);

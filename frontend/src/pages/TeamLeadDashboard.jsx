@@ -504,6 +504,7 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
               <p className="helper">Assign tasks, watch attendance, and approve leaves.</p>
             </div>
             <div className="toolbar-actions">
+              <ChatWidget />
               <div className="notification-wrapper">
                 <button className="icon-button" type="button" aria-label="Notifications">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1245,10 +1246,10 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
                     {eodPeopleChart.map((row) => (
                       <div className="bar-item compact" key={row.label}>
                         <div className="bar-label">{row.label}</div>
-                        <div className="bar-track">
-                          <div className="bar-fill" style={{ width: `${row.value}%` }} />
-                        </div>
-                        <span className="bar-value">{row.value}%</span>
+                  <div className="bar-track">
+                    <div className="bar-fill" style={{ width: `${row.value}%` }} />
+                  </div>
+                  <span className="bar-value">{row.value}%</span>
                       </div>
                     ))}
                     {eodPeopleChart.length === 0 ? (
@@ -1279,7 +1280,6 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
         </section>
       </main>
       </div>
-      <ChatWidget />
     </>
   );
 }

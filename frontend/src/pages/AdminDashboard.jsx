@@ -1443,6 +1443,7 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
               <p className="helper">Manage employees, roles, and active status.</p>
             </div>
               <div className="toolbar-actions">
+              <ChatWidget />
               <div className="notification-wrapper" ref={notificationRef}>
                 <button
                   className={`icon-button ${showNotifications ? 'is-open' : ''}`}
@@ -2906,7 +2907,6 @@ export default function AdminDashboard() { // Admin dashboard UI and data operat
         </section>
       </main>
       </div>
-      <ChatWidget />
     </>
   );
 }
