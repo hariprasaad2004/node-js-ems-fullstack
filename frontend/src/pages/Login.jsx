@@ -160,12 +160,8 @@ export default function Login() { // Login page and auth redirect logic.
                   setResetError(data?.message || 'Could not create reset token.');
                   return;
                 }
-                setRequestedToken(data?.token || '');
-                setResetMessage(
-                  data?.token
-                    ? `Reset token generated: ${data.token} (valid for 1 hour).`
-                    : 'Reset token generated. Check your email.'
-                );
+                setRequestedToken('');
+                setResetMessage('If that account exists, a 6-digit code was sent and expires in 1 hour.');
               }}
             >
               Send reset token
@@ -236,11 +232,6 @@ export default function Login() { // Login page and auth redirect logic.
 
             {resetError ? <p className="helper error-text">{resetError}</p> : null}
             {resetMessage ? <p className="helper" style={{ color: '#34d399' }}>{resetMessage}</p> : null}
-            {requestedToken ? (
-              <p className="helper" style={{ color: '#a5b4fc' }}>
-                Token: {requestedToken}
-              </p>
-            ) : null}
           </div>
         </div>
       </div>

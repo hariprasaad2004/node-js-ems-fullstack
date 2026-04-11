@@ -2,8 +2,22 @@ const express = require('express');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const { requireAuth } = require('../middleware/auth');
+
+function buildTransport() { // Configure SMTP transport if env vars are present.
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE } = process.env;
+  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) return null;
+  const port = Number(SMTP_PORT || 587);
+  const secure = SMTP_SECURE === 'true' || port === 465;
+  return nodemailer.createTransport({
+    host: SMTP_HOST,
+    port,
+    secure,
+    auth: { user: SMTP_USER, pass: SMTP_PASS }
+  });
+}
 
 const router = express.Router();
 
@@ -76,25 +90,45 @@ router.post('/logout', (req, res) => { // Destroy the session and log out.
   return req.session.destroy(() => res.json({ ok: true }));
 });
 
-router.post('/api/password/forgot', async (req, res) => { // Generate a reset token for password recovery.
+router.post('/api/password/forgot', async (req, res) => { // Generate a one-time code for password recovery.
   try {
     const { email } = req.body || {};
     if (!email) return res.status(400).json({ message: 'Email is required.' });
 
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-      return res.json({ message: 'If that account exists, a reset token has been created.' });
+      return res.json({ message: 'If that account exists, a reset code has been created.' });
     }
 
-    const token = crypto.randomBytes(20).toString('hex');
+    // 6-digit numeric code to mimic an OTP
+    const token = (Math.floor(100000 + Math.random() * 900000)).toString();
     user.resetToken = token;
     user.resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     await user.save();
 
-    // In lieu of email delivery, return the token so QA/users can copy it.
+    // Send via SMTP if configured; otherwise log for QA.
+    const transport = buildTransport();
+    const from = process.env.SMTP_FROM || 'no-reply@ems.local';
+    const mailOptions = {
+      from,
+      to: user.email,
+      subject: 'Your EMS reset code',
+      text: `Here is your EMS password reset code: ${token}\nIt expires in 1 hour.\nIf you did not request this, ignore this email.`
+    };
+
+    if (transport) {
+      try {
+        await transport.sendMail(mailOptions);
+      } catch (mailErr) {
+        console.error('Error sending reset email:', mailErr.message);
+        console.log(`[password-reset] code for ${user.email}: ${token}`);
+      }
+    } else {
+      console.log(`[password-reset] code for ${user.email}: ${token}`);
+    }
+
     return res.json({
-      message: 'Reset token created. Use it within 1 hour.',
-      token
+      message: 'If that account exists, a reset code has been sent. It expires in 1 hour.'
     });
   } catch (err) {
     return res.status(500).json({ message: 'Could not create reset token.' });
