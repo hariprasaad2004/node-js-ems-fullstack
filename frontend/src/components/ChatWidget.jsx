@@ -128,7 +128,7 @@ export default function ChatWidget() {
   return (
     <div className={`chat-widget ${open ? 'open' : ''}`}>
       <button type="button" className="chat-launcher" onClick={() => setOpen((p) => !p)}>
-        💬 Chat
+        Chat
       </button>
       {open ? (
         <div className="chat-panel">
