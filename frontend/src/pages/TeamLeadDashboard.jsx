@@ -504,7 +504,6 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
               <p className="helper">Assign tasks, watch attendance, and approve leaves.</p>
             </div>
             <div className="toolbar-actions">
-              <ChatWidget />
               <div className="notification-wrapper">
                 <button className="icon-button" type="button" aria-label="Notifications">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1280,6 +1279,7 @@ const [taskMonitorStatus, setTaskMonitorStatus] = useState('all');
         </section>
       </main>
       </div>
+      <ChatWidget />
     </>
   );
 }

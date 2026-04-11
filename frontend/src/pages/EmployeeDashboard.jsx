@@ -660,7 +660,6 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
                 <p className="helper">View your profile and update personal contact info.</p>
               </div>
               <div className="toolbar-actions">
-              <ChatWidget />
               <div className="notification-wrapper" ref={notificationRef}>
                   <button
                     className={`icon-button ${showNotifications ? 'is-open' : ''}`}
@@ -1234,6 +1233,7 @@ export default function EmployeeDashboard() { // Employee dashboard UI and data 
           </section>
         </main>
       </div>
+      <ChatWidget />
       <div className={`modal ${modalOpen ? 'active' : ''}`} aria-hidden={!modalOpen}>
         <div className="modal-backdrop" onClick={() => setModalOpen(false)} />
         <div className="modal-card" role="dialog" aria-modal="true" aria-labelledby="leave-modal-title">

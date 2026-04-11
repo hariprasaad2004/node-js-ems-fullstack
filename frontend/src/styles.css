@@ -4157,11 +4157,10 @@ body:not(.theme-dark) .monitor-text {
 
 /* Chat widget */
 .chat-widget {
-  position: relative;
-  z-index: 120;
-  display: inline-block;
-  margin-right: 12px;
-  align-self: center;
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 200;
 }
 .chat-launcher {
   background: #128c7e;
@@ -4176,7 +4175,7 @@ body:not(.theme-dark) .monitor-text {
 .chat-panel {
   position: absolute;
   right: 0;
-  top: calc(100% + 8px);
+  bottom: 56px; /* sits above launcher */
   width: 340px;
   height: min(70vh, 560px);
   max-height: calc(100vh - 120px);
@@ -4187,7 +4186,6 @@ body:not(.theme-dark) .monitor-text {
   display: grid;
   grid-template-rows: auto 1fr;
   overflow: hidden;
-  z-index: 200; /* ensure it sits above dashboard cards */
 }
 .chat-list {
   border-bottom: 1px solid #1f2c34;
