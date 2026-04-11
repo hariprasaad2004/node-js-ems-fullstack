@@ -17,7 +17,9 @@ const userSchema = new mongoose.Schema(
     salary: { type: Number },
     profileImage: { type: String, trim: true },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
-    isOnline: { type: Boolean, default: false }
+    isOnline: { type: Boolean, default: false },
+    resetToken: { type: String },
+    resetExpires: { type: Date }
   },
   { timestamps: true }
 );

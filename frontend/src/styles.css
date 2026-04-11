@@ -719,6 +719,19 @@ button:focus-visible,
   border-color: #d9e2f1;
 }
 
+.btn-link {
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
+  padding: 0;
+}
+.btn-link:hover {
+  color: #0ea5e9;
+}
+
 .sidebar-logout.btn-ghost {
   background: #f8fafc;
   border-color: var(--border);
