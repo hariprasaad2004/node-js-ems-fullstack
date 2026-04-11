@@ -4187,6 +4187,7 @@ body:not(.theme-dark) .monitor-text {
   display: grid;
   grid-template-rows: auto 1fr;
   overflow: hidden;
+  z-index: 200; /* ensure it sits above dashboard cards */
 }
 .chat-list {
   border-bottom: 1px solid #1f2c34;
