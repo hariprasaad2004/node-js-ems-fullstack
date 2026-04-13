@@ -155,7 +155,7 @@ router.post('/api/password/forgot', async (req, res) => { // Generate SMS OTP fo
     }
 
     const smsConfigured = hasTwilioConfig();
-    const transport = buildTransport();
+    const transport = buildTransport(); // kept for future email use; SMS-only path below.
     if (!smsConfigured && process.env.NODE_ENV === 'production') {
       console.warn('[otp] SMS not configured in production; falling back to console logging for testing.');
     }
@@ -190,28 +190,13 @@ router.post('/api/password/forgot', async (req, res) => { // Generate SMS OTP fo
     user.resetExpires = undefined;
     await user.save();
 
-    // Optional email fallback if SMTP is configured (does not block SMS flow).
-    if (transport) {
-      const from = process.env.SMTP_FROM || 'no-reply@ems.local';
-      const mailOptions = {
-        from,
-        to: user.email,
-        subject: 'Your EMS reset code (SMS primary)',
-        text: `We sent a password reset code to your registered mobile ending in ${maskPhone(user.phone)}.\n` +
-          `Code: ${otp}\nExpires in ${OTP_TTL_MINUTES} minutes.\nIf you did not request this, ignore this email.`
-      };
-      transport.sendMail(mailOptions).catch((mailErr) => {
-        console.error('Error sending optional reset email:', mailErr.message);
-      });
-    }
-
     if (!smsConfigured && sendResult.fallback) {
       console.log(`[otp-dev] SMS not configured; code ${otp} for ${maskPhone(user.phone)} logged for testing.`);
     }
 
     const successMessage = smsConfigured
       ? `If that account exists, an SMS with a ${OTP_LENGTH}-digit code was sent to the registered mobile number. It expires in ${OTP_TTL_MINUTES} minutes.`
-      : `If that account exists, a reset code was generated. SMS delivery is not configured in this environment; check your email (if configured) or contact an administrator.`;
+      : `If that account exists, a reset code was generated. SMS delivery is not configured in this environment; contact an administrator.`;
 
     return res.json({ message: successMessage });
   } catch (err) {
