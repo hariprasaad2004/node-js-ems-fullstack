@@ -157,23 +157,19 @@ router.post('/api/password/forgot', async (req, res) => { // Generate OTP for pa
       });
     }
 
-    let otp = null;
+    let otp = generateOtp();
     let sendResult = null;
-    let channel = null;
+    let channel = 'email';
 
-    // Prefer SMTP/email when available.
-    if (emailConfigured) {
-      otp = generateOtp();
-      channel = 'email';
-      sendResult = await sendOtpEmail({
-        to: user.email,
-        code: otp,
-        ttlMinutes: OTP_TTL_MINUTES
-      });
-    }
+    // Always attempt email first; it will log a fallback in dev if SMTP is missing.
+    sendResult = await sendOtpEmail({
+      to: user.email,
+      code: otp,
+      ttlMinutes: OTP_TTL_MINUTES
+    });
 
-    // Fallback to SMS only if email failed/unavailable.
-    if ((!sendResult || !sendResult.ok) && smsConfigured) {
+    // Fallback to SMS when email failed or is unconfigured and SMS is available.
+    if ((sendResult?.fallback || !sendResult?.ok) && smsConfigured) {
       if (!user.phone) {
         return res.status(400).json({
           message: 'No mobile number on file for SMS fallback. Contact an admin.'
@@ -184,7 +180,7 @@ router.post('/api/password/forgot', async (req, res) => { // Generate OTP for pa
         sendResult = await sendVerifyCode({ to: user.phone, channel: 'sms' });
         otp = '****'; // Twilio Verify manages the code.
       } else {
-        otp = otp || generateOtp();
+        otp = generateOtp(); // fresh code for SMS channel
         sendResult = await sendVerifyCode({ to: user.phone, channel: 'sms' }); // fallback to Verify if configured; else regular.
         if (!sendResult.ok && sendResult.reason === 'twilio-verify-not-configured') {
           // fallback to messaging API if Verify not set up
