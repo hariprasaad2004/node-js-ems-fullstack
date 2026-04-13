@@ -53,10 +53,10 @@ Fullstack EMS built with Node.js, Express, MongoDB Atlas, and React (Vite).
 8. Open `http://localhost:3000` and log in.
 
 ## Password reset via SMS
-1. In `backend/.env` set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM` (Twilio-verified sender in E.164 format).
+1. In `backend/.env` set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` (verified SMS-capable number in E.164), and `TWILIO_VERIFY_SID` (from Twilio Verify Service).
 2. Tune OTP behavior with `OTP_LENGTH`, `OTP_TTL_MINUTES`, `OTP_RESEND_COOLDOWN_SECONDS`, `OTP_MAX_ATTEMPTS`, and `OTP_SECRET`.
 3. Make sure each user has a `phone` value stored; the reset code is sent only to that mobile number.
-4. In production, keep Twilio configured; otherwise the API will reject reset requests.
+4. In production, keep Twilio configured; otherwise the API will log the code for testing.
 
 ## Dev (Optional)
 1. Start the backend server:

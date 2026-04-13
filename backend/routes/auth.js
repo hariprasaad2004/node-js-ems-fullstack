@@ -5,7 +5,13 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const { requireAuth } = require('../middleware/auth');
-const { sendOtpSms, maskPhone, hasTwilioConfig } = require('../services/sms');
+const {
+  sendVerifyCode,
+  checkVerifyCode,
+  maskPhone,
+  hasTwilioConfig,
+  hasTwilioVerifyConfig
+} = require('../services/sms');
 
 function buildTransport() { // Configure SMTP transport if env vars are present.
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE } = process.env;
@@ -154,10 +160,10 @@ router.post('/api/password/forgot', async (req, res) => { // Generate SMS OTP fo
       });
     }
 
-    const smsConfigured = hasTwilioConfig();
-    const transport = buildTransport(); // kept for future email use; SMS-only path below.
+    const smsConfigured = hasTwilioConfig() || hasTwilioVerifyConfig();
+    const transport = buildTransport(); // kept for possible future email use; SMS-only path below.
     if (!smsConfigured && process.env.NODE_ENV === 'production') {
-      console.warn('[otp] SMS not configured in production; falling back to console logging for testing.');
+      console.warn('[otp] Twilio not configured in production; falling back to console logging for testing.');
     }
 
     const waitMs = msUntilNextOtp(user);
@@ -168,12 +174,24 @@ router.post('/api/password/forgot', async (req, res) => { // Generate SMS OTP fo
       });
     }
 
-    const otp = generateOtp();
-    const sendResult = await sendOtpSms({
-      to: user.phone,
-      code: otp,
-      ttlMinutes: OTP_TTL_MINUTES
-    });
+    let otp = null;
+    let sendResult = null;
+
+    if (hasTwilioVerifyConfig()) {
+      sendResult = await sendVerifyCode({ to: user.phone, channel: 'sms' });
+      otp = '****'; // Twilio Verify manages the code.
+    } else {
+      otp = generateOtp();
+      sendResult = await sendVerifyCode({ to: user.phone, channel: 'sms' }); // fallback to Verify if configured; else regular.
+      if (!sendResult.ok && sendResult.reason === 'twilio-verify-not-configured') {
+        // fallback to messaging API if Verify not set up
+        sendResult = await sendOtpSms({
+          to: user.phone,
+          code: otp,
+          ttlMinutes: OTP_TTL_MINUTES
+        });
+      }
+    }
 
     if (!sendResult.ok) {
       console.error('Error sending SMS reset code:', sendResult.error || sendResult.response || 'unknown error');
@@ -181,7 +199,7 @@ router.post('/api/password/forgot', async (req, res) => { // Generate SMS OTP fo
     }
 
     const now = new Date();
-    user.resetOtpHash = hashOtp(otp);
+    user.resetOtpHash = hasTwilioVerifyConfig() ? undefined : hashOtp(otp);
     user.resetOtpExpires = new Date(now.getTime() + OTP_TTL_MINUTES * 60 * 1000);
     user.resetOtpAttempts = 0;
     user.resetOtpLastSent = now;
@@ -217,26 +235,41 @@ router.post('/api/password/reset', async (req, res) => { // Reset password using
 
     const user = await User.findOne({ email: email.toLowerCase() });
 
-    if (!user || !user.resetOtpHash || !user.resetOtpExpires) {
-      return res.status(400).json({ message: 'Invalid or expired reset code.' });
+    if (!hasTwilioVerifyConfig()) {
+      if (!user || !user.resetOtpHash || !user.resetOtpExpires) {
+        return res.status(400).json({ message: 'Invalid or expired reset code.' });
+      }
+      if (user.resetOtpExpires <= new Date()) {
+        return res.status(400).json({ message: 'Reset code has expired. Request a new one.' });
+      }
+    } else {
+      if (!user) return res.status(400).json({ message: 'Invalid or expired reset code.' });
     }
 
     if (user.resetOtpAttempts >= OTP_MAX_ATTEMPTS) {
       return res.status(429).json({ message: 'Too many invalid attempts. Request a new code.' });
     }
 
-    if (user.resetOtpExpires <= new Date()) {
-      return res.status(400).json({ message: 'Reset code has expired. Request a new one.' });
-    }
-
-    const hashedToken = hashOtp(token.trim());
-    if (hashedToken !== user.resetOtpHash) {
-      user.resetOtpAttempts = (user.resetOtpAttempts || 0) + 1;
-      await user.save();
-      const remaining = attemptsRemaining(user);
-      return res.status(400).json({
-        message: `Invalid code. ${remaining} attempt(s) remaining.`
-      });
+    if (hasTwilioVerifyConfig()) {
+      const verifyResult = await checkVerifyCode({ to: user.phone, code: token.trim() });
+      if (!verifyResult.ok) {
+        user.resetOtpAttempts = (user.resetOtpAttempts || 0) + 1;
+        await user.save();
+        const remaining = attemptsRemaining(user);
+        return res.status(400).json({
+          message: `Invalid code. ${remaining} attempt(s) remaining.`
+        });
+      }
+    } else {
+      const hashedToken = hashOtp(token.trim());
+      if (hashedToken !== user.resetOtpHash) {
+        user.resetOtpAttempts = (user.resetOtpAttempts || 0) + 1;
+        await user.save();
+        const remaining = attemptsRemaining(user);
+        return res.status(400).json({
+          message: `Invalid code. ${remaining} attempt(s) remaining.`
+        });
+      }
     }
 
     const normalizedPassword = password.trim();

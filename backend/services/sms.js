@@ -1,5 +1,6 @@
 const https = require('https');
 const querystring = require('querystring');
+let twilioClient = null;
 
 function maskPhone(phone) { // Hide most digits for logs.
   if (!phone || typeof phone !== 'string') return 'unknown';
@@ -14,6 +15,25 @@ function hasTwilioConfig() {
     !!process.env.TWILIO_AUTH_TOKEN &&
     !!process.env.TWILIO_FROM
   );
+}
+
+function hasTwilioVerifyConfig() {
+  return (
+    !!process.env.TWILIO_ACCOUNT_SID &&
+    !!process.env.TWILIO_AUTH_TOKEN &&
+    !!process.env.TWILIO_VERIFY_SID
+  );
+}
+
+function getTwilioClient() {
+  if (twilioClient) return twilioClient;
+  if (hasTwilioConfig() || hasTwilioVerifyConfig()) {
+    // Lazy load twilio dependency to avoid requiring it when not configured.
+    // eslint-disable-next-line global-require
+    const twilio = require('twilio');
+    twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  }
+  return twilioClient;
 }
 
 function sendSms({ to, body }) { // Send SMS via Twilio REST API or log in dev.
@@ -59,18 +79,55 @@ function sendSms({ to, body }) { // Send SMS via Twilio REST API or log in dev.
       });
     });
 
-    req.on('error', (err) => {
-      return resolve({ ok: false, error: err.message });
-    });
+    req.on('error', (err) => resolve({ ok: false, error: err.message }));
 
     req.write(payload);
     req.end();
   });
 }
 
-async function sendOtpSms({ to, code, ttlMinutes = 10 }) { // Compose OTP message wrapper.
+async function sendOtpSms({ to, code, ttlMinutes = 10 }) { // Compose OTP message wrapper (Messaging API).
   const body = `Your EMS reset code is ${code}. It expires in ${ttlMinutes} minutes.`;
   return sendSms({ to, body });
 }
 
-module.exports = { sendOtpSms, maskPhone, hasTwilioConfig };
+async function sendVerifyCode({ to, channel = 'sms' }) { // Use Twilio Verify to send a code.
+  if (!hasTwilioVerifyConfig()) {
+    console.log(`[otp-verify] Twilio Verify not configured; would send to ${maskPhone(to)}`);
+    return { ok: true, fallback: true, reason: 'twilio-verify-not-configured' };
+  }
+  try {
+    const client = getTwilioClient();
+    const verification = await client.verify.v2
+      .services(process.env.TWILIO_VERIFY_SID)
+      .verifications.create({ to, channel });
+    return { ok: true, sid: verification.sid, status: verification.status };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+async function checkVerifyCode({ to, code }) { // Validate code via Twilio Verify.
+  if (!hasTwilioVerifyConfig()) {
+    return { ok: false, error: 'Twilio Verify not configured' };
+  }
+  try {
+    const client = getTwilioClient();
+    const check = await client.verify.v2
+      .services(process.env.TWILIO_VERIFY_SID)
+      .verificationChecks.create({ to, code });
+    const approved = check.status === 'approved';
+    return { ok: approved, status: check.status };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+module.exports = {
+  sendOtpSms,
+  sendVerifyCode,
+  checkVerifyCode,
+  maskPhone,
+  hasTwilioConfig,
+  hasTwilioVerifyConfig
+};
