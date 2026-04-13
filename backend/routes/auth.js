@@ -6,7 +6,7 @@ const User = require('../models/User');
 const { requireAuth } = require('../middleware/auth');
 const { sendOtpEmail, hasSmtpConfig } = require('../services/email');
 
-// OTP configuration for password resets (email-first, SMS fallback).
+// OTP configuration for password resets (email-only).
 const OTP_LENGTH = Math.max(4, Math.min(Number(process.env.OTP_LENGTH) || 6, 8));
 const OTP_TTL_MINUTES = Number(process.env.OTP_TTL_MINUTES || 10);
 const OTP_RESEND_COOLDOWN_SECONDS = Number(process.env.OTP_RESEND_COOLDOWN_SECONDS || 60);
