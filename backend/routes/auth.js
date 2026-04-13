@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const { requireAuth } = require('../middleware/auth');
+const { sendOtpSms, maskPhone, hasTwilioConfig } = require('../services/sms');
 
 function buildTransport() { // Configure SMTP transport if env vars are present.
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE } = process.env;
@@ -17,6 +18,33 @@ function buildTransport() { // Configure SMTP transport if env vars are present.
     secure,
     auth: { user: SMTP_USER, pass: SMTP_PASS }
   });
+}
+
+// OTP configuration for password resets (SMS-first, email optional).
+const OTP_LENGTH = Math.max(4, Math.min(Number(process.env.OTP_LENGTH) || 6, 8));
+const OTP_TTL_MINUTES = Number(process.env.OTP_TTL_MINUTES || 10);
+const OTP_RESEND_COOLDOWN_SECONDS = Number(process.env.OTP_RESEND_COOLDOWN_SECONDS || 60);
+const OTP_MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5);
+const OTP_SECRET = process.env.OTP_SECRET || process.env.SESSION_SECRET || 'otp-dev-secret';
+
+function generateOtp() { // Create a numeric OTP with fixed length.
+  const min = 10 ** (OTP_LENGTH - 1);
+  const max = 10 ** OTP_LENGTH;
+  return crypto.randomInt(min, max).toString().padStart(OTP_LENGTH, '0');
+}
+
+function hashOtp(code) { // Hash OTP with HMAC-SHA256 to avoid storing raw codes.
+  return crypto.createHmac('sha256', OTP_SECRET).update(code).digest('hex');
+}
+
+function msUntilNextOtp(user) { // Cooldown between SMS sends to the same account.
+  if (!user?.resetOtpLastSent) return 0;
+  const elapsed = Date.now() - new Date(user.resetOtpLastSent).getTime();
+  return Math.max(0, OTP_RESEND_COOLDOWN_SECONDS * 1000 - elapsed);
+}
+
+function attemptsRemaining(user) {
+  return Math.max(OTP_MAX_ATTEMPTS - (user?.resetOtpAttempts || 0), 0);
 }
 
 const router = express.Router();
@@ -108,69 +136,133 @@ router.get('/api/me', requireAuth, async (req, res) => { // Return minimal profi
   }
 });
 
-router.post('/api/password/forgot', async (req, res) => { // Generate a one-time code for password recovery.
+router.post('/api/password/forgot', async (req, res) => { // Generate SMS OTP for password recovery.
   try {
     const { email } = req.body || {};
     if (!email) return res.status(400).json({ message: 'Email is required.' });
 
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-      return res.json({ message: 'If that account exists, a reset code has been created.' });
+      return res.json({
+        message: 'If that account exists, an SMS code has been created.'
+      });
     }
 
-    // 6-digit numeric code to mimic an OTP
-    const token = (Math.floor(100000 + Math.random() * 900000)).toString();
-    user.resetToken = token;
-    user.resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    if (!user.phone) {
+      return res.status(400).json({
+        message: 'SMS reset is unavailable because no mobile number is on file. Contact an admin.'
+      });
+    }
+
+    const smsConfigured = hasTwilioConfig();
+    const transport = buildTransport();
+    if (!smsConfigured && process.env.NODE_ENV === 'production') {
+      return res.status(500).json({
+        message: 'SMS delivery is not configured. Please contact an administrator.'
+      });
+    }
+
+    const waitMs = msUntilNextOtp(user);
+    if (waitMs > 0) {
+      const waitSeconds = Math.ceil(waitMs / 1000);
+      return res.status(429).json({
+        message: `Please wait ${waitSeconds}s before requesting another code.`
+      });
+    }
+
+    const otp = generateOtp();
+    const sendResult = await sendOtpSms({
+      to: user.phone,
+      code: otp,
+      ttlMinutes: OTP_TTL_MINUTES
+    });
+
+    if (!sendResult.ok) {
+      console.error('Error sending SMS reset code:', sendResult.error || sendResult.response || 'unknown error');
+      return res.status(502).json({ message: 'Could not send SMS code. Try again shortly.' });
+    }
+
+    const now = new Date();
+    user.resetOtpHash = hashOtp(otp);
+    user.resetOtpExpires = new Date(now.getTime() + OTP_TTL_MINUTES * 60 * 1000);
+    user.resetOtpAttempts = 0;
+    user.resetOtpLastSent = now;
+    user.resetOtpChannel = 'sms';
+    user.resetToken = undefined;
+    user.resetExpires = undefined;
     await user.save();
 
-    // Send via SMTP if configured; otherwise log for QA.
-    const transport = buildTransport();
-    const from = process.env.SMTP_FROM || 'no-reply@ems.local';
-    const mailOptions = {
-      from,
-      to: user.email,
-      subject: 'Your EMS reset code',
-      text: `Here is your EMS password reset code: ${token}\nIt expires in 1 hour.\nIf you did not request this, ignore this email.`
-    };
-
+    // Optional email fallback if SMTP is configured (does not block SMS flow).
     if (transport) {
-      try {
-        await transport.sendMail(mailOptions);
-      } catch (mailErr) {
-        console.error('Error sending reset email:', mailErr.message);
-        console.log(`[password-reset] code for ${user.email}: ${token}`);
-      }
-    } else {
-      console.log(`[password-reset] code for ${user.email}: ${token}`);
+      const from = process.env.SMTP_FROM || 'no-reply@ems.local';
+      const mailOptions = {
+        from,
+        to: user.email,
+        subject: 'Your EMS reset code (SMS primary)',
+        text: `We sent a password reset code to your registered mobile ending in ${maskPhone(user.phone)}.\n` +
+          `Code: ${otp}\nExpires in ${OTP_TTL_MINUTES} minutes.\nIf you did not request this, ignore this email.`
+      };
+      transport.sendMail(mailOptions).catch((mailErr) => {
+        console.error('Error sending optional reset email:', mailErr.message);
+      });
     }
 
-    return res.json({
-      message: 'If that account exists, a reset code has been sent. It expires in 1 hour.'
-    });
+    if (!smsConfigured && sendResult.fallback) {
+      console.log(`[otp-dev] SMS not configured; code ${otp} for ${maskPhone(user.phone)} logged for testing.`);
+    }
+
+    const successMessage = smsConfigured
+      ? `If that account exists, an SMS with a ${OTP_LENGTH}-digit code was sent to the registered mobile number. It expires in ${OTP_TTL_MINUTES} minutes.`
+      : `If that account exists, a reset code was generated. SMS delivery is not configured in this environment; check your email (if configured) or contact an administrator.`;
+
+    return res.json({ message: successMessage });
   } catch (err) {
     return res.status(500).json({ message: 'Could not create reset token.' });
   }
 });
 
-router.post('/api/password/reset', async (req, res) => { // Reset password using token.
+router.post('/api/password/reset', async (req, res) => { // Reset password using SMS OTP.
   try {
     const { email, token, password } = req.body || {};
     if (!email || !token || !password) {
       return res.status(400).json({ message: 'Email, token, and new password are required.' });
     }
 
-    const user = await User.findOne({
-      email: email.toLowerCase(),
-      resetToken: token,
-      resetExpires: { $gt: new Date() }
-    });
-
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired reset token.' });
+    if (typeof password !== 'string' || password.trim().length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters.' });
     }
 
-    user.passwordHash = await bcrypt.hash(password, 10);
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user || !user.resetOtpHash || !user.resetOtpExpires) {
+      return res.status(400).json({ message: 'Invalid or expired reset code.' });
+    }
+
+    if (user.resetOtpAttempts >= OTP_MAX_ATTEMPTS) {
+      return res.status(429).json({ message: 'Too many invalid attempts. Request a new code.' });
+    }
+
+    if (user.resetOtpExpires <= new Date()) {
+      return res.status(400).json({ message: 'Reset code has expired. Request a new one.' });
+    }
+
+    const hashedToken = hashOtp(token.trim());
+    if (hashedToken !== user.resetOtpHash) {
+      user.resetOtpAttempts = (user.resetOtpAttempts || 0) + 1;
+      await user.save();
+      const remaining = attemptsRemaining(user);
+      return res.status(400).json({
+        message: `Invalid code. ${remaining} attempt(s) remaining.`
+      });
+    }
+
+    const normalizedPassword = password.trim();
+    user.passwordHash = await bcrypt.hash(normalizedPassword, 10);
+    user.resetOtpHash = undefined;
+    user.resetOtpExpires = undefined;
+    user.resetOtpAttempts = 0;
+    user.resetOtpLastSent = undefined;
+    user.resetOtpChannel = undefined;
     user.resetToken = undefined;
     user.resetExpires = undefined;
     await user.save();

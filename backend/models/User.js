@@ -19,7 +19,12 @@ const userSchema = new mongoose.Schema(
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     isOnline: { type: Boolean, default: false },
     resetToken: { type: String },
-    resetExpires: { type: Date }
+    resetExpires: { type: Date },
+    resetOtpHash: { type: String },
+    resetOtpExpires: { type: Date },
+    resetOtpAttempts: { type: Number, default: 0 },
+    resetOtpLastSent: { type: Date },
+    resetOtpChannel: { type: String, enum: ['sms', 'email'] }
   },
   { timestamps: true }
 );

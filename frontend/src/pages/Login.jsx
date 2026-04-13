@@ -149,6 +149,8 @@ export default function Login() { // Login page and auth redirect logic.
               />
             </label>
 
+            <p className="helper">We will text a code to the mobile number on file for this email.</p>
+
             <button
               className="btn-primary"
               type="button"
@@ -161,19 +163,22 @@ export default function Login() { // Login page and auth redirect logic.
                   return;
                 }
                 setRequestedToken('');
-                setResetMessage('If that account exists, a 6-digit code was sent and expires in 1 hour.');
+                const msg =
+                  data?.message ||
+                  'If that account exists, a 6-digit SMS code was sent to your registered mobile. It expires in 10 minutes.';
+                setResetMessage(msg);
               }}
             >
-              Send reset token
+              Send SMS code
             </button>
 
             <label className="auth-field">
-              <span>Reset token</span>
+              <span>SMS code</span>
               <input
                 type="text"
                 value={resetToken}
                 onChange={(e) => setResetToken(e.target.value)}
-                placeholder="Paste token"
+                placeholder="6-digit code from SMS"
               />
             </label>
 
@@ -204,7 +209,7 @@ export default function Login() { // Login page and auth redirect logic.
                 setResetError('');
                 setResetMessage('');
                 if (!resetEmail || !resetToken || !resetPasswordVal) {
-                  setResetError('Email, token, and new password are required.');
+                  setResetError('Email, code, and new password are required.');
                   return;
                 }
                 if (resetPasswordVal !== resetConfirm) {

@@ -17,6 +17,7 @@ Fullstack EMS built with Node.js, Express, MongoDB Atlas, and React (Vite).
 - Admin dashboard to create, edit, and delete employees
 - Employee self-service dashboard to update personal contact info
 - Role-based access control with sessions
+- SMS OTP password reset to the employee’s registered mobile number (Twilio configurable)
 
 ## Setup
 1. Go to the backend folder:
@@ -50,6 +51,12 @@ Fullstack EMS built with Node.js, Express, MongoDB Atlas, and React (Vite).
    npm start
    ```
 8. Open `http://localhost:3000` and log in.
+
+## Password reset via SMS
+1. In `backend/.env` set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM` (Twilio-verified sender in E.164 format).
+2. Tune OTP behavior with `OTP_LENGTH`, `OTP_TTL_MINUTES`, `OTP_RESEND_COOLDOWN_SECONDS`, `OTP_MAX_ATTEMPTS`, and `OTP_SECRET`.
+3. Make sure each user has a `phone` value stored; the reset code is sent only to that mobile number.
+4. In production, keep Twilio configured; otherwise the API will reject reset requests.
 
 ## Dev (Optional)
 1. Start the backend server:
