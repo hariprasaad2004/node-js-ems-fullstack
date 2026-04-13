@@ -149,7 +149,7 @@ export default function Login() { // Login page and auth redirect logic.
               />
             </label>
 
-            <p className="helper">We will text a code to the mobile number on file for this email.</p>
+            <p className="helper">We will email a code to this address if the account exists.</p>
 
             <button
               className="btn-primary"
@@ -165,20 +165,20 @@ export default function Login() { // Login page and auth redirect logic.
                 setRequestedToken('');
                 const msg =
                   data?.message ||
-                  'If that account exists, a 6-digit SMS code was sent to your registered mobile. It expires in 10 minutes.';
+                  'If that account exists, a 6-digit code was emailed to you. It expires in 10 minutes.';
                 setResetMessage(msg);
               }}
             >
-              Send SMS code
+              Send email code
             </button>
 
             <label className="auth-field">
-              <span>SMS code</span>
+              <span>Email code</span>
               <input
                 type="text"
                 value={resetToken}
                 onChange={(e) => setResetToken(e.target.value)}
-                placeholder="6-digit code from SMS"
+                placeholder="6-digit code from email"
               />
             </label>
 
