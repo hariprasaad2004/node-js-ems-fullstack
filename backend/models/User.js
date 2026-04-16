@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema(
     resetOtpExpires: { type: Date },
     resetOtpAttempts: { type: Number, default: 0 },
     resetOtpLastSent: { type: Date },
+    resetOtpVerifiedAt: { type: Date },
     resetOtpChannel: { type: String, enum: ['sms', 'email'] }
   },
   { timestamps: true }

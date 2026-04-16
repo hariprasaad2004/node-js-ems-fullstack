@@ -9,6 +9,15 @@ export async function forgotPassword(email) { // Request a reset token.
   return { res, data };
 }
 
+export async function verifyPasswordResetCode({ email, token }) { // Verify the emailed OTP before password reset.
+  const res = await apiRequest('/api/password/verify', {
+    method: 'POST',
+    body: JSON.stringify({ email, token })
+  });
+  const data = await readJson(res);
+  return { res, data };
+}
+
 export async function resetPassword({ email, token, password }) { // Complete reset with token.
   const res = await apiRequest('/api/password/reset', {
     method: 'POST',

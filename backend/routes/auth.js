@@ -33,6 +33,38 @@ function attemptsRemaining(user) {
   return Math.max(OTP_MAX_ATTEMPTS - (user?.resetOtpAttempts || 0), 0);
 }
 
+async function validateResetOtp(user, token) {
+  if (!user || !user.resetOtpExpires) {
+    return { ok: false, status: 400, message: 'Invalid or expired reset code.' };
+  }
+
+  if (user.resetOtpExpires <= new Date()) {
+    return { ok: false, status: 400, message: 'Reset code has expired. Request a new one.' };
+  }
+
+  if (user.resetOtpAttempts >= OTP_MAX_ATTEMPTS) {
+    return { ok: false, status: 429, message: 'Too many invalid attempts. Request a new code.' };
+  }
+
+  if (!user.resetOtpHash) {
+    return { ok: false, status: 400, message: 'Invalid or expired reset code.' };
+  }
+
+  const hashedToken = hashOtp((token || '').trim());
+  if (hashedToken !== user.resetOtpHash) {
+    user.resetOtpAttempts = (user.resetOtpAttempts || 0) + 1;
+    await user.save();
+    const remaining = attemptsRemaining(user);
+    return {
+      ok: false,
+      status: 400,
+      message: `Invalid code. ${remaining} attempt(s) remaining.`
+    };
+  }
+
+  return { ok: true };
+}
+
 const router = express.Router();
 
 const rootDir = path.join(__dirname, '..', '..');
@@ -170,6 +202,7 @@ router.post('/api/password/forgot', async (req, res) => { // Generate OTP for pa
     user.resetOtpExpires = new Date(now.getTime() + OTP_TTL_MINUTES * 60 * 1000);
     user.resetOtpAttempts = 0;
     user.resetOtpLastSent = now;
+    user.resetOtpVerifiedAt = undefined;
     user.resetOtpChannel = channel;
     user.resetToken = undefined;
     user.resetExpires = undefined;
@@ -187,11 +220,34 @@ router.post('/api/password/forgot', async (req, res) => { // Generate OTP for pa
   }
 });
 
+router.post('/api/password/verify', async (req, res) => { // Verify email OTP before password reset.
+  try {
+    const { email, token } = req.body || {};
+    if (!email || !token) {
+      return res.status(400).json({ message: 'Email and code are required.' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    const verification = await validateResetOtp(user, token);
+    if (!verification.ok) {
+      return res.status(verification.status).json({ message: verification.message });
+    }
+
+    user.resetOtpVerifiedAt = new Date();
+    user.resetOtpAttempts = 0;
+    await user.save();
+
+    return res.json({ message: 'Code verified. You can now set a new password.' });
+  } catch (err) {
+    return res.status(500).json({ message: 'Could not verify reset code.' });
+  }
+});
+
 router.post('/api/password/reset', async (req, res) => { // Reset password using email OTP.
   try {
     const { email, token, password } = req.body || {};
-    if (!email || !token || !password) {
-      return res.status(400).json({ message: 'Email, token, and new password are required.' });
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and new password are required.' });
     }
 
     if (typeof password !== 'string' || password.trim().length < 8) {
@@ -199,29 +255,20 @@ router.post('/api/password/reset', async (req, res) => { // Reset password using
     }
 
     const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user || !user.resetOtpExpires) {
-      return res.status(400).json({ message: 'Invalid or expired reset code.' });
-    }
+    const hasVerifiedCode =
+      Boolean(user?.resetOtpVerifiedAt) &&
+      Boolean(user?.resetOtpExpires) &&
+      user.resetOtpExpires > new Date();
 
-    if (user.resetOtpExpires <= new Date()) {
-      return res.status(400).json({ message: 'Reset code has expired. Request a new one.' });
-    }
+    if (!hasVerifiedCode) {
+      if (!token) {
+        return res.status(400).json({ message: 'Verify the email code first.' });
+      }
 
-    if (user.resetOtpAttempts >= OTP_MAX_ATTEMPTS) {
-      return res.status(429).json({ message: 'Too many invalid attempts. Request a new code.' });
-    }
-
-    if (!user.resetOtpHash) {
-      return res.status(400).json({ message: 'Invalid or expired reset code.' });
-    }
-    const hashedToken = hashOtp(token.trim());
-    if (hashedToken !== user.resetOtpHash) {
-      user.resetOtpAttempts = (user.resetOtpAttempts || 0) + 1;
-      await user.save();
-      const remaining = attemptsRemaining(user);
-      return res.status(400).json({
-        message: `Invalid code. ${remaining} attempt(s) remaining.`
-      });
+      const verification = await validateResetOtp(user, token);
+      if (!verification.ok) {
+        return res.status(verification.status).json({ message: verification.message });
+      }
     }
 
     const normalizedPassword = password.trim();
@@ -230,6 +277,7 @@ router.post('/api/password/reset', async (req, res) => { // Reset password using
     user.resetOtpExpires = undefined;
     user.resetOtpAttempts = 0;
     user.resetOtpLastSent = undefined;
+    user.resetOtpVerifiedAt = undefined;
     user.resetOtpChannel = undefined;
     user.resetToken = undefined;
     user.resetExpires = undefined;

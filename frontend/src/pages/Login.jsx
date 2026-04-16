@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiRequest, readJson } from '../api/client.js';
-import { forgotPassword, resetPassword } from '../api/auth.js';
+import { forgotPassword, resetPassword, verifyPasswordResetCode } from '../api/auth.js';
 import { useBodyClass } from '../hooks/useBodyClass.js';
 
 export default function Login() { // Login page and auth redirect logic.
@@ -18,7 +18,40 @@ export default function Login() { // Login page and auth redirect logic.
   const [resetConfirm, setResetConfirm] = useState('');
   const [resetMessage, setResetMessage] = useState('');
   const [resetError, setResetError] = useState('');
-  const [requestedToken, setRequestedToken] = useState('');
+  const [resetStage, setResetStage] = useState('request');
+
+  const resetForgotState = (nextEmail = '') => {
+    setResetEmail(nextEmail);
+    setResetToken('');
+    setResetPasswordVal('');
+    setResetConfirm('');
+    setResetMessage('');
+    setResetError('');
+    setResetStage('request');
+  };
+
+  const openForgotPassword = () => {
+    setForgotOpen(true);
+    resetForgotState(email.trim());
+  };
+
+  const closeForgotPassword = () => {
+    setForgotOpen(false);
+    resetForgotState('');
+  };
+
+  const handleResetEmailChange = (value) => {
+    setResetEmail(value);
+    setResetError('');
+    setResetMessage('');
+
+    if (resetStage !== 'request') {
+      setResetStage('request');
+      setResetToken('');
+      setResetPasswordVal('');
+      setResetConfirm('');
+    }
+  };
 
   const handleSubmit = async (event) => { // Submit login form and route by role.
     event.preventDefault();
@@ -53,6 +86,87 @@ export default function Login() { // Login page and auth redirect logic.
     } catch (err) {
       setError('Unable to reach server.');
     }
+  };
+
+  const handleSendResetCode = async () => {
+    setResetError('');
+    setResetMessage('');
+
+    const normalizedEmail = resetEmail.trim();
+    if (!normalizedEmail) {
+      setResetError('Enter your registered email address.');
+      return;
+    }
+
+    const { res, data } = await forgotPassword(normalizedEmail);
+    if (!res.ok) {
+      setResetError(data?.message || 'Could not send email code.');
+      return;
+    }
+
+    setResetStage('verify');
+    setResetToken('');
+    setResetPasswordVal('');
+    setResetConfirm('');
+    setResetMessage(
+      data?.message || 'If that account exists, a 6-digit code was emailed to you. It expires in 10 minutes.'
+    );
+  };
+
+  const handleVerifyResetCode = async () => {
+    setResetError('');
+    setResetMessage('');
+
+    const normalizedEmail = resetEmail.trim();
+    const normalizedToken = resetToken.trim();
+    if (!normalizedEmail || !normalizedToken) {
+      setResetError('Email and code are required.');
+      return;
+    }
+
+    const { res, data } = await verifyPasswordResetCode({
+      email: normalizedEmail,
+      token: normalizedToken
+    });
+
+    if (!res.ok) {
+      setResetError(data?.message || 'Could not verify code.');
+      return;
+    }
+
+    setResetStage('reset');
+    setResetMessage(data?.message || 'Code verified. You can now set a new password.');
+  };
+
+  const handleResetPassword = async () => {
+    setResetError('');
+    setResetMessage('');
+
+    if (!resetEmail.trim() || !resetPasswordVal.trim()) {
+      setResetError('Email and new password are required.');
+      return;
+    }
+
+    if (resetPasswordVal !== resetConfirm) {
+      setResetError('Passwords do not match.');
+      return;
+    }
+
+    const { res, data } = await resetPassword({
+      email: resetEmail.trim(),
+      password: resetPasswordVal.trim()
+    });
+
+    if (!res.ok) {
+      setResetError(data?.message || 'Could not reset password.');
+      return;
+    }
+
+    setResetStage('request');
+    setResetToken('');
+    setResetPasswordVal('');
+    setResetConfirm('');
+    setResetMessage(data?.message || 'Password reset successful.');
   };
 
   return (
@@ -92,7 +206,7 @@ export default function Login() { // Login page and auth redirect logic.
                 <input
                   id="password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="********"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                 />
@@ -102,13 +216,7 @@ export default function Login() { // Login page and auth redirect logic.
                 type="button"
                 className="btn-link"
                 style={{ alignSelf: 'flex-end', marginTop: '-6px', marginBottom: '6px' }}
-                onClick={() => {
-                  setForgotOpen(true);
-                  setResetEmail(email);
-                  setResetError('');
-                  setResetMessage('');
-                  setRequestedToken('');
-                }}
+                onClick={openForgotPassword}
               >
                 Forgot password?
               </button>
@@ -123,7 +231,7 @@ export default function Login() { // Login page and auth redirect logic.
       </div>
 
       <div className={`modal ${forgotOpen ? 'active' : ''}`} aria-hidden={!forgotOpen}>
-        <div className="modal-backdrop" onClick={() => setForgotOpen(false)} />
+        <div className="modal-backdrop" onClick={closeForgotPassword} />
         <div className="modal-card">
           <div className="modal-header">
             <h3 style={{ margin: 0 }}>Forgot / Reset Password</h3>
@@ -131,109 +239,105 @@ export default function Login() { // Login page and auth redirect logic.
               type="button"
               className="modal-close"
               aria-label="Close"
-              onClick={() => setForgotOpen(false)}
+              onClick={closeForgotPassword}
             >
-              ×
+              x
             </button>
           </div>
 
           <div className="modal-grid" style={{ gridTemplateColumns: '1fr' }}>
+            <div className="reset-flow-steps">
+              <span className={resetStage === 'request' ? 'active' : resetStage === 'verify' || resetStage === 'reset' ? 'done' : ''}>
+                1. Send code
+              </span>
+              <span className={resetStage === 'verify' ? 'active' : resetStage === 'reset' ? 'done' : ''}>
+                2. Verify code
+              </span>
+              <span className={resetStage === 'reset' ? 'active' : ''}>
+                3. Reset password
+              </span>
+            </div>
+
             <label className="auth-field">
               <span>Email</span>
               <input
                 type="email"
                 value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
+                onChange={(event) => handleResetEmailChange(event.target.value)}
                 placeholder="you@company.com"
                 required
               />
             </label>
 
-            <p className="helper">We will email a code to this address if the account exists.</p>
+            <p className="helper">
+              {resetStage === 'request'
+                ? 'We will email a code to this address if the account exists.'
+                : resetStage === 'verify'
+                  ? 'Enter the OTP from your email. If it fails, you can resend and try again.'
+                  : 'Code verified. Enter your new password below.'}
+            </p>
 
-            <button
-              className="btn-primary"
-              type="button"
-              onClick={async () => {
-                setResetError('');
-                setResetMessage('');
-                const { res, data } = await forgotPassword(resetEmail.trim());
-                if (!res.ok) {
-                  setResetError(data?.message || 'Could not create reset token.');
-                  return;
-                }
-                setRequestedToken('');
-                const msg =
-                  data?.message ||
-                  'If that account exists, a 6-digit code was emailed to you. It expires in 10 minutes.';
-                setResetMessage(msg);
-              }}
-            >
-              Send email code
-            </button>
+            {resetStage === 'request' ? (
+              <button className="btn-primary" type="button" onClick={handleSendResetCode}>
+                Send email code
+              </button>
+            ) : null}
 
-            <label className="auth-field">
-              <span>Email code</span>
-              <input
-                type="text"
-                value={resetToken}
-                onChange={(e) => setResetToken(e.target.value)}
-                placeholder="6-digit code from email"
-              />
-            </label>
+            {resetStage === 'verify' ? (
+              <>
+                <label className="auth-field">
+                  <span>Email code</span>
+                  <input
+                    type="text"
+                    value={resetToken}
+                    onChange={(event) => setResetToken(event.target.value)}
+                    placeholder="6-digit code from email"
+                  />
+                </label>
 
-            <label className="auth-field">
-              <span>New password</span>
-              <input
-                type="password"
-                value={resetPasswordVal}
-                onChange={(e) => setResetPasswordVal(e.target.value)}
-                placeholder="New password"
-              />
-            </label>
+                <div className="form-actions">
+                  <button className="btn-primary" type="button" onClick={handleVerifyResetCode}>
+                    Verify code
+                  </button>
+                  <button className="btn-link" type="button" onClick={handleSendResetCode}>
+                    Retry / resend code
+                  </button>
+                </div>
+              </>
+            ) : null}
 
-            <label className="auth-field">
-              <span>Confirm new password</span>
-              <input
-                type="password"
-                value={resetConfirm}
-                onChange={(e) => setResetConfirm(e.target.value)}
-                placeholder="Repeat new password"
-              />
-            </label>
+            {resetStage === 'reset' ? (
+              <>
+                <label className="auth-field">
+                  <span>New password</span>
+                  <input
+                    type="password"
+                    value={resetPasswordVal}
+                    onChange={(event) => setResetPasswordVal(event.target.value)}
+                    placeholder="New password"
+                  />
+                </label>
 
-            <button
-              className="btn-primary"
-              type="button"
-              onClick={async () => {
-                setResetError('');
-                setResetMessage('');
-                if (!resetEmail || !resetToken || !resetPasswordVal) {
-                  setResetError('Email, code, and new password are required.');
-                  return;
-                }
-                if (resetPasswordVal !== resetConfirm) {
-                  setResetError('Passwords do not match.');
-                  return;
-                }
-                const { res, data } = await resetPassword({
-                  email: resetEmail.trim(),
-                  token: resetToken.trim(),
-                  password: resetPasswordVal.trim()
-                });
-                if (!res.ok) {
-                  setResetError(data?.message || 'Could not reset password.');
-                  return;
-                }
-                setResetMessage(data?.message || 'Password reset successful.');
-                setRequestedToken('');
-                setResetPasswordVal('');
-                setResetConfirm('');
-                setResetToken('');
-              }}
-            >
-              Reset password
-            </button>
+                <label className="auth-field">
+                  <span>Confirm new password</span>
+                  <input
+                    type="password"
+                    value={resetConfirm}
+                    onChange={(event) => setResetConfirm(event.target.value)}
+                    placeholder="Repeat new password"
+                  />
+                </label>
+
+                <div className="form-actions">
+                  <button className="btn-primary" type="button" onClick={handleResetPassword}>
+                    Reset password
+                  </button>
+                  <button className="btn-link" type="button" onClick={handleSendResetCode}>
+                    Send new code
+                  </button>
+                </div>
+              </>
+            ) : null}
 
             {resetError ? <p className="helper error-text">{resetError}</p> : null}
             {resetMessage ? <p className="helper" style={{ color: '#34d399' }}>{resetMessage}</p> : null}
